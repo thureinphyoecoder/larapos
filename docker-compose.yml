@@ -1,0 +1,73 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: larapos-app
+    ports:
+      - "5173:5173"
+      - "8080:8080"
+    volumes:
+      - .:/var/www
+    networks:
+      - larapos-network
+
+  web:
+    image: nginx:alpine
+    container_name: larapos-web
+    ports:
+      - "8001:80"
+    volumes:
+      - .:/var/www
+      - ./docker-config/nginx:/etc/nginx/conf.d:ro
+    depends_on:
+      - app
+    networks:
+      - larapos-network
+
+  # Python Analytics
+  analytics:
+    build:
+      context: ./analytics
+    container_name: larapos-analytics
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./analytics:/app
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - larapos-network
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: larapos-db
+    environment:
+      MYSQL_DATABASE: larapos
+      MYSQL_USER: larapos_user
+      MYSQL_PASSWORD: larapos_pass
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql # 🎯 ဒါက data ကို စက်ထဲမှာ အသေသိမ်းပေးမှာပါ
+    networks:
+      - larapos-network
+
+  # Message Broker (RabbitMQ)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: larapos-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - larapos-network
+volumes:
+  db_data:
+
+networks:
+  larapos-network:
+    driver: bridge
