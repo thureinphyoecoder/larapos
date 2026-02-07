@@ -36,10 +36,56 @@ export default function AuthenticatedLayout({ header, children }) {
             });
         });
 
+        window.Echo.private(channel).listen(".SupportMessageSent", (e) => {
+            if (Number(e.sender_id) === Number(user?.id)) {
+                return;
+            }
+
+            // Customer side: notify only for real staff replies (not bot/system echoes).
+            if (Number(e.sender_id) !== Number(e.staff_id)) {
+                return;
+            }
+
+            const next = {
+                id: `support-${e.id}-${Date.now()}`,
+                message: `Support: ${e.message || "New message"}`,
+                time: new Date().toLocaleString(),
+                isRead: false,
+            };
+            setNotifications((prev) => [next, ...prev].slice(0, 20));
+            Swal.fire({
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 4500,
+                icon: "info",
+                title: `Support reply: ${e.sender_name || "Team"}`,
+                text: e.message || "",
+            });
+        });
+
         return () => {
             window.Echo.leaveChannel(channel);
         };
     }, [user?.id]);
+
+    useEffect(() => {
+        const handleSupportSeen = () => {
+            setNotifications((prev) =>
+                prev.map((n) =>
+                    String(n.id).startsWith("support-")
+                        ? { ...n, isRead: true }
+                        : n,
+                ),
+            );
+        };
+
+        window.addEventListener("support:clear-notifications", handleSupportSeen);
+
+        return () => {
+            window.removeEventListener("support:clear-notifications", handleSupportSeen);
+        };
+    }, []);
 
     const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -56,14 +102,17 @@ export default function AuthenticatedLayout({ header, children }) {
             { label: "📦 Inventory", route: "admin.products.index" },
         ],
         sales: [
+            { label: "📊 Dashboard", route: "admin.dashboard" },
             { label: "🧾 Orders", route: "admin.orders.index" },
         ],
         delivery: [
+            { label: "📍 Dashboard", route: "dashboard" },
             { label: "🚚 My Deliveries", route: "admin.orders.index" },
         ],
         user: [
             { label: "🏠 Dashboard", route: "dashboard" },
             { label: "🧾 My Orders", route: "orders.index" },
+            { label: "💬 Support Chat", route: "support.index" },
             { label: "👤 Profile", route: "profile.edit" },
         ],
     };
@@ -117,6 +166,24 @@ export default function AuthenticatedLayout({ header, children }) {
                             <Link href="/">
                                 <ApplicationLogo className="h-8 w-auto fill-current text-orange-600" />
                             </Link>
+                        )}
+
+                        {isUser && (
+                            <div className="flex items-center gap-2 ms-2 overflow-x-auto whitespace-nowrap">
+                                {links.map((link, index) => (
+                                    <Link
+                                        key={index}
+                                        href={route(link.route)}
+                                        className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
+                                            route().current(link.route)
+                                                ? "bg-orange-600 text-white border-orange-600"
+                                                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                                        }`}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                ))}
+                            </div>
                         )}
                     </div>
 
@@ -221,28 +288,6 @@ export default function AuthenticatedLayout({ header, children }) {
                         </Dropdown>
                     </div>
                 </nav>
-
-                {isUser && (
-                    <div className="bg-white border-b border-gray-100">
-                        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="flex gap-2 py-3">
-                                {links.map((link, index) => (
-                                    <Link
-                                        key={index}
-                                        href={route(link.route)}
-                                        className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
-                                            route().current(link.route)
-                                                ? "bg-orange-600 text-white border-orange-600"
-                                                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                                        }`}
-                                    >
-                                        {link.label}
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {header && (
                     <header className="bg-white shadow-sm">
