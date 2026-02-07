@@ -1,17 +1,36 @@
-import { Link, usePage, router } from "@inertiajs/react"; // 👈 router ထည့်ပါ
+import { Link, usePage, router } from "@inertiajs/react";
 import { useState } from "react";
 import Swal from "sweetalert2";
 
 export default function ProductDetail({ product }) {
-    const { auth, errors = {} } = usePage().props; // 👈 props ထဲက auth ကို တန်းယူလိုက်ပါ
-    const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
+    const { auth, errors = {} } = usePage().props;
+    const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || null);
     const [quantity, setQuantity] = useState(1);
     const [processing, setProcessing] = useState(false);
+
+    const selectedPrice = Number(selectedVariant?.price || 0) * quantity;
+    const inStock = Number(selectedVariant?.stock_level || 0) > 0;
+
+    const getProductImage = () => {
+        if (product?.image) return product.image;
+        if (product?.image_url) return product.image_url;
+        if (product?.image_path) return `/storage/${product.image_path}`;
+        return "/images/products/product-1.svg";
+    };
 
     const handleAction = (e, type) => {
         e.preventDefault();
 
-        // ၁။ Auth အရင်စစ်မယ်
+        if (!selectedVariant) {
+            Swal.fire({
+                title: "Variant မရွေးရသေးပါ",
+                text: "ဝယ်ယူမည့် variant ကိုအရင်ရွေးပေးပါ။",
+                icon: "warning",
+                confirmButtonColor: "#f97316",
+            });
+            return;
+        }
+
         if (!auth.user) {
             Swal.fire({
                 title: "Login ဝင်ပေးပါဦး",
@@ -27,9 +46,7 @@ export default function ProductDetail({ product }) {
             return;
         }
 
-        // ၂။ Login ရှိရင် ဒေတာပို့မယ်
-        const redirectTo =
-            type === "buy_now" ? route("checkout.index") : null;
+        const redirectTo = type === "buy_now" ? route("checkout.index") : null;
 
         router.post(
             route("cart.add"),
@@ -61,107 +78,125 @@ export default function ProductDetail({ product }) {
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen pb-12">
-            <nav className="bg-white border-b mb-6">
-                <div className="max-w-6xl mx-auto px-4 py-3 flex items-center text-sm gap-2">
+        <div className="bg-slate-100 min-h-screen pb-12">
+            <nav className="bg-white border-b border-slate-200 sticky top-0 z-30 backdrop-blur">
+                <div className="max-w-6xl mx-auto px-4 py-3 flex items-center text-sm gap-2 text-slate-500">
                     <Link
                         href="/"
-                        className="text-gray-500 hover:text-orange-500 transition font-medium"
+                        className="hover:text-orange-500 transition font-medium"
                     >
-                        🏠 Home
+                        Home
                     </Link>
-                    <span className="text-gray-300">/</span>
-                    <span className="text-gray-800 font-medium truncate">
+                    <span className="text-slate-300">/</span>
+                    <span className="text-slate-800 font-semibold truncate">
                         {product.name}
                     </span>
                 </div>
             </nav>
 
-            <div className="max-w-6xl mx-auto px-4 mt-8">
-                <div className="bg-white rounded-sm shadow-sm p-8 flex flex-col md:flex-row gap-10">
-                    {/* Left: Product Image */}
-                    <div className="md:w-2/5">
-                        <div className="aspect-square bg-gray-100 rounded-sm flex items-center justify-center border border-gray-200 shadow-inner">
-                            <span className="text-gray-300 text-6xl font-bold uppercase">
-                                {product.brand?.name}
-                            </span>
+            <div className="max-w-6xl mx-auto px-4 mt-8 space-y-8">
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                        <div className="aspect-square rounded-3xl overflow-hidden border border-slate-200 bg-slate-100">
+                            <img
+                                src={getProductImage()}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            {[1, 2, 3].map((idx) => (
+                                <div
+                                    key={idx}
+                                    className="h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200"
+                                />
+                            ))}
                         </div>
                     </div>
 
-                    {/* Right: Product Info */}
-                    <div className="md:w-3/5">
-                        <h1 className="text-2xl font-semibold mb-4">
-                            {product.name}
-                        </h1>
+                    <div className="space-y-6">
+                        <div>
+                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold">
+                                {product.brand?.name || "Brand"}
+                            </p>
+                            <h1 className="mt-2 text-3xl sm:text-4xl font-black text-slate-900 leading-tight">
+                                {product.name}
+                            </h1>
+                            <p className="mt-3 text-sm text-slate-500">
+                                SKU: {selectedVariant?.sku || product.sku || "-"}
+                            </p>
+                        </div>
 
-                        {/* Error Message ပေါ်ဖို့ (ဥပမာ- Login မဝင်ထားရင်) */}
                         {errors.message && (
-                            <div className="bg-red-100 text-red-600 p-3 rounded mb-4 text-sm">
-                                ⚠️ {errors.message}
+                            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+                                {errors.message}
                             </div>
                         )}
 
-                        <div className="bg-orange-50 p-5 rounded-sm mb-6">
-                            <span className="text-3xl font-bold text-orange-600">
-                                Ks{" "}
-                                {(
-                                    selectedVariant?.price * quantity
-                                ).toLocaleString()}
+                        <div className="bg-orange-50 border border-orange-200 p-5 rounded-2xl">
+                            <span className="text-3xl font-black text-orange-600">
+                                Ks {selectedPrice.toLocaleString()}
                             </span>
+                            <p className="text-xs text-slate-500 mt-2">
+                                Stock: {selectedVariant?.stock_level ?? 0}
+                            </p>
                         </div>
 
-                        {/* Variants Selector */}
-                        <div className="mb-6">
-                            <p className="text-sm text-gray-500 mb-2">
-                                Variant ရွေးချယ်ပါ
+                        <div>
+                            <p className="text-sm font-semibold text-slate-700 mb-3">
+                                Choose Variant
                             </p>
-                            <div className="flex gap-2">
-                                {product.variants.map((v) => (
+                            <div className="flex flex-wrap gap-2">
+                                {(product.variants || []).map((v) => (
                                     <button
                                         key={v.id}
                                         onClick={() => setSelectedVariant(v)}
-                                        className={`px-4 py-2 border text-sm ${selectedVariant.id === v.id ? "border-orange-500 text-orange-500 bg-orange-50" : "border-gray-200"}`}
+                                        className={`px-4 py-2 rounded-xl border text-sm font-semibold transition ${
+                                            selectedVariant?.id === v.id
+                                                ? "border-orange-500 text-orange-600 bg-orange-50"
+                                                : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                                        }`}
                                     >
-                                        {v.sku.split("-").pop()}
+                                        {v.sku?.split("-").pop() || "Default"}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Quantity Selector */}
-                        <div className="mb-8 flex items-center gap-4">
-                            <span className="text-sm text-gray-500">
-                                အရေအတွက်
-                            </span>
-                            <div className="flex items-center border border-gray-300">
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-semibold text-slate-700">Qty</span>
+                            <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden">
                                 <button
                                     onClick={() =>
                                         setQuantity((q) => Math.max(1, q - 1))
                                     }
-                                    className="px-3 py-1 bg-gray-100 border-r"
+                                    className="px-3 py-2 bg-slate-100 border-r border-slate-300 hover:bg-slate-200"
                                 >
                                     -
                                 </button>
-                                <span className="px-6 py-1">{quantity}</span>
+                                <span className="px-6 py-2 font-semibold text-slate-700">{quantity}</span>
                                 <button
                                     onClick={() => setQuantity((q) => q + 1)}
-                                    className="px-3 py-1 bg-gray-100 border-l"
+                                    className="px-3 py-2 bg-slate-100 border-l border-slate-300 hover:bg-slate-200"
                                 >
                                     +
                                 </button>
                             </div>
                         </div>
 
-                        {/* Add to Cart Button */}
-                        <div className="flex gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                             <button
                                 onClick={(e) => handleAction(e, "add_to_cart")}
-                                disabled={processing}
-                                className={`flex-1 py-4 rounded-sm font-bold flex items-center justify-center gap-2 transition ${processing ? "bg-gray-400" : "bg-orange-100 text-orange-600 border border-orange-500 hover:bg-orange-200"}`}
+                                disabled={processing || !inStock}
+                                className={`py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition ${
+                                    processing || !inStock
+                                        ? "bg-slate-300 text-slate-500"
+                                        : "bg-orange-100 text-orange-600 border border-orange-500 hover:bg-orange-200"
+                                }`}
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
-                                    className="h-6 w-6"
+                                    className="h-5 w-5"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
@@ -173,47 +208,53 @@ export default function ProductDetail({ product }) {
                                         d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
                                     />
                                 </svg>
-                                {processing
-                                    ? "ထည့်သွင်းနေပါသည်..."
-                                    : "ခြင်းတောင်းထဲထည့်မည်"}
+                                {processing ? "ထည့်သွင်းနေပါသည်..." : "Add to Cart"}
                             </button>
 
                             <button
                                 onClick={(e) => handleAction(e, "buy_now")}
-                                disabled={processing}
-                                className={`flex-1 py-4 rounded-sm font-bold shadow-md ${processing ? "bg-gray-400 text-white" : "bg-orange-500 text-white hover:bg-orange-600"}`}
+                                disabled={processing || !inStock}
+                                className={`py-3 rounded-2xl font-bold shadow-md transition ${
+                                    processing || !inStock
+                                        ? "bg-slate-300 text-slate-500"
+                                        : "bg-orange-600 text-white hover:bg-orange-700"
+                                }`}
                             >
-                                အခုဝယ်မည်
+                                Buy Now
                             </button>
                         </div>
+
+                        {!inStock && (
+                            <p className="text-sm text-red-500 font-medium">
+                                This variant is out of stock.
+                            </p>
+                        )}
                     </div>
                 </div>
-            </div>
 
-            <ProductTabs
-                description={product.description}
-                reviews={product.reviews}
-            />
+                <ProductTabs
+                    description={product.description}
+                    reviews={product.reviews}
+                />
+            </div>
         </div>
     );
 }
 
-// ProductDetail.jsx ရဲ့ အောက်ဆုံးမှာ သီးသန့် Component တစ်ခုအနေနဲ့ ထည့်ပါ
 function ProductTabs({ description, reviews = [] }) {
     const [activeTab, setActiveTab] = useState("description");
 
     return (
-        <div className="mt-10 bg-white p-6 shadow-sm rounded-sm border border-gray-100">
-            {/* Tab Headers */}
-            <div className="flex border-b gap-8 mb-6">
+        <div className="bg-white p-6 sm:p-8 shadow-sm rounded-3xl border border-slate-200">
+            <div className="flex border-b border-slate-100 gap-6 mb-6 overflow-x-auto">
                 {["description", "comments", "ratings"].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`pb-3 text-sm font-bold uppercase tracking-wider transition ${
+                        className={`pb-3 text-sm font-bold uppercase tracking-wider transition whitespace-nowrap ${
                             activeTab === tab
                                 ? "border-b-2 border-orange-500 text-orange-600"
-                                : "text-gray-400 hover:text-gray-600"
+                                : "text-slate-400 hover:text-slate-600"
                         }`}
                     >
                         {tab}
@@ -221,10 +262,9 @@ function ProductTabs({ description, reviews = [] }) {
                 ))}
             </div>
 
-            {/* Tab Content */}
             <div className="min-h-[200px]">
                 {activeTab === "description" && (
-                    <div className="prose max-w-none text-gray-600 leading-relaxed">
+                    <div className="prose max-w-none text-slate-600 leading-relaxed">
                         {description ||
                             "ဒီပစ္စည်းအတွက် အသေးစိတ်ဖော်ပြချက် မရှိသေးပါဘူး။"}
                     </div>
@@ -232,12 +272,11 @@ function ProductTabs({ description, reviews = [] }) {
 
                 {activeTab === "comments" && (
                     <div className="space-y-4">
-                        <p className="text-sm text-gray-500 italic">
-                            မှတ်ချက်များ (၀)
+                        <p className="text-sm text-slate-500 italic">
+                            မှတ်ချက်များ ({reviews?.length || 0})
                         </p>
-                        {/* ဒီမှာ Comment Form နဲ့ List ထည့်လို့ရပါတယ် */}
                         <textarea
-                            className="w-full border p-3 text-sm"
+                            className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                             placeholder="မေးချင်တာရှိရင် ရေးခဲ့ပါ..."
                         ></textarea>
                     </div>
@@ -245,13 +284,13 @@ function ProductTabs({ description, reviews = [] }) {
 
                 {activeTab === "ratings" && (
                     <div className="flex flex-col items-center py-10">
-                        <span className="text-4xl font-bold text-gray-800">
+                        <span className="text-4xl font-bold text-slate-800">
                             0.0
                         </span>
                         <div className="flex text-yellow-400 my-2">
                             ⭐⭐⭐⭐⭐
                         </div>
-                        <p className="text-gray-400 text-sm">
+                        <p className="text-slate-400 text-sm">
                             သုံးသပ်ချက် မရှိသေးပါ
                         </p>
                     </div>
