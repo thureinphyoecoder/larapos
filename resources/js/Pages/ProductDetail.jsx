@@ -1,17 +1,12 @@
-import { Link, useForm, usePage, router } from "@inertiajs/react"; // 👈 router ထည့်ပါ
+import { Link, usePage, router } from "@inertiajs/react"; // 👈 router ထည့်ပါ
 import { useState } from "react";
 import Swal from "sweetalert2";
 
 export default function ProductDetail({ product }) {
-    const { auth } = usePage().props; // 👈 props ထဲက auth ကို တန်းယူလိုက်ပါ
+    const { auth, errors = {} } = usePage().props; // 👈 props ထဲက auth ကို တန်းယူလိုက်ပါ
     const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
     const [quantity, setQuantity] = useState(1);
-
-    const { post, processing, errors } = useForm({
-        product_id: product.id,
-        variant_id: selectedVariant?.id,
-        quantity: quantity,
-    });
+    const [processing, setProcessing] = useState(false);
 
     const handleAction = (e, type) => {
         e.preventDefault();
@@ -33,24 +28,36 @@ export default function ProductDetail({ product }) {
         }
 
         // ၂။ Login ရှိရင် ဒေတာပို့မယ်
-        post(route("cart.add"), {
-            preserveScroll: true,
-            onSuccess: () => {
-                if (type === "buy_now") {
-                    router.get("/cart");
-                } else {
-                    Swal.fire({
-                        icon: "success",
-                        title: "ခြင်းတောင်းထဲ ထည့်ပြီးပါပြီ",
-                        toast: true,
-                        position: "top-end",
-                        showConfirmButton: false,
-                        timer: 2000,
-                        timerProgressBar: true,
-                    });
-                }
+        const redirectTo =
+            type === "buy_now" ? route("checkout.index") : null;
+
+        router.post(
+            route("cart.add"),
+            {
+                product_id: product.id,
+                variant_id: selectedVariant?.id,
+                quantity,
+                redirect_to: redirectTo,
             },
-        });
+            {
+                preserveScroll: true,
+                onStart: () => setProcessing(true),
+                onFinish: () => setProcessing(false),
+                onSuccess: () => {
+                    if (type !== "buy_now") {
+                        Swal.fire({
+                            icon: "success",
+                            title: "ခြင်းတောင်းထဲ ထည့်ပြီးပါပြီ",
+                            toast: true,
+                            position: "top-end",
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true,
+                        });
+                    }
+                },
+            },
+        );
     };
 
     return (
@@ -173,7 +180,8 @@ export default function ProductDetail({ product }) {
 
                             <button
                                 onClick={(e) => handleAction(e, "buy_now")}
-                                className="flex-1 bg-orange-500 text-white py-4 rounded-sm font-bold hover:bg-orange-600 shadow-md"
+                                disabled={processing}
+                                className={`flex-1 py-4 rounded-sm font-bold shadow-md ${processing ? "bg-gray-400 text-white" : "bg-orange-500 text-white hover:bg-orange-600"}`}
                             >
                                 အခုဝယ်မည်
                             </button>

@@ -1,5 +1,6 @@
 import React from "react";
 import { router, Head, useForm } from "@inertiajs/react";
+import Swal from "sweetalert2";
 
 export default function Confirm({ formData, cartItems }) {
     const { data, post, processing } = useForm({
@@ -23,20 +24,26 @@ export default function Confirm({ formData, cartItems }) {
 
     const submitOrder = (e) => {
         e.preventDefault();
-        // 🎯 orders.store ဆီကို data တွေ အမှန်အတိုင်း ပို့မယ်
+        // useForm က data state ကိုပဲ submit လုပ်မယ် (nested data key မပို့ပါ)
         post(route("orders.store"), {
-            data: {
-                phone: formData.phone,
-                address: formData.address,
-                payment_slip: formData.payment_slip,
-                total_amount: formData.total_amount,
-            },
             onSuccess: () => {
                 console.log("Success! Receipt should show now.");
             },
             onError: (errors) => {
-                // 🎯 ဒီနေရာမှာ ဘာ Error တက်လဲဆိုတာ Inspect > Console မှာ ကြည့်လို့ရပါပြီ
-                console.log("Validation Errors:", errors);
+                // ဒီနေရာမှာ validation/system error နှစ်မျိုးလုံး ဝင်နိုင်ပါတယ်
+                console.log("Order submit errors:", errors);
+                const firstError =
+                    errors.system_error ||
+                    errors.payment_slip ||
+                    errors.phone ||
+                    errors.address ||
+                    "Order submit failed.";
+                Swal.fire({
+                    icon: "error",
+                    title: "Order မတင်နိုင်သေးပါ",
+                    text: firstError,
+                    confirmButtonColor: "#ea580c",
+                });
             },
         });
     };

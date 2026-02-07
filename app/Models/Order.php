@@ -17,6 +17,8 @@ class Order extends Model
         'delivery_lat',
         'delivery_lng',
         'delivery_updated_at',
+        'delivery_proof_path',
+        'shipped_at',
         'slip_verdict',
         'slip_score',
         'slip_checked_at',

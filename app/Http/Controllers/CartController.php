@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\CartItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
 
 class CartController extends Controller
 {
@@ -32,7 +30,8 @@ class CartController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'variant_id' => 'required|exists:product_variants,id',
-            'quantity' => 'required|integer|min:1'
+            'quantity' => 'required|integer|min:1',
+            'redirect_to' => 'nullable|string'
         ]);
 
         // 🎯 ခြင်းတောင်းထဲမှာ ဒီပစ္စည်း ရှိ၊ မရှိ အရင်စစ်မယ်
@@ -53,6 +52,17 @@ class CartController extends Controller
                 'variant_id' => $request->variant_id,
                 'quantity' => $request->quantity
             ]);
+        }
+
+        $redirectTo = $request->input('redirect_to');
+        if (is_string($redirectTo) && $redirectTo !== '') {
+            $targetPath = str_starts_with($redirectTo, '/')
+                ? $redirectTo
+                : parse_url($redirectTo, PHP_URL_PATH);
+
+            if (is_string($targetPath) && str_starts_with($targetPath, '/')) {
+                return redirect($targetPath)->with('success', 'ခြင်းတောင်းထဲ ထည့်ပြီးပါပြီ');
+            }
         }
 
         return back()->with('success', 'ခြင်းတောင်းထဲ ထည့်ပြီးပါပြီ');

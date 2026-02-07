@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB; // Transaction အတွက်
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -38,7 +39,7 @@ class OrderController extends Controller
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
         $isStaff = $user && method_exists($user, 'hasAnyRole')
-            ? $user->hasAnyRole(['admin', 'manager', 'sales'])
+            ? $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery'])
             : false;
 
         if (!$isStaff && $order->user_id !== Auth::id()) {
@@ -139,7 +140,9 @@ class OrderController extends Controller
         // ၁။ ခြင်းတောင်းထဲမှာ ပစ္စည်း တကယ်ရှိလား အရင်စစ် (Early Return)
         $cartItems = CartItem::with('variant')->where('user_id', $user->id)->get();
         if ($cartItems->isEmpty()) {
-            return back()->withErrors(['system_error' => 'ခြင်းတောင်းထဲမှာ ပစ္စည်းမရှိပါဘူးဗျာ။']);
+            throw ValidationException::withMessages([
+                'system_error' => 'ခြင်းတောင်းထဲမှာ ပစ္စည်းမရှိပါဘူးဗျာ။',
+            ]);
         }
 
         $request->validate([
@@ -178,7 +181,7 @@ class OrderController extends Controller
             foreach ($cartItems as $item) {
                 $order->items()->create([
                     'product_id' => $item->product_id,
-                    'product_variant_id' => $item->product_variant_id,
+                    'product_variant_id' => $item->variant_id,
                     'quantity' => $item->quantity,
                     'price' => $item->variant->price,
 
@@ -190,16 +193,31 @@ class OrderController extends Controller
             // ခြင်းတောင်း ရှင်း
             CartItem::where('user_id', $user->id)->delete();
 
-            // Real-time Notification
-            event(new \App\Events\NewOrderPlaced($order));
-
             DB::commit();
+
+            // Order save ကို မထိခိုက်စေဖို့ broadcast failure ကို swallow လုပ်မယ်
+            try {
+                event(new \App\Events\NewOrderPlaced($order));
+            } catch (\Throwable $broadcastError) {
+                Log::warning('NewOrderPlaced broadcast failed', [
+                    'order_id' => $order->id,
+                    'error' => $broadcastError->getMessage(),
+                ]);
+            }
+
             return redirect()
                 ->route('orders.show', $order->id)
                 ->with('success', 'Order တင်ခြင်း အောင်မြင်ပါတယ်ဗျာ!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['system_error' => 'Error: ' . $e->getMessage()]);
+            Log::error('Order create failed', [
+                'user_id' => $user->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw ValidationException::withMessages([
+                'system_error' => 'Order create failed: ' . $e->getMessage(),
+            ]);
         }
     }
 
@@ -320,6 +338,31 @@ class OrderController extends Controller
         event(new \App\Events\OrderStatusUpdated($order));
 
         return back()->with('success', 'Delivery location updated.');
+    }
+
+    public function confirmShipment(Request $request, Order $order)
+    {
+        $request->validate([
+            'delivery_proof' => 'required|image|mimes:jpeg,png,jpg,webp|max:4096',
+        ]);
+
+        if (in_array($order->status, ['cancelled', 'delivered'], true)) {
+            return back()->withErrors([
+                'status' => 'Cannot mark shipment for cancelled/delivered orders.',
+            ]);
+        }
+
+        $path = $request->file('delivery_proof')->store('delivery-proofs', 'public');
+
+        $order->update([
+            'delivery_proof_path' => $path,
+            'status' => 'shipped',
+            'shipped_at' => now(),
+        ]);
+
+        event(new \App\Events\OrderStatusUpdated($order));
+
+        return back()->with('success', 'Delivery proof uploaded. Order marked as shipped.');
     }
 
     public function verifySlip(Order $order)
