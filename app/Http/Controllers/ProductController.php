@@ -14,15 +14,20 @@ class ProductController extends Controller
         $query = Product::with(['variants', 'shop', 'brand']);
 
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $keyword = trim((string) $request->input('search'));
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', '%' . $keyword . '%')
+                    ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', '%' . $keyword . '%'))
+                    ->orWhereHas('shop', fn ($s) => $s->where('name', 'like', '%' . $keyword . '%'));
+            });
         }
 
         if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
+            $query->where('category_id', (int) $request->input('category'));
         }
 
         return Inertia::render('Welcome', [
-            'products' => Product::with(['variants', 'brand', 'shop'])->get(),
+            'products' => $query->latest()->get(),
             'categories' => Category::all(),
             'filters' => $request->only(['search', 'category'])
         ]);

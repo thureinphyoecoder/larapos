@@ -215,13 +215,13 @@ export default function Welcome({
                             <h1 className="mt-3 text-3xl sm:text-5xl font-black text-white leading-tight max-w-3xl">
                                 {activeItem?.name || "Shop smart with the latest offers"}
                             </h1>
-                            <p className="mt-3 text-white/90 text-sm sm:text-base max-w-2xl">
+                            <p className="mt-4 text-white/90 text-sm sm:text-base max-w-2xl">
                                 {activeItem?.brand?.name
                                     ? `${activeItem.brand.name} products are trending now.`
                                     : "Find fresh products, fast checkout and secure order tracking."}
                             </p>
                         </div>
-                        <div className="flex flex-wrap gap-3">
+                        <div className="mt-6 flex flex-wrap gap-3">
                             <Link
                                 href={activeItem?.slug ? route("product.show", { slug: activeItem.slug }) : route("home")}
                                 className="px-5 py-3 rounded-2xl bg-white text-slate-900 font-black hover:bg-slate-100 transition"
