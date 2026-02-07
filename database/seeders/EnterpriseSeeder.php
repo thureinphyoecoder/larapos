@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
+use App\Models\ProductReview;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -91,6 +92,15 @@ class EnterpriseSeeder extends Seeder
             // ပစ္စည်းများ ထည့်သွင်းခြင်း logic...
             for ($i = 1; $i <= 3; $i++) {
                 $productName = $v['brand'] . " Item $i";
+                $detailDescription = implode("\n", [
+                    "Premium {$v['brand']} product designed for daily use.",
+                    "Key Features:",
+                    "- Durable build quality and modern finish",
+                    "- Smooth performance for everyday tasks",
+                    "- Reliable after-sales support from {$v['name']}",
+                    "- Suitable for home, office and personal use",
+                    "Box Includes: Main product unit, quick guide and warranty card.",
+                ]);
                 $product = Product::create([
                     'shop_id' => $shop->id,
                     'brand_id' => $brand->id,
@@ -99,6 +109,7 @@ class EnterpriseSeeder extends Seeder
                     'slug' => Str::slug($productName) . '-' . Str::random(5),
                     'sku' => strtoupper(substr($v['brand'], 0, 3)) . "-00" . rand(100, 999),
                     'price' => 0,
+                    'description' => $detailDescription,
                 ]);
 
                 $product->variants()->create([
@@ -148,6 +159,34 @@ class EnterpriseSeeder extends Seeder
             }
 
             $order->update(['total_amount' => $total]);
+        }
+
+        // ၁၀။ Product Reviews (dummy comments + ratings)
+        $reviewSamples = [
+            ['reviewer_name' => 'Aye Aye', 'rating' => 5, 'comment' => 'Quality ကောင်းတယ်။ Packaging သပ်ရပ်ပါတယ်။'],
+            ['reviewer_name' => 'Ko Htet', 'rating' => 4, 'comment' => 'Price နဲ့ယှဉ်ရင် တန်တယ်။ ထပ်ဝယ်မယ်။'],
+            ['reviewer_name' => 'Su Su', 'rating' => 5, 'comment' => 'Delivery မြန်တယ်၊ service လည်း OK ပါတယ်။'],
+            ['reviewer_name' => 'Zaw Min', 'rating' => 4, 'comment' => 'Variant ရွေးရတာလွယ်ပြီး checkout smooth ဖြစ်တယ်။'],
+            ['reviewer_name' => 'Moe Pwint', 'rating' => 5, 'comment' => 'Color တကယ်လှတယ်။ ပစ္စည်းလည်းအဆင်ပြေပါတယ်။'],
+            ['reviewer_name' => 'Nanda', 'rating' => 5, 'comment' => 'Stock info တိတိကျကျ ပြထားတာကြိုက်တယ်။'],
+        ];
+
+        $reviewProducts = Product::inRandomOrder()->take(4)->get();
+        if ($reviewProducts->isNotEmpty()) {
+            foreach ($reviewSamples as $idx => $sample) {
+                $targetProduct = $reviewProducts[$idx % $reviewProducts->count()];
+                ProductReview::firstOrCreate(
+                    [
+                        'product_id' => $targetProduct->id,
+                        'reviewer_name' => $sample['reviewer_name'],
+                        'comment' => $sample['comment'],
+                    ],
+                    [
+                        'user_id' => null,
+                        'rating' => $sample['rating'],
+                    ],
+                );
+            }
         }
     }
 }

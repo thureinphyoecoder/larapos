@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\SupportChatController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\AdminProductController;
@@ -46,6 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::match(['get', 'post'], '/checkout/confirm', [OrderController::class, 'confirm'])->name('checkout.confirm');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::post('/products/{product}/reviews', [ProductReviewController::class, 'store'])->name('products.reviews.store');
     Route::get('/orders', [OrderController::class, 'customerIndex'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'customerShow'])->name('orders.show');
     Route::get('/orders/{order}/receipt', [OrderController::class, 'customerReceipt'])->name('orders.receipt');

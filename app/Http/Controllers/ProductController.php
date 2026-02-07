@@ -24,8 +24,33 @@ class ProductController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
+        $reviews = $product->reviews()
+            ->with('user')
+            ->latest()
+            ->get()
+            ->map(fn ($review) => [
+                'id' => $review->id,
+                'reviewer_name' => $review->reviewer_name ?: ($review->user?->name ?? 'Customer'),
+                'rating' => $review->rating,
+                'comment' => $review->comment,
+                'created_at_human' => $review->created_at?->diffForHumans(),
+                'created_at' => $review->created_at,
+            ])
+            ->values();
+
+        $ratingQuery = $product->reviews()->whereNotNull('rating');
+        $ratingCount = (clone $ratingQuery)->count();
+        $ratingAverage = $ratingCount > 0
+            ? round((float) (clone $ratingQuery)->avg('rating'), 1)
+            : 0.0;
+
         return Inertia::render('ProductDetail', [
-            'product' => $product
+            'product' => $product,
+            'reviews' => $reviews,
+            'ratingSummary' => [
+                'average' => $ratingAverage,
+                'count' => $ratingCount,
+            ],
         ]);
     }
 }
