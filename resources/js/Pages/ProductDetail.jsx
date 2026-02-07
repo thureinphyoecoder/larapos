@@ -1,5 +1,5 @@
 import { Link, usePage, router } from "@inertiajs/react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 
 export default function ProductDetail({ product }) {
@@ -256,14 +256,59 @@ export default function ProductDetail({ product }) {
                 <ProductTabs
                     description={product.description}
                     reviews={product.reviews}
+                    product={product}
+                    auth={auth}
                 />
             </div>
         </div>
     );
 }
 
-function ProductTabs({ description, reviews = [] }) {
+function ProductTabs({ description, reviews = [], product, auth }) {
     const [activeTab, setActiveTab] = useState("description");
+    const [commentText, setCommentText] = useState("");
+    const [comments, setComments] = useState([]);
+
+    const fakeComments = useMemo(
+        () => [
+            { id: "f1", user: "Aye Aye", text: "Quality ကောင်းတယ်။ Packaging သပ်ရပ်ပါတယ်။", time: "2 days ago" },
+            { id: "f2", user: "Ko Htet", text: "Price နဲ့ယှဉ်ရင် တန်တယ်။ ထပ်ဝယ်မယ်။", time: "3 days ago" },
+            { id: "f3", user: "Su Su", text: "Delivery မြန်တယ်၊ service လည်း OK ပါတယ်။", time: "4 days ago" },
+            { id: "f4", user: "Zaw Min", text: "Variant ရွေးရတာလွယ်ပြီး checkout smooth ဖြစ်တယ်။", time: "5 days ago" },
+            { id: "f5", user: "Moe Pwint", text: "Color တကယ်လှတယ်။ ပစ္စည်းလည်းအဆင်ပြေပါတယ်။", time: "6 days ago" },
+            { id: "f6", user: "Nanda", text: "Stock info တိတိကျကျ ပြထားတာကြိုက်တယ်။", time: "1 week ago" },
+        ],
+        [],
+    );
+
+    useEffect(() => {
+        const key = `product-comments-${product?.id}`;
+        const raw = window.localStorage.getItem(key);
+        const saved = raw ? JSON.parse(raw) : [];
+        setComments([...fakeComments, ...saved]);
+    }, [fakeComments, product?.id]);
+
+    const submitComment = (e) => {
+        e.preventDefault();
+        const text = commentText.trim();
+        if (!text) return;
+
+        const next = {
+            id: `u-${Date.now()}`,
+            user: auth?.user?.name || "Guest User",
+            text,
+            time: "just now",
+            isCustom: true,
+        };
+
+        const key = `product-comments-${product?.id}`;
+        const raw = window.localStorage.getItem(key);
+        const saved = raw ? JSON.parse(raw) : [];
+        const updatedSaved = [...saved, next];
+        window.localStorage.setItem(key, JSON.stringify(updatedSaved));
+        setComments([...fakeComments, ...updatedSaved]);
+        setCommentText("");
+    };
 
     return (
         <div className="bg-white p-6 sm:p-8 shadow-sm rounded-3xl border border-slate-200">
@@ -285,21 +330,60 @@ function ProductTabs({ description, reviews = [] }) {
 
             <div className="min-h-[200px]">
                 {activeTab === "description" && (
-                    <div className="prose max-w-none text-slate-600 leading-relaxed">
-                        {description ||
-                            "ဒီပစ္စည်းအတွက် အသေးစိတ်ဖော်ပြချက် မရှိသေးပါဘူး။"}
+                    <div className="space-y-4">
+                        <div className="prose max-w-none text-slate-600 leading-relaxed">
+                            {description ||
+                                "ဒီပစ္စည်းအတွက် အသေးစိတ်ဖော်ပြချက် မရှိသေးပါဘူး။"}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                                <p className="text-slate-400 text-xs uppercase">Brand</p>
+                                <p className="font-semibold text-slate-700 mt-1">{product?.brand?.name || "-"}</p>
+                            </div>
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                                <p className="text-slate-400 text-xs uppercase">Category</p>
+                                <p className="font-semibold text-slate-700 mt-1">{product?.category?.name || "-"}</p>
+                            </div>
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                                <p className="text-slate-400 text-xs uppercase">Shop</p>
+                                <p className="font-semibold text-slate-700 mt-1">{product?.shop?.name || "-"}</p>
+                            </div>
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                                <p className="text-slate-400 text-xs uppercase">Variants</p>
+                                <p className="font-semibold text-slate-700 mt-1">{product?.variants?.length || 0}</p>
+                            </div>
+                        </div>
                     </div>
                 )}
 
                 {activeTab === "comments" && (
                     <div className="space-y-4">
-                        <p className="text-sm text-slate-500 italic">
-                            မှတ်ချက်များ ({reviews?.length || 0})
-                        </p>
-                        <textarea
-                            className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            placeholder="မေးချင်တာရှိရင် ရေးခဲ့ပါ..."
-                        ></textarea>
+                        <p className="text-sm text-slate-500 italic">Comments ({comments.length || reviews?.length || 0})</p>
+                        <form onSubmit={submitComment} className="space-y-3">
+                            <textarea
+                                className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                placeholder="မေးချင်တာရှိရင် ရေးခဲ့ပါ..."
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                            />
+                            <button
+                                type="submit"
+                                className="px-4 py-2 rounded-xl bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700"
+                            >
+                                Post Comment
+                            </button>
+                        </form>
+                        <div className="space-y-3 pt-2">
+                            {comments.map((c) => (
+                                <div key={c.id} className="p-3 rounded-xl border border-slate-200 bg-white">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="font-semibold text-sm text-slate-700">{c.user}</p>
+                                        <p className="text-xs text-slate-400">{c.time}</p>
+                                    </div>
+                                    <p className="mt-2 text-sm text-slate-600">{c.text}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
