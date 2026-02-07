@@ -1,5 +1,5 @@
-import { Link, router } from "@inertiajs/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@inertiajs/react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function Welcome({
     products = [],
@@ -13,7 +13,6 @@ export default function Welcome({
     );
     const [activeSlide, setActiveSlide] = useState(0);
     const [pauseSlider, setPauseSlider] = useState(false);
-    const isFirstRender = useRef(true);
 
     const sliderItems = useMemo(() => {
         const top = products.slice(0, 4);
@@ -38,45 +37,14 @@ export default function Welcome({
         "/images/heroes/hero-store.svg",
     ];
 
-    const runSearch = (nextSearch, nextCategory) => {
-        router.get(
-            "/",
-            {
-                search: nextSearch || undefined,
-                category: nextCategory || undefined,
-            },
-            {
-                preserveState: true,
-                replace: true,
-                preserveScroll: true,
-                only: ["products"],
-            },
-        );
-    };
-
     const handleSearch = (e) => {
         e.preventDefault();
-        runSearch(search, activeCategory);
     };
 
     const filterByCategory = (id) => {
         const nextCategory = id ? String(id) : "";
         setActiveCategory(nextCategory);
-        runSearch(search, nextCategory);
     };
-
-    useEffect(() => {
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
-            return;
-        }
-
-        const delayDebounceFn = setTimeout(() => {
-            runSearch(search, activeCategory);
-        }, 450);
-
-        return () => clearTimeout(delayDebounceFn);
-    }, [search, activeCategory]);
 
     useEffect(() => {
         if (pauseSlider || sliderItems.length <= 1) return;
@@ -96,6 +64,28 @@ export default function Welcome({
 
     const activeItem = sliderItems[activeSlide] || sliderItems[0];
     const activeSlideImage = slideImages[activeSlide % slideImages.length];
+    const filteredProducts = useMemo(() => {
+        const keyword = search.trim().toLowerCase();
+
+        return products.filter((product) => {
+            const matchCategory = activeCategory
+                ? String(product?.category_id) === activeCategory
+                : true;
+
+            if (!matchCategory) return false;
+            if (!keyword) return true;
+
+            const name = String(product?.name || "").toLowerCase();
+            const brand = String(product?.brand?.name || "").toLowerCase();
+            const shop = String(product?.shop?.name || "").toLowerCase();
+
+            return (
+                name.includes(keyword) ||
+                brand.includes(keyword) ||
+                shop.includes(keyword)
+            );
+        });
+    }, [products, search, activeCategory]);
     const getProductImage = (product) => {
         if (product?.image) return product.image;
         if (product?.image_url) return product.image_url;
@@ -310,14 +300,12 @@ export default function Welcome({
                         <h2 className="text-xl sm:text-2xl font-black text-slate-800">
                             Discover Products
                         </h2>
-                        <p className="text-sm text-slate-500">
-                            {products.length} items found
-                        </p>
+                        <p className="text-sm text-slate-500">{filteredProducts.length} items found</p>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                        {products.length > 0 ? (
-                            products.map((product) => (
+                        {filteredProducts.length > 0 ? (
+                            filteredProducts.map((product) => (
                                 <Link
                                     href={route("product.show", {
                                         slug: product.slug,

@@ -11,23 +11,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['variants', 'shop', 'brand']);
-
-        if ($request->filled('search')) {
-            $keyword = trim((string) $request->input('search'));
-            $query->where(function ($q) use ($keyword) {
-                $q->where('name', 'like', '%' . $keyword . '%')
-                    ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', '%' . $keyword . '%'))
-                    ->orWhereHas('shop', fn ($s) => $s->where('name', 'like', '%' . $keyword . '%'));
-            });
-        }
-
-        if ($request->filled('category')) {
-            $query->where('category_id', (int) $request->input('category'));
-        }
-
         return Inertia::render('Welcome', [
-            'products' => $query->latest()->get(),
+            'products' => Product::with(['variants', 'brand', 'shop'])->latest()->get(),
             'categories' => Category::all(),
             'filters' => $request->only(['search', 'category'])
         ]);
