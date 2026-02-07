@@ -14,7 +14,7 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
             label: "Weekend Picks",
             title: "Smart gadgets and daily essentials",
             subtitle: "Fresh offers are live now. Check trending products and buy instantly.",
-            image: "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?auto=format&fit=crop&w=1400&q=80",
+            image: "/images/heroes/hero-tech.svg",
             accent: "from-orange-600 via-amber-500 to-yellow-400",
         },
         {
@@ -22,7 +22,7 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
             label: "Hot Deal",
             title: "Fashion, home and lifestyle picks",
             subtitle: "Explore curated products from top shops with fast checkout flow.",
-            image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1400&q=80",
+            image: "/images/heroes/hero-fashion.svg",
             accent: "from-cyan-700 via-sky-600 to-emerald-400",
         },
         {
@@ -30,7 +30,7 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
             label: "New Arrival",
             title: "Upgrade your cart in minutes",
             subtitle: "Buy now, track delivery and chat with support anytime in one place.",
-            image: "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1400&q=80",
+            image: "/images/heroes/hero-lifestyle.svg",
             accent: "from-rose-700 via-red-600 to-orange-500",
         },
     ];
@@ -67,12 +67,11 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                     <div
                         onMouseEnter={() => setPauseSlider(true)}
                         onMouseLeave={() => setPauseSlider(false)}
-                        className="relative overflow-hidden rounded-3xl shadow-xl min-h-[320px] sm:min-h-[380px]"
+                        className="group relative overflow-hidden rounded-3xl shadow-xl min-h-[320px] sm:min-h-[380px]"
                     >
-                        <img
-                            src={currentSlide.image}
-                            alt={currentSlide.title}
-                            className="absolute inset-0 w-full h-full object-cover"
+                        <div
+                            className="absolute inset-0 bg-cover bg-center"
+                            style={{ backgroundImage: `url(${currentSlide.image})` }}
                         />
                         <div className={`absolute inset-0 bg-gradient-to-br ${currentSlide.accent} opacity-75`} />
                         <div className="absolute inset-0 bg-black/25" />
@@ -113,14 +112,14 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                                     (prev) => (prev - 1 + heroSlides.length) % heroSlides.length,
                                 )
                             }
-                            className="absolute z-30 left-3 sm:left-5 bottom-5 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-slate-700 font-black shadow"
+                            className="absolute z-30 left-3 sm:left-5 bottom-5 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-slate-700 font-black shadow sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto"
                         >
                             ‹
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveSlide((prev) => (prev + 1) % heroSlides.length)}
-                            className="absolute z-30 right-3 sm:right-5 bottom-5 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-slate-700 font-black shadow"
+                            className="absolute z-30 right-3 sm:right-5 bottom-5 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-slate-700 font-black shadow sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto"
                         >
                             ›
                         </button>

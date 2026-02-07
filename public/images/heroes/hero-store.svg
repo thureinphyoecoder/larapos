@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="g4" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#312e81"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g4)"/>
+  <rect x="130" y="150" width="1340" height="590" rx="28" fill="#ede9fe" opacity="0.14"/>
+  <circle cx="1260" cy="180" r="220" fill="#a78bfa" opacity="0.22"/>
+  <circle cx="290" cy="720" r="240" fill="#c4b5fd" opacity="0.22"/>
+  <text x="210" y="490" fill="#f5f3ff" font-family="Arial, sans-serif" font-size="84" font-weight="700">Top Store Picks</text>
+</svg>

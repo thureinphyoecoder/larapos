@@ -19,9 +19,9 @@ export default function Welcome({
         const top = products.slice(0, 4);
         if (top.length) return top;
         return [
-            { id: "s1", name: "Smart Electronics", brand: { name: "Tech" } },
-            { id: "s2", name: "Fashion Collection", brand: { name: "Style" } },
-            { id: "s3", name: "Home Essentials", brand: { name: "Living" } },
+            { id: "s1", name: "Smart Electronics", brand: { name: "Tech" }, slug: null },
+            { id: "s2", name: "Fashion Collection", brand: { name: "Style" }, slug: null },
+            { id: "s3", name: "Home Essentials", brand: { name: "Living" }, slug: null },
         ];
     }, [products]);
 
@@ -30,6 +30,12 @@ export default function Welcome({
         "from-cyan-700 via-sky-600 to-emerald-400",
         "from-rose-700 via-red-600 to-orange-500",
         "from-indigo-700 via-violet-600 to-fuchsia-500",
+    ];
+    const slideImages = [
+        "/images/heroes/hero-tech.svg",
+        "/images/heroes/hero-fashion.svg",
+        "/images/heroes/hero-lifestyle.svg",
+        "/images/heroes/hero-store.svg",
     ];
 
     const runSearch = (nextSearch, nextCategory) => {
@@ -89,6 +95,15 @@ export default function Welcome({
     }, [activeSlide, sliderItems.length]);
 
     const activeItem = sliderItems[activeSlide] || sliderItems[0];
+    const activeSlideImage = slideImages[activeSlide % slideImages.length];
+    const getProductImage = (product) => {
+        if (product?.image) return product.image;
+        if (product?.image_url) return product.image_url;
+        if (product?.thumbnail) return product.thumbnail;
+
+        const fallbackIndex = ((Number(product?.id) || 1) % 4) + 1;
+        return `/images/products/product-${fallbackIndex}.svg`;
+    };
 
     return (
         <div className="min-h-screen bg-slate-100">
@@ -182,8 +197,12 @@ export default function Welcome({
                 <section
                     onMouseEnter={() => setPauseSlider(true)}
                     onMouseLeave={() => setPauseSlider(false)}
-                    className="relative rounded-3xl overflow-hidden shadow-xl min-h-[280px] sm:min-h-[340px]"
+                    className="group relative rounded-3xl overflow-hidden shadow-xl min-h-[280px] sm:min-h-[340px]"
                 >
+                    <div
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${activeSlideImage})` }}
+                    />
                     <div
                         className={`absolute inset-0 bg-gradient-to-br ${slideBackgrounds[activeSlide % slideBackgrounds.length]}`}
                     />
@@ -227,7 +246,7 @@ export default function Welcome({
                                         (prev) => (prev - 1 + sliderItems.length) % sliderItems.length,
                                     )
                                 }
-                                className="absolute z-30 left-3 sm:left-5 bottom-5 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:bg-white transition shadow"
+                                className="absolute z-30 left-3 sm:left-5 bottom-5 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:bg-white transition shadow sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto"
                             >
                                 ‹
                             </button>
@@ -236,7 +255,7 @@ export default function Welcome({
                                 onClick={() =>
                                     setActiveSlide((prev) => (prev + 1) % sliderItems.length)
                                 }
-                                className="absolute z-30 right-3 sm:right-5 bottom-5 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:bg-white transition shadow"
+                                className="absolute z-30 right-3 sm:right-5 bottom-5 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:bg-white transition shadow sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto"
                             >
                                 ›
                             </button>
@@ -307,9 +326,12 @@ export default function Welcome({
                                     className="bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 border border-slate-100 hover:border-orange-400 overflow-hidden group"
                                 >
                                     <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center relative overflow-hidden">
-                                        <span className="text-slate-400 font-black uppercase text-xs tracking-wider">
-                                            {product.brand?.name}
-                                        </span>
+                                        <img
+                                            src={getProductImage(product)}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover"
+                                            loading="lazy"
+                                        />
                                         {product.variants[0]?.stock_level >
                                             0 && (
                                             <div className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
