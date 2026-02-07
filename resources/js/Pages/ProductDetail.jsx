@@ -1,8 +1,8 @@
 import { Link, usePage, router } from "@inertiajs/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Swal from "sweetalert2";
 
-export default function ProductDetail({ product }) {
+export default function ProductDetail({ product, reviews = [], ratingSummary = {} }) {
     const { auth, errors = {} } = usePage().props;
     const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || null);
     const [quantity, setQuantity] = useState(1);
@@ -17,6 +17,7 @@ export default function ProductDetail({ product }) {
         if (product?.image_path) return `/storage/${product.image_path}`;
         return "/images/products/product-1.svg";
     };
+
     const galleryImages = [
         getProductImage(),
         "/images/products/angle-1.svg",
@@ -88,16 +89,11 @@ export default function ProductDetail({ product }) {
         <div className="bg-slate-100 min-h-screen pb-12">
             <nav className="bg-white border-b border-slate-200 sticky top-0 z-30 backdrop-blur">
                 <div className="max-w-6xl mx-auto px-4 py-3 flex items-center text-sm gap-2 text-slate-500">
-                    <Link
-                        href="/"
-                        className="hover:text-orange-500 transition font-medium"
-                    >
+                    <Link href="/" className="hover:text-orange-500 transition font-medium">
                         Home
                     </Link>
                     <span className="text-slate-300">/</span>
-                    <span className="text-slate-800 font-semibold truncate">
-                        {product.name}
-                    </span>
+                    <span className="text-slate-800 font-semibold truncate">{product.name}</span>
                 </div>
             </nav>
 
@@ -105,11 +101,7 @@ export default function ProductDetail({ product }) {
                 <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="space-y-4">
                         <div className="aspect-square rounded-3xl overflow-hidden border border-slate-200 bg-slate-100">
-                            <img
-                                src={selectedImage}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                            />
+                            <img src={selectedImage} alt={product.name} className="w-full h-full object-cover" />
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                             {galleryImages.slice(1).map((img, idx) => (
@@ -124,12 +116,7 @@ export default function ProductDetail({ product }) {
                                     }`}
                                     aria-label={`View angle ${idx + 1}`}
                                 >
-                                    <img
-                                        src={img}
-                                        alt={`Angle ${idx + 1}`}
-                                        className="w-full h-full object-cover"
-                                        loading="lazy"
-                                    />
+                                    <img src={img} alt={`Angle ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
                                 </button>
                             ))}
                         </div>
@@ -143,9 +130,7 @@ export default function ProductDetail({ product }) {
                             <h1 className="mt-2 text-3xl sm:text-4xl font-black text-slate-900 leading-tight">
                                 {product.name}
                             </h1>
-                            <p className="mt-3 text-sm text-slate-500">
-                                SKU: {selectedVariant?.sku || product.sku || "-"}
-                            </p>
+                            <p className="mt-3 text-sm text-slate-500">SKU: {selectedVariant?.sku || product.sku || "-"}</p>
                         </div>
 
                         {errors.message && (
@@ -155,18 +140,12 @@ export default function ProductDetail({ product }) {
                         )}
 
                         <div className="bg-orange-50 border border-orange-200 p-5 rounded-2xl">
-                            <span className="text-3xl font-black text-orange-600">
-                                Ks {selectedPrice.toLocaleString()}
-                            </span>
-                            <p className="text-xs text-slate-500 mt-2">
-                                Stock: {selectedVariant?.stock_level ?? 0}
-                            </p>
+                            <span className="text-3xl font-black text-orange-600">Ks {selectedPrice.toLocaleString()}</span>
+                            <p className="text-xs text-slate-500 mt-2">Stock: {selectedVariant?.stock_level ?? 0}</p>
                         </div>
 
                         <div>
-                            <p className="text-sm font-semibold text-slate-700 mb-3">
-                                Choose Variant
-                            </p>
+                            <p className="text-sm font-semibold text-slate-700 mb-3">Choose Variant</p>
                             <div className="flex flex-wrap gap-2">
                                 {(product.variants || []).map((v) => (
                                     <button
@@ -188,9 +167,7 @@ export default function ProductDetail({ product }) {
                             <span className="text-sm font-semibold text-slate-700">Qty</span>
                             <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden">
                                 <button
-                                    onClick={() =>
-                                        setQuantity((q) => Math.max(1, q - 1))
-                                    }
+                                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                                     className="px-3 py-2 bg-slate-100 border-r border-slate-300 hover:bg-slate-200"
                                 >
                                     -
@@ -246,17 +223,16 @@ export default function ProductDetail({ product }) {
                         </div>
 
                         {!inStock && (
-                            <p className="text-sm text-red-500 font-medium">
-                                This variant is out of stock.
-                            </p>
+                            <p className="text-sm text-red-500 font-medium">This variant is out of stock.</p>
                         )}
                     </div>
                 </div>
 
                 <ProductTabs
-                    description={product.description}
-                    reviews={product.reviews}
                     product={product}
+                    description={product.description}
+                    reviews={reviews}
+                    ratingSummary={ratingSummary}
                     auth={auth}
                 />
             </div>
@@ -264,80 +240,74 @@ export default function ProductDetail({ product }) {
     );
 }
 
-function ProductTabs({ description, reviews = [], product, auth }) {
+function ProductTabs({ product, description, reviews = [], ratingSummary = {}, auth }) {
     const [activeTab, setActiveTab] = useState("description");
     const [commentText, setCommentText] = useState("");
-    const [comments, setComments] = useState([]);
     const [ratingInput, setRatingInput] = useState(0);
-    const [ratings, setRatings] = useState([]);
+    const [submittingComment, setSubmittingComment] = useState(false);
+    const [submittingRating, setSubmittingRating] = useState(false);
 
-    const fakeComments = useMemo(
-        () => [
-            { id: "f1", user: "Aye Aye", text: "Quality ကောင်းတယ်။ Packaging သပ်ရပ်ပါတယ်။", time: "2 days ago" },
-            { id: "f2", user: "Ko Htet", text: "Price နဲ့ယှဉ်ရင် တန်တယ်။ ထပ်ဝယ်မယ်။", time: "3 days ago" },
-            { id: "f3", user: "Su Su", text: "Delivery မြန်တယ်၊ service လည်း OK ပါတယ်။", time: "4 days ago" },
-            { id: "f4", user: "Zaw Min", text: "Variant ရွေးရတာလွယ်ပြီး checkout smooth ဖြစ်တယ်။", time: "5 days ago" },
-            { id: "f5", user: "Moe Pwint", text: "Color တကယ်လှတယ်။ ပစ္စည်းလည်းအဆင်ပြေပါတယ်။", time: "6 days ago" },
-            { id: "f6", user: "Nanda", text: "Stock info တိတိကျကျ ပြထားတာကြိုက်တယ်။", time: "1 week ago" },
-        ],
-        [],
+    const commentList = useMemo(
+        () => reviews.filter((review) => review.comment && String(review.comment).trim() !== ""),
+        [reviews],
     );
 
-    useEffect(() => {
-        const key = `product-comments-${product?.id}`;
-        const raw = window.localStorage.getItem(key);
-        const saved = raw ? JSON.parse(raw) : [];
-        setComments([...fakeComments, ...saved]);
-    }, [fakeComments, product?.id]);
+    const averageRating = Number(ratingSummary?.average || 0);
+    const ratingCount = Number(ratingSummary?.count || 0);
 
-    useEffect(() => {
-        const seedRatings = [5, 4, 5, 4, 5, 5];
-        const key = `product-ratings-${product?.id}`;
-        const raw = window.localStorage.getItem(key);
-        const saved = raw ? JSON.parse(raw) : [];
-        setRatings([...seedRatings, ...saved]);
-    }, [product?.id]);
+    const ensureAuth = () => {
+        if (auth?.user) return true;
+
+        Swal.fire({
+            title: "Login ဝင်ပေးပါဦး",
+            text: "Comment / Rating ပေးရန် Login လိုအပ်ပါတယ်။",
+            icon: "info",
+            showCancelButton: true,
+            confirmButtonText: "Login",
+            cancelButtonText: "Cancel",
+            confirmButtonColor: "#f97316",
+        }).then((result) => {
+            if (result.isConfirmed) router.get("/login");
+        });
+
+        return false;
+    };
 
     const submitComment = (e) => {
         e.preventDefault();
+        if (!ensureAuth()) return;
+
         const text = commentText.trim();
         if (!text) return;
 
-        const next = {
-            id: `u-${Date.now()}`,
-            user: auth?.user?.name || "Guest User",
-            text,
-            time: "just now",
-            isCustom: true,
-        };
-
-        const key = `product-comments-${product?.id}`;
-        const raw = window.localStorage.getItem(key);
-        const saved = raw ? JSON.parse(raw) : [];
-        const updatedSaved = [...saved, next];
-        window.localStorage.setItem(key, JSON.stringify(updatedSaved));
-        setComments([...fakeComments, ...updatedSaved]);
-        setCommentText("");
+        router.post(
+            route("products.reviews.store", product.id),
+            { comment: text },
+            {
+                preserveScroll: true,
+                onStart: () => setSubmittingComment(true),
+                onFinish: () => setSubmittingComment(false),
+                onSuccess: () => setCommentText(""),
+            },
+        );
     };
 
     const submitRating = (e) => {
         e.preventDefault();
+        if (!ensureAuth()) return;
         if (ratingInput < 1 || ratingInput > 5) return;
 
-        const key = `product-ratings-${product?.id}`;
-        const raw = window.localStorage.getItem(key);
-        const saved = raw ? JSON.parse(raw) : [];
-        const updatedSaved = [...saved, ratingInput];
-        window.localStorage.setItem(key, JSON.stringify(updatedSaved));
-
-        const seedRatings = [5, 4, 5, 4, 5, 5];
-        setRatings([...seedRatings, ...updatedSaved]);
-        setRatingInput(0);
+        router.post(
+            route("products.reviews.store", product.id),
+            { rating: ratingInput },
+            {
+                preserveScroll: true,
+                onStart: () => setSubmittingRating(true),
+                onFinish: () => setSubmittingRating(false),
+                onSuccess: () => setRatingInput(0),
+            },
+        );
     };
-
-    const averageRating = ratings.length
-        ? (ratings.reduce((sum, r) => sum + Number(r), 0) / ratings.length).toFixed(1)
-        : "0.0";
 
     return (
         <div className="bg-white p-6 sm:p-8 shadow-sm rounded-3xl border border-slate-200">
@@ -357,12 +327,11 @@ function ProductTabs({ description, reviews = [], product, auth }) {
                 ))}
             </div>
 
-            <div className="min-h-[200px]">
+            <div className="min-h-[220px]">
                 {activeTab === "description" && (
                     <div className="space-y-4">
-                        <div className="prose max-w-none text-slate-600 leading-relaxed">
-                            {description ||
-                                "ဒီပစ္စည်းအတွက် အသေးစိတ်ဖော်ပြချက် မရှိသေးပါဘူး။"}
+                        <div className="prose max-w-none text-slate-600 leading-relaxed whitespace-pre-line">
+                            {description || "ဒီပစ္စည်းအတွက် အသေးစိတ်ဖော်ပြချက် မရှိသေးပါဘူး။"}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
@@ -387,31 +356,42 @@ function ProductTabs({ description, reviews = [], product, auth }) {
 
                 {activeTab === "comments" && (
                     <div className="space-y-4">
-                        <p className="text-sm text-slate-500 italic">Comments ({comments.length || reviews?.length || 0})</p>
+                        <p className="text-sm text-slate-500 italic">Comments ({commentList.length})</p>
+
                         <form onSubmit={submitComment} className="space-y-3">
                             <textarea
                                 className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                                 placeholder="မေးချင်တာရှိရင် ရေးခဲ့ပါ..."
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
-                            />
+                            ></textarea>
                             <button
                                 type="submit"
-                                className="px-4 py-2 rounded-xl bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700"
+                                disabled={submittingComment || commentText.trim().length < 2}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold ${
+                                    submittingComment || commentText.trim().length < 2
+                                        ? "bg-slate-300 text-slate-500"
+                                        : "bg-orange-600 text-white hover:bg-orange-700"
+                                }`}
                             >
-                                Post Comment
+                                {submittingComment ? "Posting..." : "Post Comment"}
                             </button>
                         </form>
+
                         <div className="space-y-3 pt-2">
-                            {comments.map((c) => (
-                                <div key={c.id} className="p-3 rounded-xl border border-slate-200 bg-white">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <p className="font-semibold text-sm text-slate-700">{c.user}</p>
-                                        <p className="text-xs text-slate-400">{c.time}</p>
+                            {commentList.length ? (
+                                commentList.map((c) => (
+                                    <div key={c.id} className="p-3 rounded-xl border border-slate-200 bg-white">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <p className="font-semibold text-sm text-slate-700">{c.reviewer_name}</p>
+                                            <p className="text-xs text-slate-400">{c.created_at_human || "recent"}</p>
+                                        </div>
+                                        <p className="mt-2 text-sm text-slate-600">{c.comment}</p>
                                     </div>
-                                    <p className="mt-2 text-sm text-slate-600">{c.text}</p>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <p className="text-sm text-slate-400">No comments yet.</p>
+                            )}
                         </div>
                     </div>
                 )}
@@ -419,41 +399,29 @@ function ProductTabs({ description, reviews = [], product, auth }) {
                 {activeTab === "ratings" && (
                     <div className="space-y-4">
                         <div className="flex flex-col items-center py-4">
-                            <span className="text-4xl font-bold text-slate-800">
-                                {averageRating}
-                            </span>
+                            <span className="text-4xl font-bold text-slate-800">{averageRating.toFixed(1)}</span>
                             <div className="flex text-yellow-400 my-2 text-xl">
                                 {"★★★★★".split("").map((star, idx) => (
                                     <span
                                         key={idx}
-                                        className={
-                                            idx < Math.round(Number(averageRating))
-                                                ? "text-yellow-400"
-                                                : "text-slate-300"
-                                        }
+                                        className={idx < Math.round(averageRating) ? "text-yellow-400" : "text-slate-300"}
                                     >
                                         {star}
                                     </span>
                                 ))}
                             </div>
-                            <p className="text-slate-400 text-sm">
-                                {ratings.length} ratings
-                            </p>
+                            <p className="text-slate-400 text-sm">{ratingCount} ratings</p>
                         </div>
 
                         <form onSubmit={submitRating} className="p-4 rounded-xl border border-slate-200 bg-slate-50">
-                            <p className="text-sm font-semibold text-slate-700 mb-3">
-                                Give your rating
-                            </p>
+                            <p className="text-sm font-semibold text-slate-700 mb-3">Give your rating</p>
                             <div className="flex items-center gap-1 mb-3">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <button
                                         key={star}
                                         type="button"
                                         onClick={() => setRatingInput(star)}
-                                        className={`text-2xl ${
-                                            star <= ratingInput ? "text-yellow-400" : "text-slate-300"
-                                        }`}
+                                        className={`text-2xl ${star <= ratingInput ? "text-yellow-400" : "text-slate-300"}`}
                                         aria-label={`Rate ${star}`}
                                     >
                                         ★
@@ -462,14 +430,14 @@ function ProductTabs({ description, reviews = [], product, auth }) {
                             </div>
                             <button
                                 type="submit"
-                                disabled={!ratingInput}
+                                disabled={submittingRating || !ratingInput}
                                 className={`px-4 py-2 rounded-xl text-sm font-semibold ${
-                                    ratingInput
-                                        ? "bg-orange-600 text-white hover:bg-orange-700"
-                                        : "bg-slate-300 text-slate-500"
+                                    submittingRating || !ratingInput
+                                        ? "bg-slate-300 text-slate-500"
+                                        : "bg-orange-600 text-white hover:bg-orange-700"
                                 }`}
                             >
-                                Submit Rating
+                                {submittingRating ? "Submitting..." : "Submit Rating"}
                             </button>
                         </form>
                     </div>
