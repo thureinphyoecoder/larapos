@@ -268,6 +268,8 @@ function ProductTabs({ description, reviews = [], product, auth }) {
     const [activeTab, setActiveTab] = useState("description");
     const [commentText, setCommentText] = useState("");
     const [comments, setComments] = useState([]);
+    const [ratingInput, setRatingInput] = useState(0);
+    const [ratings, setRatings] = useState([]);
 
     const fakeComments = useMemo(
         () => [
@@ -287,6 +289,14 @@ function ProductTabs({ description, reviews = [], product, auth }) {
         const saved = raw ? JSON.parse(raw) : [];
         setComments([...fakeComments, ...saved]);
     }, [fakeComments, product?.id]);
+
+    useEffect(() => {
+        const seedRatings = [5, 4, 5, 4, 5, 5];
+        const key = `product-ratings-${product?.id}`;
+        const raw = window.localStorage.getItem(key);
+        const saved = raw ? JSON.parse(raw) : [];
+        setRatings([...seedRatings, ...saved]);
+    }, [product?.id]);
 
     const submitComment = (e) => {
         e.preventDefault();
@@ -309,6 +319,25 @@ function ProductTabs({ description, reviews = [], product, auth }) {
         setComments([...fakeComments, ...updatedSaved]);
         setCommentText("");
     };
+
+    const submitRating = (e) => {
+        e.preventDefault();
+        if (ratingInput < 1 || ratingInput > 5) return;
+
+        const key = `product-ratings-${product?.id}`;
+        const raw = window.localStorage.getItem(key);
+        const saved = raw ? JSON.parse(raw) : [];
+        const updatedSaved = [...saved, ratingInput];
+        window.localStorage.setItem(key, JSON.stringify(updatedSaved));
+
+        const seedRatings = [5, 4, 5, 4, 5, 5];
+        setRatings([...seedRatings, ...updatedSaved]);
+        setRatingInput(0);
+    };
+
+    const averageRating = ratings.length
+        ? (ratings.reduce((sum, r) => sum + Number(r), 0) / ratings.length).toFixed(1)
+        : "0.0";
 
     return (
         <div className="bg-white p-6 sm:p-8 shadow-sm rounded-3xl border border-slate-200">
@@ -388,16 +417,61 @@ function ProductTabs({ description, reviews = [], product, auth }) {
                 )}
 
                 {activeTab === "ratings" && (
-                    <div className="flex flex-col items-center py-10">
-                        <span className="text-4xl font-bold text-slate-800">
-                            0.0
-                        </span>
-                        <div className="flex text-yellow-400 my-2">
-                            ⭐⭐⭐⭐⭐
+                    <div className="space-y-4">
+                        <div className="flex flex-col items-center py-4">
+                            <span className="text-4xl font-bold text-slate-800">
+                                {averageRating}
+                            </span>
+                            <div className="flex text-yellow-400 my-2 text-xl">
+                                {"★★★★★".split("").map((star, idx) => (
+                                    <span
+                                        key={idx}
+                                        className={
+                                            idx < Math.round(Number(averageRating))
+                                                ? "text-yellow-400"
+                                                : "text-slate-300"
+                                        }
+                                    >
+                                        {star}
+                                    </span>
+                                ))}
+                            </div>
+                            <p className="text-slate-400 text-sm">
+                                {ratings.length} ratings
+                            </p>
                         </div>
-                        <p className="text-slate-400 text-sm">
-                            သုံးသပ်ချက် မရှိသေးပါ
-                        </p>
+
+                        <form onSubmit={submitRating} className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                            <p className="text-sm font-semibold text-slate-700 mb-3">
+                                Give your rating
+                            </p>
+                            <div className="flex items-center gap-1 mb-3">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setRatingInput(star)}
+                                        className={`text-2xl ${
+                                            star <= ratingInput ? "text-yellow-400" : "text-slate-300"
+                                        }`}
+                                        aria-label={`Rate ${star}`}
+                                    >
+                                        ★
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={!ratingInput}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold ${
+                                    ratingInput
+                                        ? "bg-orange-600 text-white hover:bg-orange-700"
+                                        : "bg-slate-300 text-slate-500"
+                                }`}
+                            >
+                                Submit Rating
+                            </button>
+                        </form>
                     </div>
                 )}
             </div>
