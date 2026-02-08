@@ -1,8 +1,12 @@
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import Swal from "sweetalert2";
 
 export default function Index({ products }) {
+    const { auth } = usePage().props;
+    const role = auth?.role || "admin";
+    const canDeleteProduct = ["admin", "manager"].includes(role);
+
     return (
         <AdminLayout header="Products">
             <Head title="Admin Products" />
@@ -26,7 +30,8 @@ export default function Index({ products }) {
                                 <th className="px-6 py-4 font-bold">Name</th>
                                 <th className="px-6 py-4 font-bold">Category</th>
                                 <th className="px-6 py-4 font-bold">Shop</th>
-                                <th className="px-6 py-4 font-bold">Price</th>
+                                <th className="px-6 py-4 font-bold">Variants</th>
+                                <th className="px-6 py-4 font-bold">Price Range</th>
                                 <th className="px-6 py-4 font-bold">Action</th>
                             </tr>
                         </thead>
@@ -57,8 +62,19 @@ export default function Index({ products }) {
                                         <td className="px-6 py-4 text-sm text-slate-600">
                                             {product.shop?.name || "N/A"}
                                         </td>
+                                        <td className="px-6 py-4 text-sm font-semibold text-slate-700">
+                                            {(product.variants || []).filter((variant) => variant.is_active ?? true).length}
+                                        </td>
                                         <td className="px-6 py-4 text-sm font-bold text-slate-900">
-                                            {product.price} MMK
+                                            {(() => {
+                                                const activeVariants = (product.variants || []).filter((variant) => variant.is_active ?? true);
+                                                if (!activeVariants.length) return "N/A";
+                                                const prices = activeVariants.map((variant) => Number(variant.price || 0));
+                                                const min = Math.min(...prices);
+                                                const max = Math.max(...prices);
+                                                if (min === max) return `${min.toLocaleString()} MMK`;
+                                                return `${min.toLocaleString()} - ${max.toLocaleString()} MMK`;
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4 text-sm">
                                             <div className="flex items-center gap-3">
@@ -68,33 +84,35 @@ export default function Index({ products }) {
                                                 >
                                                     Edit
                                                 </Link>
-                                                <button
-                                                    onClick={() =>
-                                                        Swal.fire({
-                                                            title: "Delete product?",
-                                                            text: "This action cannot be undone.",
-                                                            icon: "warning",
-                                                            showCancelButton: true,
-                                                            confirmButtonText: "Delete",
-                                                        }).then((result) => {
-                                                            if (!result.isConfirmed) return;
-                                                            router.delete(
-                                                                route("admin.products.destroy", product.id),
-                                                                {
-                                                                    onSuccess: () =>
-                                                                        Swal.fire(
-                                                                            "Deleted",
-                                                                            "Product removed.",
-                                                                            "success",
-                                                                        ),
-                                                                },
-                                                            );
-                                                        })
-                                                    }
-                                                    className="text-red-500 font-semibold hover:underline"
-                                                >
-                                                    Delete
-                                                </button>
+                                                {canDeleteProduct && (
+                                                    <button
+                                                        onClick={() =>
+                                                            Swal.fire({
+                                                                title: "Delete product?",
+                                                                text: "This action cannot be undone.",
+                                                                icon: "warning",
+                                                                showCancelButton: true,
+                                                                confirmButtonText: "Delete",
+                                                            }).then((result) => {
+                                                                if (!result.isConfirmed) return;
+                                                                router.delete(
+                                                                    route("admin.products.destroy", product.id),
+                                                                    {
+                                                                        onSuccess: () =>
+                                                                            Swal.fire(
+                                                                                "Deleted",
+                                                                                "Product removed.",
+                                                                                "success",
+                                                                            ),
+                                                                    },
+                                                                );
+                                                            })
+                                                        }
+                                                        className="text-red-500 font-semibold hover:underline"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -102,7 +120,7 @@ export default function Index({ products }) {
                             ) : (
                                 <tr>
                                     <td
-                                        colSpan="6"
+                                        colSpan="7"
                                         className="p-12 text-center text-slate-400 italic"
                                     >
                                         No products yet.

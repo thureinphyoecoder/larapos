@@ -45,6 +45,11 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    public function activeVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->where('is_active', true);
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(ProductReview::class);

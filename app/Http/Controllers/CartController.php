@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CartItem;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -29,7 +30,12 @@ class CartController extends Controller
 
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'variant_id' => 'required|exists:product_variants,id',
+            'variant_id' => [
+                'required',
+                Rule::exists('product_variants', 'id')
+                    ->where('product_id', $request->input('product_id'))
+                    ->where('is_active', true),
+            ],
             'quantity' => 'required|integer|min:1',
             'redirect_to' => 'nullable|string'
         ]);

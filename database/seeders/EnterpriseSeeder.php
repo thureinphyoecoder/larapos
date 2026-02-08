@@ -93,13 +93,39 @@ class EnterpriseSeeder extends Seeder
             for ($i = 1; $i <= 3; $i++) {
                 $productName = $v['brand'] . " Item $i";
                 $detailDescription = implode("\n", [
-                    "Premium {$v['brand']} product designed for daily use.",
+                    "Premium {$v['brand']} product designed for reliable daily use.",
+                    "",
+                    "Overview:",
+                    "This model is selected for customers who want stable performance, clean design and long-lasting value.",
+                    "Suitable for office, home, personal workflow and everyday lifestyle needs.",
+                    "",
                     "Key Features:",
-                    "- Durable build quality and modern finish",
-                    "- Smooth performance for everyday tasks",
+                    "- Durable build quality with modern finish",
+                    "- Smooth performance for common tasks and multitasking",
+                    "- User-friendly operation with practical controls",
+                    "- Optimized for long daily usage sessions",
                     "- Reliable after-sales support from {$v['name']}",
-                    "- Suitable for home, office and personal use",
-                    "Box Includes: Main product unit, quick guide and warranty card.",
+                    "",
+                    "Technical Notes:",
+                    "- Product line: {$v['brand']} standard edition",
+                    "- SKU base: {$v['brand']} enterprise seed sample",
+                    "- Quality check: passed internal visual and packaging checklist",
+                    "- Usage mode: suitable for beginners and regular users",
+                    "",
+                    "Shipping & Packaging:",
+                    "- Secure boxed packaging with inner protection layers",
+                    "- Standard delivery process with order tracking support",
+                    "- Final product condition verified before dispatch",
+                    "",
+                    "Warranty & Support:",
+                    "- Warranty availability may vary by seller policy",
+                    "- Support contact available for setup and issue reporting",
+                    "- Return/refund process follows platform order policy",
+                    "",
+                    "Box Includes:",
+                    "- Main product unit",
+                    "- Quick start guide",
+                    "- Warranty / support information card",
                 ]);
                 $product = Product::create([
                     'shop_id' => $shop->id,
@@ -112,10 +138,31 @@ class EnterpriseSeeder extends Seeder
                     'description' => $detailDescription,
                 ]);
 
-                $product->variants()->create([
-                    'sku' => $product->sku . "-REG",
-                    'price' => rand(50000, 1000000),
-                    'stock_level' => rand(5, 100),
+                $variantProfiles = [
+                    ['label' => 'REG', 'price' => rand(50000, 500000), 'stock' => rand(5, 40)],
+                    ['label' => 'PLUS', 'price' => rand(150000, 700000), 'stock' => rand(5, 30)],
+                    ['label' => 'PRO', 'price' => rand(300000, 1000000), 'stock' => rand(3, 25)],
+                    ['label' => 'MAX', 'price' => rand(300000, 1000000), 'stock' => rand(2, 20)],
+                ];
+
+                if (rand(0, 1) === 1) {
+                    $variantProfiles[2]['price'] = $variantProfiles[1]['price'];
+                }
+
+                $variantCount = rand(3, 4);
+                $selected = array_slice($variantProfiles, 0, $variantCount);
+                foreach ($selected as $profile) {
+                    $product->variants()->create([
+                        'sku' => $product->sku . '-' . $profile['label'],
+                        'price' => $profile['price'],
+                        'stock_level' => $profile['stock'],
+                        'is_active' => true,
+                    ]);
+                }
+
+                $product->update([
+                    'price' => min(array_column($selected, 'price')),
+                    'stock_level' => array_sum(array_column($selected, 'stock')),
                 ]);
             }
         }

@@ -12,7 +12,11 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         return Inertia::render('Welcome', [
-            'products' => Product::with(['variants', 'brand', 'shop'])->latest()->get(),
+            'products' => Product::with([
+                'variants' => fn ($query) => $query->where('is_active', true),
+                'brand',
+                'shop',
+            ])->latest()->get(),
             'categories' => Category::all(),
             'filters' => $request->only(['search', 'category'])
         ]);
@@ -20,7 +24,12 @@ class ProductController extends Controller
 
     public function show($slug) // ID အစား Slug နဲ့ ရှာမယ်
     {
-        $product = Product::with(['variants', 'shop', 'brand', 'category'])
+        $product = Product::with([
+            'variants' => fn ($query) => $query->where('is_active', true),
+            'shop',
+            'brand',
+            'category',
+        ])
             ->where('slug', $slug)
             ->firstOrFail();
 
