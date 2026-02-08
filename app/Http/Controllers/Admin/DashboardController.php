@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order; // Model ရှိရမယ်
 use App\Models\Shop;  // Model ရှိရမယ်
+use App\Models\StaffAttendance;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -43,17 +44,66 @@ class DashboardController extends Controller
                     ];
                 });
 
+                $staffRoles = ['manager', 'sales', 'delivery'];
+                $staffUsers = User::with(['roles', 'shop'])
+                    ->whereHas('roles', fn ($query) => $query->whereIn('name', $staffRoles))
+                    ->orderBy('name')
+                    ->get();
+
+                $todayStart = Carbon::now()->startOfDay();
+                $weekStart = Carbon::now()->subDays(6)->startOfDay();
+                $attendanceRows = StaffAttendance::whereIn('user_id', $staffUsers->pluck('id'))
+                    ->where('check_in_at', '>=', $weekStart)
+                    ->orderByDesc('check_in_at')
+                    ->get()
+                    ->groupBy('user_id');
+
+                $teamAttendance = $staffUsers->map(function ($staff) use ($attendanceRows, $todayStart) {
+                    $rows = $attendanceRows->get($staff->id, collect());
+                    $todayRows = $rows->filter(fn ($row) => $row->check_in_at && $row->check_in_at->gte($todayStart));
+                    $todayLatest = $todayRows->first();
+                    $weeklyMinutes = (int) $rows->sum(function ($row) {
+                        if ($row->check_out_at) {
+                            return (int) $row->worked_minutes;
+                        }
+
+                        return (int) $row->check_in_at->diffInMinutes(now());
+                    });
+                    $todayMinutes = (int) $todayRows->sum(function ($row) {
+                        if ($row->check_out_at) {
+                            return (int) $row->worked_minutes;
+                        }
+
+                        return (int) $row->check_in_at->diffInMinutes(now());
+                    });
+
+                    return [
+                        'id' => $staff->id,
+                        'name' => $staff->name,
+                        'role' => $staff->roles->pluck('name')->first(),
+                        'shop' => $staff->shop?->name,
+                        'checked_in' => (bool) ($todayLatest && $todayLatest->check_out_at === null),
+                        'check_in_at' => $todayLatest?->check_in_at?->toDateTimeString(),
+                        'check_out_at' => $todayLatest?->check_out_at?->toDateTimeString(),
+                        'today_worked_minutes' => $todayMinutes,
+                        'weekly_worked_minutes' => $weeklyMinutes,
+                        'met_daily_target' => $todayMinutes >= 480,
+                    ];
+                })->values();
+
                 $stats = [
                     'total_sales' => number_format((float) Order::sum('total_amount')),
                     'active_shops' => Shop::count(),
                     'total_orders' => Order::count(),
                     'system_users' => User::count(),
+                    'checked_in_staff' => $teamAttendance->where('checked_in', true)->count(),
                 ];
 
                 return inertia('Admin/Dashboard', [
                     'stats' => $stats,
                     'recentOrders' => $recentOrders,
                     'dailySales' => $dailySales,
+                    'teamAttendance' => $teamAttendance,
                 ]);
             }
 

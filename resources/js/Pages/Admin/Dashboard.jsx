@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, usePage } from "@inertiajs/react";
 
-export default function Dashboard({ stats, recentOrders, dailySales = [] }) {
+export default function Dashboard({ stats, recentOrders, dailySales = [], teamAttendance = [] }) {
     const { auth } = usePage().props;
     const role = auth?.role || "admin";
     const [orders, setOrders] = useState(recentOrders || []);
@@ -74,7 +74,7 @@ export default function Dashboard({ stats, recentOrders, dailySales = [] }) {
                     </div>
                 </div>
                 {/* 📊 Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     <StatCard
                         label="Total Sales"
                         value={liveStats.total_sales}
@@ -99,6 +99,89 @@ export default function Dashboard({ stats, recentOrders, dailySales = [] }) {
                         icon="👥"
                         color="bg-purple-500"
                     />
+                    <StatCard
+                        label="Checked In Staff"
+                        value={liveStats.checked_in_staff ?? 0}
+                        icon="🕘"
+                        color="bg-emerald-500"
+                    />
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                        <h3 className="font-bold text-slate-800">
+                            Staff Attendance (Manager / Sales / Delivery)
+                        </h3>
+                        <span className="text-xs text-slate-400 uppercase tracking-widest">
+                            Daily target 8 hours
+                        </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="text-slate-400 text-[11px] uppercase tracking-widest border-b border-slate-50">
+                                    <th className="px-6 py-4 font-bold">Staff</th>
+                                    <th className="px-6 py-4 font-bold">Role</th>
+                                    <th className="px-6 py-4 font-bold">Shop</th>
+                                    <th className="px-6 py-4 font-bold">Status</th>
+                                    <th className="px-6 py-4 font-bold">Today</th>
+                                    <th className="px-6 py-4 font-bold">This Week</th>
+                                    <th className="px-6 py-4 font-bold">Target</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {teamAttendance.length ? (
+                                    teamAttendance.map((staff) => (
+                                        <tr key={staff.id} className="hover:bg-slate-50/80 transition">
+                                            <td className="px-6 py-4 text-sm font-semibold text-slate-700">
+                                                {staff.name}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-600 capitalize">
+                                                {staff.role}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-600">
+                                                {staff.shop || "N/A"}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span
+                                                    className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${
+                                                        staff.checked_in
+                                                            ? "bg-emerald-100 text-emerald-700"
+                                                            : "bg-slate-100 text-slate-600"
+                                                    }`}
+                                                >
+                                                    {staff.checked_in ? "Checked In" : "Offline"}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-700">
+                                                {Math.floor((staff.today_worked_minutes || 0) / 60)}h {(staff.today_worked_minutes || 0) % 60}m
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-700">
+                                                {Math.floor((staff.weekly_worked_minutes || 0) / 60)}h {(staff.weekly_worked_minutes || 0) % 60}m
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span
+                                                    className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${
+                                                        staff.met_daily_target
+                                                            ? "bg-blue-100 text-blue-700"
+                                                            : "bg-amber-100 text-amber-700"
+                                                    }`}
+                                                >
+                                                    {staff.met_daily_target ? "Met" : "Pending"}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="7" className="p-8 text-center text-slate-400 italic">
+                                            No staff attendance records yet.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 {/* 🛒 Recent Orders Table */}

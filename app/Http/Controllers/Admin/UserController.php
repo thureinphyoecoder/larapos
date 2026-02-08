@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Shop;
+use App\Models\StaffAttendance;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
@@ -39,6 +41,40 @@ class UserController extends Controller
 
         $users = $query->paginate(10)->withQueryString();
 
+        $todayStart = Carbon::now()->startOfDay();
+        $staffRows = collect($users->items());
+        $staffIds = $staffRows->pluck('id')->all();
+
+        $todayAttendance = empty($staffIds)
+            ? collect()
+            : StaffAttendance::whereIn('user_id', $staffIds)
+                ->where('check_in_at', '>=', $todayStart)
+                ->orderByDesc('check_in_at')
+                ->get()
+                ->groupBy('user_id');
+
+        $users->setCollection(
+            $staffRows->map(function ($user) use ($todayAttendance) {
+                $latest = optional($todayAttendance->get($user->id))->first();
+                $activeMinutes = 0;
+
+                if ($latest) {
+                    $activeMinutes = $latest->check_out_at
+                        ? (int) $latest->worked_minutes
+                        : (int) $latest->check_in_at->diffInMinutes(now());
+                }
+
+                $user->setAttribute('attendance_today', [
+                    'checked_in' => (bool) ($latest && $latest->check_out_at === null),
+                    'check_in_at' => $latest?->check_in_at?->toDateTimeString(),
+                    'check_out_at' => $latest?->check_out_at?->toDateTimeString(),
+                    'worked_minutes' => $activeMinutes,
+                ]);
+
+                return $user;
+            }),
+        );
+
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
             'type' => $type,
@@ -50,6 +86,8 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless($request->user()?->hasAnyRole(['admin', 'manager']), 403);
+
         $roles = Role::pluck('name')->toArray();
 
         $validated = $request->validate([
@@ -80,6 +118,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        abort_unless($request->user()?->hasAnyRole(['admin', 'manager']), 403);
+
         $roles = Role::pluck('name')->toArray();
 
         $validated = $request->validate([
@@ -101,6 +141,13 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        abort_unless($user->id !== auth()->id(), 422, 'You cannot delete yourself.');
+        abort_unless(request()->user()?->hasRole('admin'), 403);
+
+        if ($user->hasRole('admin')) {
+            return back()->withErrors(['user' => 'Admin account cannot be deleted from this panel.']);
+        }
+
         $user->delete();
         return back()->with('success', 'User deleted.');
     }

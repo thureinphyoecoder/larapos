@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ShopController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\StaffAttendanceController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -47,7 +48,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::match(['get', 'post'], '/checkout/confirm', [OrderController::class, 'confirm'])->name('checkout.confirm');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
-    Route::post('/products/{product}/reviews', [ProductReviewController::class, 'store'])->name('products.reviews.store');
+    Route::post('/products/{product}/reviews', [ProductReviewController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('products.reviews.store');
     Route::get('/orders', [OrderController::class, 'customerIndex'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'customerShow'])->name('orders.show');
     Route::get('/orders/{order}/receipt', [OrderController::class, 'customerReceipt'])->name('orders.receipt');
@@ -63,6 +66,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Staff Attendance
+    Route::middleware(['role:admin|manager|sales|delivery'])->group(function () {
+        Route::post('/staff/check-in', [StaffAttendanceController::class, 'checkIn'])->name('staff.checkin');
+        Route::post('/staff/check-out', [StaffAttendanceController::class, 'checkOut'])->name('staff.checkout');
+    });
 });
 
 /*
@@ -78,9 +87,6 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery'])->pr
     Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
     // Products Management
     Route::resource('products', AdminProductController::class)->except(['destroy']);
@@ -93,12 +99,18 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery'])->pr
 
     // Manager & Admin Only
     Route::middleware(['role:admin|manager'])->group(function () {
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
         Route::delete('/products/{product}', [AdminProductController::class, 'destroy'])->name('products.destroy');
         Route::post('/orders/{order}/verify-slip', [OrderController::class, 'verifySlip'])->name('orders.verifySlip');
         Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
         Route::patch('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
         Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    });
+
+    Route::middleware(['role:admin'])->group(function () {
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
     // Delivery tracking updates (admin/manager/delivery)

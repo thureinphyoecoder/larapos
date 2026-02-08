@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link, usePage } from "@inertiajs/react";
+import { Link, usePage, router } from "@inertiajs/react";
 
 export default function AdminLayout({ children, header }) {
-    const { auth } = usePage().props;
+    const { auth, attendance } = usePage().props;
     const user = auth?.user;
     const role = auth?.role || "admin";
+    const canTrackAttendance = ["admin", "manager", "sales", "delivery"].includes(role);
 
     const menuByRole = {
         admin: [
@@ -153,6 +154,31 @@ export default function AdminLayout({ children, header }) {
                     </div>
 
                     <div className="flex items-center gap-6">
+                        {canTrackAttendance && (
+                            <div className="hidden lg:flex items-center gap-2 border border-slate-200 rounded-xl px-2 py-1 bg-slate-50">
+                                {attendance?.is_checked_in ? (
+                                    <button
+                                        onClick={() => router.post(route("staff.checkout"))}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-red-100 text-red-700 hover:bg-red-200"
+                                    >
+                                        Check Out
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => router.post(route("staff.checkin"))}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                    >
+                                        Check In
+                                    </button>
+                                )}
+                                <span className="text-[11px] font-semibold text-slate-500">
+                                    {attendance?.is_checked_in
+                                        ? `Active ${Math.floor((attendance?.active_minutes || 0) / 60)}h ${(attendance?.active_minutes || 0) % 60}m`
+                                        : `Today ${Math.floor((attendance?.today_worked_minutes || 0) / 60)}h ${(attendance?.today_worked_minutes || 0) % 60}m`}
+                                </span>
+                            </div>
+                        )}
+
                         {canAccessSupport && (
                             <Link
                                 href={route("admin.support.index")}

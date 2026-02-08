@@ -1,9 +1,13 @@
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import { useState } from "react";
 import Swal from "sweetalert2";
 
 export default function Index({ users, roles, shops, type = "staff", search = "" }) {
+    const { auth } = usePage().props;
+    const role = auth?.role || "admin";
+    const canManageUsers = ["admin", "manager"].includes(role);
+    const canDeleteUsers = role === "admin";
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -101,7 +105,7 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                 </form>
             </div>
 
-            {type === "staff" && (
+            {type === "staff" && canManageUsers && (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
                     <h3 className="font-bold text-slate-800 mb-4">
                         Create Staff
@@ -178,6 +182,7 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                                 <th className="px-6 py-4 font-bold">Email</th>
                                 <th className="px-6 py-4 font-bold">Role</th>
                                 {type === "staff" && <th className="px-6 py-4 font-bold">Shop</th>}
+                                {type === "staff" && <th className="px-6 py-4 font-bold">Active Time</th>}
                                 <th className="px-6 py-4 font-bold">Action</th>
                             </tr>
                         </thead>
@@ -197,7 +202,7 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                                                 {user.email}
                                             </td>
                                             <td className="px-6 py-4 text-sm">
-                                                {type === "staff" ? (
+                                                {type === "staff" && canManageUsers ? (
                                                     <select
                                                         className="border rounded-lg px-2 py-1"
                                                         defaultValue={currentRole}
@@ -220,40 +225,58 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                                             {type === "staff" && (
                                                 <>
                                                     <td className="px-6 py-4 text-sm">
-                                                        <select
-                                                            className="border rounded-lg px-2 py-1"
-                                                            defaultValue={user.shop_id || ""}
-                                                            onChange={(e) =>
-                                                                updateUser(user.id, currentRole, e.target.value)
-                                                            }
-                                                            disabled={!staffRoles.includes(currentRole)}
-                                                        >
-                                                            <option value="">Select shop</option>
-                                                            {shops.map((s) => (
-                                                                <option key={s.id} value={s.id}>
-                                                                    {s.name}
-                                                                </option>
-                                                            ))}
-                                                        </select>
+                                                        {canManageUsers ? (
+                                                            <select
+                                                                className="border rounded-lg px-2 py-1"
+                                                                defaultValue={user.shop_id || ""}
+                                                                onChange={(e) =>
+                                                                    updateUser(user.id, currentRole, e.target.value)
+                                                                }
+                                                                disabled={!staffRoles.includes(currentRole)}
+                                                            >
+                                                                <option value="">Select shop</option>
+                                                                {shops.map((s) => (
+                                                                    <option key={s.id} value={s.id}>
+                                                                        {s.name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <span>{user.shop?.name || "N/A"}</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-slate-600">
+                                                        {Math.floor((user.attendance_today?.worked_minutes || 0) / 60)}h {(user.attendance_today?.worked_minutes || 0) % 60}m
+                                                        <span className={`ms-2 px-2 py-0.5 rounded-full text-[10px] font-bold ${user.attendance_today?.checked_in ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                                                            {user.attendance_today?.checked_in ? "On Duty" : "Off"}
+                                                        </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-sm text-slate-500">
+                                                        {canDeleteUsers ? (
+                                                            <button
+                                                                onClick={() => deleteUser(user.id)}
+                                                                className="text-red-500 font-semibold hover:underline"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-slate-400">No permission</span>
+                                                        )}
+                                                    </td>
+                                                </>
+                                            )}
+                                            {type !== "staff" && (
+                                                <td className="px-6 py-4 text-sm text-slate-500">
+                                                    {canDeleteUsers ? (
                                                         <button
                                                             onClick={() => deleteUser(user.id)}
                                                             className="text-red-500 font-semibold hover:underline"
                                                         >
                                                             Delete
                                                         </button>
-                                                    </td>
-                                                </>
-                                            )}
-                                            {type !== "staff" && (
-                                                <td className="px-6 py-4 text-sm text-slate-500">
-                                                    <button
-                                                        onClick={() => deleteUser(user.id)}
-                                                        className="text-red-500 font-semibold hover:underline"
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    ) : (
+                                                        <span className="text-slate-400">No permission</span>
+                                                    )}
                                                 </td>
                                             )}
                                         </tr>
@@ -262,7 +285,7 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                             ) : (
                                 <tr>
                                     <td
-                                        colSpan={type === "staff" ? 5 : 4}
+                                        colSpan={type === "staff" ? 6 : 4}
                                         className="p-12 text-center text-slate-400 italic"
                                     >
                                         No users found.
