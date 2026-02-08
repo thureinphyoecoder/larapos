@@ -255,9 +255,22 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                                                         {canDeleteUsers ? (
                                                             <button
                                                                 onClick={() => deleteUser(user.id)}
-                                                                className="text-red-500 font-semibold hover:underline"
+                                                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
+                                                                title="Delete user"
+                                                                aria-label="Delete user"
                                                             >
-                                                                Delete
+                                                                <svg
+                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                    className="h-4 w-4"
+                                                                    viewBox="0 0 20 20"
+                                                                    fill="currentColor"
+                                                                >
+                                                                    <path
+                                                                        fillRule="evenodd"
+                                                                        d="M6 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6-1a1 1 0 10-2 0v7a1 1 0 102 0V7zm-7-3a2 2 0 012-2h6a2 2 0 012 2v1h2a1 1 0 110 2h-1v9a2 2 0 01-2 2H6a2 2 0 01-2-2V7H3a1 1 0 010-2h2V4z"
+                                                                        clipRule="evenodd"
+                                                                    />
+                                                                </svg>
                                                             </button>
                                                         ) : (
                                                             <span className="text-slate-400">No permission</span>
@@ -270,9 +283,22 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                                                     {canDeleteUsers ? (
                                                         <button
                                                             onClick={() => deleteUser(user.id)}
-                                                            className="text-red-500 font-semibold hover:underline"
+                                                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
+                                                            title="Delete user"
+                                                            aria-label="Delete user"
                                                         >
-                                                            Delete
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                className="h-4 w-4"
+                                                                viewBox="0 0 20 20"
+                                                                fill="currentColor"
+                                                            >
+                                                                <path
+                                                                    fillRule="evenodd"
+                                                                    d="M6 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6-1a1 1 0 10-2 0v7a1 1 0 102 0V7zm-7-3a2 2 0 012-2h6a2 2 0 012 2v1h2a1 1 0 110 2h-1v9a2 2 0 01-2 2H6a2 2 0 01-2-2V7H3a1 1 0 010-2h2V4z"
+                                                                    clipRule="evenodd"
+                                                                />
+                                                            </svg>
                                                         </button>
                                                     ) : (
                                                         <span className="text-slate-400">No permission</span>

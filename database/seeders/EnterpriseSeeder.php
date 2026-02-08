@@ -12,6 +12,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
 use App\Models\ProductReview;
+use App\Models\ShopStockShare;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -48,9 +49,11 @@ class EnterpriseSeeder extends Seeder
             ['name' => 'Apple Store', 'email' => 'apple@vendor.com', 'brand' => 'Apple'],
             ['name' => 'Samsung Global', 'email' => 'samsung@vendor.com', 'brand' => 'Samsung'],
         ];
+        $createdShopIds = [];
 
         foreach ($vendors as $v) {
             $shop = Shop::firstOrCreate(['name' => $v['name']]);
+            $createdShopIds[] = $shop->id;
             $brand = Brand::firstOrCreate(['name' => $v['brand']]);
 
             // ၅။ Manager (Verify ပါပြီးသား)
@@ -164,6 +167,20 @@ class EnterpriseSeeder extends Seeder
                     'price' => min(array_column($selected, 'price')),
                     'stock_level' => array_sum(array_column($selected, 'stock')),
                 ]);
+            }
+        }
+
+        $createdShopIds = array_values(array_unique($createdShopIds));
+        foreach ($createdShopIds as $fromShopId) {
+            foreach ($createdShopIds as $toShopId) {
+                if ($fromShopId === $toShopId) {
+                    continue;
+                }
+
+                ShopStockShare::updateOrCreate(
+                    ['from_shop_id' => $fromShopId, 'to_shop_id' => $toShopId],
+                    ['is_enabled' => true, 'updated_by' => $admin->id]
+                );
             }
         }
 

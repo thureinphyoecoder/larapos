@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, usePage, router } from "@inertiajs/react";
+import Swal from "sweetalert2";
 
 export default function AdminLayout({ children, header }) {
-    const { auth, attendance } = usePage().props;
+    const { auth, attendance, flash } = usePage().props;
     const user = auth?.user;
     const role = auth?.role || "admin";
     const canTrackAttendance = ["admin", "manager", "sales", "delivery"].includes(role);
@@ -10,6 +11,7 @@ export default function AdminLayout({ children, header }) {
     const menuByRole = {
         admin: [
             { label: "Dashboard", route: "admin.dashboard" },
+            { label: "Inventory", route: "admin.inventory.index" },
             { label: "Support", route: "admin.support.index" },
             { label: "Orders", route: "admin.orders.index" },
             { label: "Products", route: "admin.products.index" },
@@ -19,6 +21,7 @@ export default function AdminLayout({ children, header }) {
         ],
         manager: [
             { label: "Dashboard", route: "admin.dashboard" },
+            { label: "Inventory", route: "admin.inventory.index" },
             { label: "Support", route: "admin.support.index" },
             { label: "Orders", route: "admin.orders.index" },
             { label: "Products", route: "admin.products.index" },
@@ -26,6 +29,7 @@ export default function AdminLayout({ children, header }) {
         ],
         sales: [
             { label: "Dashboard", route: "admin.dashboard" },
+            { label: "Inventory", route: "admin.inventory.index" },
             { label: "Support", route: "admin.support.index" },
             { label: "Orders", route: "admin.orders.index" },
             { label: "Products", route: "admin.products.index" },
@@ -42,6 +46,8 @@ export default function AdminLayout({ children, header }) {
     // Notification State
     const [showNoti, setShowNoti] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const [globalSearch, setGlobalSearch] = useState("");
+    const [attendanceLoading, setAttendanceLoading] = useState(false);
 
     const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -104,6 +110,34 @@ export default function AdminLayout({ children, header }) {
         };
     }, []);
 
+    useEffect(() => {
+        if (!flash?.success && !flash?.error) {
+            return;
+        }
+
+        Swal.fire({
+            toast: true,
+            position: "top-end",
+            timer: 2200,
+            showConfirmButton: false,
+            icon: flash?.success ? "success" : "error",
+            title: flash?.success || flash?.error || "",
+        });
+    }, [flash?.success, flash?.error]);
+
+    const submitAttendance = (type) => {
+        const routeName = type === "out" ? "staff.checkout" : "staff.checkin";
+        router.post(
+            route(routeName),
+            {},
+            {
+                preserveScroll: true,
+                onStart: () => setAttendanceLoading(true),
+                onFinish: () => setAttendanceLoading(false),
+            },
+        );
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 flex">
             {/* Sidebar */}
@@ -149,8 +183,25 @@ export default function AdminLayout({ children, header }) {
             {/* Main Content */}
             <div className="flex-1 md:ms-64 flex flex-col min-h-screen">
                 <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-50">
-                    <div className="text-sm font-semibold text-slate-700">
-                        {header || "Admin"}
+                    <div className="flex items-center gap-4">
+                        <div className="text-sm font-semibold text-slate-700">
+                            {header || "Admin"}
+                        </div>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                router.get(route("admin.search.index"), { q: globalSearch || undefined });
+                            }}
+                            className="hidden xl:flex items-center"
+                        >
+                            <input
+                                type="text"
+                                className="w-80 border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                                placeholder="Global search: product, variant SKU, order, user..."
+                                value={globalSearch}
+                                onChange={(e) => setGlobalSearch(e.target.value)}
+                            />
+                        </form>
                     </div>
 
                     <div className="flex items-center gap-6">
@@ -158,17 +209,19 @@ export default function AdminLayout({ children, header }) {
                             <div className="hidden lg:flex items-center gap-2 border border-slate-200 rounded-xl px-2 py-1 bg-slate-50">
                                 {attendance?.is_checked_in ? (
                                     <button
-                                        onClick={() => router.post(route("staff.checkout"))}
-                                        className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-red-100 text-red-700 hover:bg-red-200"
+                                        onClick={() => submitAttendance("out")}
+                                        disabled={attendanceLoading}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
-                                        Check Out
+                                        {attendanceLoading ? "Working..." : "Check Out"}
                                     </button>
                                 ) : (
                                     <button
-                                        onClick={() => router.post(route("staff.checkin"))}
-                                        className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                        onClick={() => submitAttendance("in")}
+                                        disabled={attendanceLoading}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
-                                        Check In
+                                        {attendanceLoading ? "Working..." : "Check In"}
                                     </button>
                                 )}
                                 <span className="text-[11px] font-semibold text-slate-500">

@@ -16,6 +16,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        $actor = $request->user();
         $staffRoles = ['admin', 'manager', 'sales', 'delivery'];
         $type = $request->get('type', 'staff');
         $search = trim((string) $request->get('search', ''));
@@ -37,6 +38,13 @@ class UserController extends Controller
             $query->whereHas('roles', function ($q) use ($staffRoles) {
                 $q->whereIn('name', $staffRoles);
             });
+        }
+
+        if ($actor?->hasRole('manager')) {
+            $query->where('shop_id', $actor->shop_id)
+                ->whereHas('roles', function ($q) {
+                    $q->whereIn('name', ['sales', 'delivery']);
+                });
         }
 
         $users = $query->paginate(10)->withQueryString();
@@ -79,7 +87,7 @@ class UserController extends Controller
             'users' => $users,
             'type' => $type,
             'search' => $search,
-            'roles' => Role::orderBy('name')->pluck('name'),
+            'roles' => collect($this->allowedRolesFor($actor)),
             'shops' => Shop::orderBy('name')->get(),
         ]);
     }
@@ -87,8 +95,7 @@ class UserController extends Controller
     public function store(Request $request)
     {
         abort_unless($request->user()?->hasAnyRole(['admin', 'manager']), 403);
-
-        $roles = Role::pluck('name')->toArray();
+        $roles = $this->allowedRolesFor($request->user());
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -119,13 +126,16 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         abort_unless($request->user()?->hasAnyRole(['admin', 'manager']), 403);
-
-        $roles = Role::pluck('name')->toArray();
+        $roles = $this->allowedRolesFor($request->user());
 
         $validated = $request->validate([
             'role' => 'required|in:' . implode(',', $roles),
             'shop_id' => 'nullable|exists:shops,id',
         ]);
+
+        if ($request->user()?->hasRole('manager') && $user->hasAnyRole(['admin', 'manager'])) {
+            return back()->withErrors(['role' => 'Manager cannot modify admin/manager accounts.']);
+        }
 
         $staffRoles = ['manager', 'sales', 'delivery'];
         if (in_array($validated['role'], $staffRoles, true) && empty($validated['shop_id'])) {
@@ -150,5 +160,18 @@ class UserController extends Controller
 
         $user->delete();
         return back()->with('success', 'User deleted.');
+    }
+
+    private function allowedRolesFor(?User $actor): array
+    {
+        if ($actor?->hasRole('admin')) {
+            return Role::orderBy('name')->pluck('name')->all();
+        }
+
+        if ($actor?->hasRole('manager')) {
+            return ['sales', 'delivery'];
+        }
+
+        return [];
     }
 }

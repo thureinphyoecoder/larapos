@@ -80,9 +80,18 @@ export default function Index({ products }) {
                                             <div className="flex items-center gap-3">
                                                 <Link
                                                     href={route("admin.products.edit", product.id)}
-                                                    className="text-blue-600 font-semibold hover:underline"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
+                                                    title="Edit product"
+                                                    aria-label="Edit product"
                                                 >
-                                                    Edit
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="h-4 w-4"
+                                                        viewBox="0 0 20 20"
+                                                        fill="currentColor"
+                                                    >
+                                                        <path d="M17.414 2.586a2 2 0 010 2.828l-8.19 8.19a2 2 0 01-.878.513l-3.2.914a1 1 0 01-1.236-1.236l.914-3.2a2 2 0 01.513-.878l8.19-8.19a2 2 0 012.828 0z" />
+                                                    </svg>
                                                 </Link>
                                                 {canDeleteProduct && (
                                                     <button
@@ -108,9 +117,22 @@ export default function Index({ products }) {
                                                                 );
                                                             })
                                                         }
-                                                        className="text-red-500 font-semibold hover:underline"
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
+                                                        title="Delete product"
+                                                        aria-label="Delete product"
                                                     >
-                                                        Delete
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            className="h-4 w-4"
+                                                            viewBox="0 0 20 20"
+                                                            fill="currentColor"
+                                                        >
+                                                            <path
+                                                                fillRule="evenodd"
+                                                                d="M6 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6-1a1 1 0 10-2 0v7a1 1 0 102 0V7zm-7-3a2 2 0 012-2h6a2 2 0 012 2v1h2a1 1 0 110 2h-1v9a2 2 0 01-2 2H6a2 2 0 01-2-2V7H3a1 1 0 010-2h2V4z"
+                                                                clipRule="evenodd"
+                                                            />
+                                                        </svg>
                                                     </button>
                                                 )}
                                             </div>

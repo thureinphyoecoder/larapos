@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\CartItem;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB; // Transaction အတွက်
@@ -139,10 +141,21 @@ class OrderController extends Controller
         $user = Auth::user();
 
         // ၁။ ခြင်းတောင်းထဲမှာ ပစ္စည်း တကယ်ရှိလား အရင်စစ် (Early Return)
-        $cartItems = CartItem::with('variant')->where('user_id', $user->id)->get();
+        $cartItems = CartItem::with(['variant.product'])->where('user_id', $user->id)->get();
         if ($cartItems->isEmpty()) {
             throw ValidationException::withMessages([
                 'system_error' => 'ခြင်းတောင်းထဲမှာ ပစ္စည်းမရှိပါဘူးဗျာ။',
+            ]);
+        }
+
+        $shopIds = $cartItems
+            ->map(fn ($item) => $item->variant?->product?->shop_id)
+            ->filter()
+            ->unique()
+            ->values();
+        if ($shopIds->count() !== 1) {
+            throw ValidationException::withMessages([
+                'system_error' => 'Please checkout items from one shop at a time.',
             ]);
         }
 
@@ -158,10 +171,16 @@ class OrderController extends Controller
             ]);
         }
 
-        $calculatedTotal = $cartItems->sum(fn($item) => $item->variant->price * $item->quantity);
+        $calculatedTotal = $cartItems->sum(fn($item) => (float) $item->variant->price * (int) $item->quantity);
 
         DB::beginTransaction();
         try {
+            $variantIds = $cartItems->pluck('variant_id')->unique()->values();
+            $lockedVariants = ProductVariant::whereIn('id', $variantIds)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
             // Profile Update
             $user->profile()->updateOrCreate(
                 ['user_id' => $user->id],
@@ -176,7 +195,7 @@ class OrderController extends Controller
             // Order Table ထဲ သိမ်း
             $order = Order::create([
                 'user_id' => $user->id,
-                'shop_id' => $user->shop_id ?? 1,
+                'shop_id' => (int) $shopIds->first(),
                 'total_amount' => $calculatedTotal, // 🎯 Backend calculated value
                 'payment_slip' => $request->payment_slip,
                 'status' => 'pending',
@@ -185,17 +204,33 @@ class OrderController extends Controller
             ]);
 
             // Order Items ထဲ သိမ်း
+            $affectedProductIds = [];
             foreach ($cartItems as $item) {
+                $variant = $lockedVariants->get($item->variant_id);
+                if (!$variant || !$variant->is_active) {
+                    throw ValidationException::withMessages([
+                        'system_error' => 'One or more variants are no longer available.',
+                    ]);
+                }
+                if ((int) $variant->stock_level < (int) $item->quantity) {
+                    throw ValidationException::withMessages([
+                        'system_error' => "Insufficient stock for {$variant->sku}.",
+                    ]);
+                }
+
                 $order->items()->create([
                     'product_id' => $item->product_id,
                     'product_variant_id' => $item->variant_id,
                     'quantity' => $item->quantity,
-                    'price' => $item->variant->price,
+                    'price' => $variant->price,
 
                 ]);
 
-                // လိုအပ်ရင် ဒီမှာ stock နှုတ်နိုင်ပါတယ်
+                $variant->decrement('stock_level', (int) $item->quantity);
+                $affectedProductIds[] = (int) $item->product_id;
             }
+
+            $this->refreshProductsStock($affectedProductIds);
 
             // ခြင်းတောင်း ရှင်း
             CartItem::where('user_id', $user->id)->delete();
@@ -234,21 +269,30 @@ class OrderController extends Controller
             'status' => 'required|in:pending,confirmed,shipped,delivered,cancelled,refund_requested,refunded,return_requested,returned'
         ]);
 
-        $order->update(['status' => $request->status]);
+        $previousStatus = $order->status;
+        $nextStatus = $request->status;
+        $order->update(['status' => $nextStatus]);
 
-        if ($request->status === 'refund_requested') {
+        if (
+            in_array($nextStatus, ['cancelled', 'refunded', 'returned'], true)
+            && !in_array($previousStatus, ['cancelled', 'refunded', 'returned'], true)
+        ) {
+            $this->restockOrderItems($order);
+        }
+
+        if ($nextStatus === 'refund_requested') {
             $order->update(['refund_requested_at' => now()]);
         }
-        if ($request->status === 'refunded') {
+        if ($nextStatus === 'refunded') {
             $order->update(['refunded_at' => now()]);
         }
-        if ($request->status === 'return_requested') {
+        if ($nextStatus === 'return_requested') {
             $order->update(['return_requested_at' => now()]);
         }
-        if ($request->status === 'returned') {
+        if ($nextStatus === 'returned') {
             $order->update(['returned_at' => now()]);
         }
-        if ($request->status === 'delivered') {
+        if ($nextStatus === 'delivered') {
             $order->update(['delivered_at' => now()]);
         }
 
@@ -268,6 +312,7 @@ class OrderController extends Controller
         }
 
         $order->update(['status' => 'cancelled']);
+        $this->restockOrderItems($order);
         event(new \App\Events\OrderStatusUpdated($order));
 
         return back()->with('success', 'Order cancelled.');
@@ -381,5 +426,56 @@ class OrderController extends Controller
         \App\Jobs\VerifyPaymentSlip::dispatchSync($order->id);
 
         return back()->with('success', 'Slip verification completed.');
+    }
+
+    private function restockOrderItems(Order $order): void
+    {
+        DB::transaction(function () use ($order): void {
+            $items = $order->items()->get(['product_id', 'product_variant_id', 'quantity']);
+            if ($items->isEmpty()) {
+                return;
+            }
+
+            $variants = ProductVariant::whereIn('id', $items->pluck('product_variant_id'))
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $affectedProductIds = [];
+            foreach ($items as $item) {
+                $variant = $variants->get($item->product_variant_id);
+                if (!$variant) {
+                    continue;
+                }
+
+                $variant->increment('stock_level', (int) $item->quantity);
+                $affectedProductIds[] = (int) $item->product_id;
+            }
+
+            $this->refreshProductsStock($affectedProductIds);
+        });
+    }
+
+    private function refreshProductsStock(array $productIds): void
+    {
+        $ids = collect($productIds)->filter()->unique()->values();
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        $summaries = ProductVariant::whereIn('product_id', $ids)
+            ->where('is_active', true)
+            ->groupBy('product_id')
+            ->selectRaw('product_id, COALESCE(SUM(stock_level),0) as stock_sum, COALESCE(MIN(price),0) as min_price')
+            ->get()
+            ->keyBy('product_id');
+
+        foreach ($ids as $productId) {
+            $row = $summaries->get($productId);
+            Product::where('id', $productId)->update([
+                'stock_level' => (int) ($row->stock_sum ?? 0),
+                'price' => (float) ($row->min_price ?? 0),
+            ]);
+        }
     }
 }

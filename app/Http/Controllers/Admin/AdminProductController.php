@@ -18,10 +18,16 @@ class AdminProductController extends Controller
 {
     public function index()
     {
+        $user = Auth::user();
+        $productsQuery = Product::with(['category', 'shop', 'variants' => fn ($query) => $query->orderBy('id')])
+            ->latest();
+
+        if ($user && !$user->hasRole('admin')) {
+            $productsQuery->where('shop_id', $user->shop_id);
+        }
+
         return Inertia::render('Admin/Products/Index', [
-            'products' => Product::with(['category', 'shop', 'variants' => fn ($query) => $query->orderBy('id')])
-                ->latest()
-                ->get(),
+            'products' => $productsQuery->get(),
         ]);
     }
 
@@ -98,6 +104,8 @@ class AdminProductController extends Controller
 
     public function edit(Product $product)
     {
+        $this->authorizeProductAccess(Auth::user(), $product);
+
         return Inertia::render('Admin/Products/Edit', [
             'product' => $product->load(['variants' => fn ($query) => $query->orderBy('id')]),
             'categories' => Category::all(),
@@ -106,6 +114,8 @@ class AdminProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        $this->authorizeProductAccess($request->user(), $product);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'sku' => 'nullable|string|max:64|unique:products,sku,' . $product->id,
@@ -122,6 +132,7 @@ class AdminProductController extends Controller
         ]);
 
         $variants = $this->normalizeVariants($validated['variants']);
+        $this->ensureVariantIdsBelongToProduct($product, $variants);
 
         if (empty($variants)) {
             throw ValidationException::withMessages([
@@ -162,6 +173,8 @@ class AdminProductController extends Controller
 
     public function destroy(Product $product)
     {
+        $this->authorizeProductAccess(Auth::user(), $product);
+
         if ($product->image_path) {
             Storage::disk('public')->delete($product->image_path);
         }
@@ -293,5 +306,37 @@ class AdminProductController extends Controller
         }
 
         return $sku;
+    }
+
+    private function authorizeProductAccess($user, Product $product): void
+    {
+        if (!$user) {
+            abort(403);
+        }
+
+        if ($user->hasRole('admin')) {
+            return;
+        }
+
+        abort_if((int) $product->shop_id !== (int) $user->shop_id, 403);
+    }
+
+    private function ensureVariantIdsBelongToProduct(Product $product, array $variants): void
+    {
+        $incomingIds = collect($variants)->pluck('id')->filter()->map(fn ($id) => (int) $id)->values();
+
+        if ($incomingIds->isEmpty()) {
+            return;
+        }
+
+        $ownedCount = ProductVariant::where('product_id', $product->id)
+            ->whereIn('id', $incomingIds)
+            ->count();
+
+        if ($ownedCount !== $incomingIds->count()) {
+            throw ValidationException::withMessages([
+                'variants' => 'One or more variants are invalid for this product.',
+            ]);
+        }
     }
 }

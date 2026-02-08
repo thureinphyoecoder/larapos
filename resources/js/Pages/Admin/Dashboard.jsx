@@ -1,28 +1,39 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head, usePage } from "@inertiajs/react";
+import { Head } from "@inertiajs/react";
 
-export default function Dashboard({ stats, recentOrders, dailySales = [], teamAttendance = [] }) {
-    const { auth } = usePage().props;
-    const role = auth?.role || "admin";
+const PERIODS = [
+    { key: "daily", label: "Daily" },
+    { key: "weekly", label: "Weekly" },
+    { key: "monthly", label: "Monthly" },
+    { key: "yearly", label: "Yearly" },
+];
+
+export default function Dashboard({
+    stats,
+    recentOrders,
+    dailySales = [],
+    salesTrends = {},
+    teamAttendance = [],
+    stockByShop = [],
+    transferTrend = [],
+}) {
     const [orders, setOrders] = useState(recentOrders || []);
-    const [liveStats, setLiveStats] = useState(stats);
+    const [liveStats, setLiveStats] = useState(stats || {});
+    const [period, setPeriod] = useState("daily");
 
     useEffect(() => {
-        if (window.Echo) {
-            window.Echo.channel("admin-notifications").listen(
-                ".NewOrderPlaced",
-                (e) => {
-                    if (e?.order) {
-                        setOrders((prev) => [e.order, ...prev].slice(0, 10));
-                    }
-                    setLiveStats((prev) => ({
-                        ...prev,
-                        total_orders: Number(prev.total_orders || 0) + 1,
-                    }));
-                },
-            );
-        }
+        if (!window.Echo) return;
+
+        window.Echo.channel("admin-notifications").listen(".NewOrderPlaced", (e) => {
+            if (e?.order) {
+                setOrders((prev) => [e.order, ...prev].slice(0, 10));
+            }
+            setLiveStats((prev) => ({
+                ...prev,
+                total_orders: Number(prev.total_orders || 0) + 1,
+            }));
+        });
 
         return () => {
             if (window.Echo) {
@@ -31,223 +42,268 @@ export default function Dashboard({ stats, recentOrders, dailySales = [], teamAt
         };
     }, []);
 
-    const roleLabels = {
-        admin: "Admin Command",
-        manager: "Manager Console",
-        sales: "Sales Desk",
-        delivery: "Delivery Hub",
-    };
+    const trendData = salesTrends?.[period]?.length
+        ? salesTrends[period]
+        : dailySales;
 
-    const roleAccent = {
-        admin: "from-slate-900 via-slate-800 to-slate-700",
-        manager: "from-emerald-700 via-emerald-600 to-teal-500",
-        sales: "from-orange-600 via-amber-500 to-yellow-400",
-        delivery: "from-sky-700 via-sky-600 to-cyan-500",
-    };
+    const maxTrendValue = useMemo(
+        () => trendData.reduce((max, item) => Math.max(max, Number(item.total || 0)), 0),
+        [trendData],
+    );
+    const chartPoints = useMemo(() => {
+        const width = 920;
+        const height = 250;
+        const left = 28;
+        const right = width - 28;
+        const top = 18;
+        const bottom = height - 30;
+        const usableWidth = right - left;
+        const usableHeight = bottom - top;
+        const denominator = Math.max(1, maxTrendValue);
+
+        return trendData.map((item, idx) => {
+            const ratioX = trendData.length <= 1 ? 0 : idx / (trendData.length - 1);
+            const ratioY = Number(item.total || 0) / denominator;
+            return {
+                x: left + ratioX * usableWidth,
+                y: bottom - ratioY * usableHeight,
+                value: Number(item.total || 0),
+                label: item.label || item.date,
+            };
+        });
+    }, [trendData, maxTrendValue]);
+
+    const linePath = useMemo(() => {
+        if (!chartPoints.length) return "";
+        return chartPoints.map((point, idx) => `${idx === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+    }, [chartPoints]);
+
+    const areaPath = useMemo(() => {
+        if (!chartPoints.length) return "";
+        const baseline = 220;
+        const first = chartPoints[0];
+        const last = chartPoints[chartPoints.length - 1];
+        return `${linePath} L ${last.x} ${baseline} L ${first.x} ${baseline} Z`;
+    }, [chartPoints, linePath]);
+
+    const maxShopStock = useMemo(
+        () => stockByShop.reduce((max, item) => Math.max(max, Number(item.total_stock || 0)), 0),
+        [stockByShop],
+    );
+
+    const maxTransferQty = useMemo(
+        () => transferTrend.reduce((max, item) => Math.max(max, Number(item.qty || 0)), 0),
+        [transferTrend],
+    );
 
     return (
         <AdminLayout>
-            <Head title="Admin Dashboard" />
+            <Head title="Super Admin Dashboard" />
 
-            <div className="space-y-8">
-                {/* Hero */}
-                <div
-                    className={`rounded-3xl p-6 sm:p-8 text-white shadow-lg bg-gradient-to-br ${roleAccent[role] || roleAccent.admin}`}
-                >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <p className="text-xs uppercase tracking-[0.25em] text-white/70">
-                                {roleLabels[role] || "Admin Console"}
-                            </p>
-                            <h1 className="mt-2 text-2xl sm:text-3xl font-black">
-                                LaraPee Operations
-                            </h1>
+            <div className="space-y-6">
+                <section className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-900 text-white shadow-2xl">
+                    <div className="px-6 sm:px-8 py-6 sm:py-7 bg-[radial-gradient(circle_at_top_right,_rgba(251,146,60,0.35),_transparent_42%)]">
+                        <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5">
+                            <div>
+                                <p className="text-[11px] uppercase tracking-[0.26em] text-slate-300 font-bold">
+                                    Super Admin Control Center
+                                </p>
+                                <h1 className="mt-2 text-2xl sm:text-3xl font-black tracking-tight">
+                                    Revenue Trend Overview
+                                </h1>
+                                <p className="mt-2 text-sm text-slate-300">
+                                    Daily, weekly, monthly, yearly sales chart for executive monitoring.
+                                </p>
+                            </div>
+
+                            <div className="inline-flex p-1 rounded-2xl bg-white/10 border border-white/20">
+                                {PERIODS.map((p) => (
+                                    <button
+                                        key={p.key}
+                                        type="button"
+                                        onClick={() => setPeriod(p.key)}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition ${
+                                            period === p.key
+                                                ? "bg-white text-slate-900"
+                                                : "text-slate-200 hover:text-white"
+                                        }`}
+                                    >
+                                        {p.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 border border-white/30">
-                                Role: {role}
-                            </span>
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 border border-white/30">
-                                Live Orders
-                            </span>
+
+                        <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+                            <div className="lg:col-span-9">
+                                <div className="h-56 sm:h-64 rounded-2xl border border-white/10 bg-black/15 p-4 overflow-hidden">
+                                    {chartPoints.length ? (
+                                        <svg viewBox="0 0 920 250" className="w-full h-full">
+                                            <defs>
+                                                <linearGradient id="salesArea" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#fb923c" stopOpacity="0.55" />
+                                                    <stop offset="100%" stopColor="#fb923c" stopOpacity="0.04" />
+                                                </linearGradient>
+                                                <linearGradient id="salesLine" x1="0" y1="0" x2="1" y2="0">
+                                                    <stop offset="0%" stopColor="#f97316" />
+                                                    <stop offset="100%" stopColor="#facc15" />
+                                                </linearGradient>
+                                            </defs>
+
+                                            {[0, 1, 2, 3].map((step) => {
+                                                const y = 30 + step * 48;
+                                                return (
+                                                    <line
+                                                        key={`grid-${step}`}
+                                                        x1="28"
+                                                        y1={y}
+                                                        x2="892"
+                                                        y2={y}
+                                                        stroke="rgba(255,255,255,0.12)"
+                                                        strokeDasharray="4 6"
+                                                    />
+                                                );
+                                            })}
+
+                                            <path d={areaPath} fill="url(#salesArea)" />
+                                            <path d={linePath} fill="none" stroke="url(#salesLine)" strokeWidth="4" strokeLinecap="round" />
+
+                                            {chartPoints.map((point, idx) => (
+                                                <g key={`point-${idx}`}>
+                                                    <circle cx={point.x} cy={point.y} r="4.5" fill="#fb923c" stroke="#fff" strokeWidth="1.4" />
+                                                    <text x={point.x} y="242" textAnchor="middle" fontSize="11" fill="rgba(226,232,240,0.95)">
+                                                        {point.label}
+                                                    </text>
+                                                </g>
+                                            ))}
+                                        </svg>
+                                    ) : (
+                                        <div className="h-full w-full grid place-items-center text-slate-400 text-sm">No chart data available.</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="lg:col-span-3 space-y-3">
+                                <MetricPill label="Total Sales" value={`${liveStats.total_sales || 0} MMK`} />
+                                <MetricPill label="Total Orders" value={liveStats.total_orders || 0} />
+                                <MetricPill label="Checked In Staff" value={liveStats.checked_in_staff ?? 0} />
+                            </div>
                         </div>
                     </div>
-                </div>
-                {/* 📊 Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                    <StatCard
-                        label="Total Sales"
-                        value={liveStats.total_sales}
-                        icon="💰"
-                        color="bg-blue-500"
-                    />
-                    <StatCard
-                        label="Active Shops"
-                        value={liveStats.active_shops}
-                        icon="🏪"
-                        color="bg-orange-500"
-                    />
-                    <StatCard
-                        label="Total Orders"
-                        value={liveStats.total_orders}
-                        icon="📦"
-                        color="bg-green-500"
-                    />
-                    <StatCard
-                        label="System Users"
-                        value={liveStats.system_users}
-                        icon="👥"
-                        color="bg-purple-500"
-                    />
-                    <StatCard
-                        label="Checked In Staff"
-                        value={liveStats.checked_in_staff ?? 0}
-                        icon="🕘"
-                        color="bg-emerald-500"
-                    />
-                </div>
+                </section>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                        <h3 className="font-bold text-slate-800">
-                            Staff Attendance (Manager / Sales / Delivery)
-                        </h3>
-                        <span className="text-xs text-slate-400 uppercase tracking-widest">
-                            Daily target 8 hours
-                        </span>
+                <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                    <StatCard label="Active Shops" value={liveStats.active_shops || 0} tone="sky" />
+                    <StatCard label="System Users" value={liveStats.system_users || 0} tone="violet" />
+                    <StatCard label="Orders" value={liveStats.total_orders || 0} tone="emerald" />
+                    <StatCard label="Low Stock Shops" value={stockByShop.filter((s) => Number(s.low_stock_variants || 0) > 0).length} tone="amber" />
+                    <StatCard label="Tracked Staff" value={teamAttendance.length} tone="rose" />
+                </section>
+
+                <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div className="p-5 border-b border-slate-50 flex items-center justify-between">
+                            <h3 className="font-bold text-slate-800">Stock by Shop</h3>
+                            <span className="text-xs text-slate-400 uppercase tracking-wider">Live inventory</span>
+                        </div>
+                        <div className="p-5 space-y-3">
+                            {stockByShop.length ? (
+                                stockByShop.map((item, idx) => (
+                                    <div key={item.id ?? `${item.shop}-${idx}`} className="flex items-center gap-3">
+                                        <div className="w-28 text-xs text-slate-500 truncate">{item.shop}</div>
+                                        <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
+                                                style={{
+                                                    width:
+                                                        maxShopStock === 0
+                                                            ? "0%"
+                                                            : `${(Number(item.total_stock || 0) / maxShopStock) * 100}%`,
+                                                }}
+                                            ></div>
+                                        </div>
+                                        <div className="w-28 text-right text-sm font-semibold text-slate-700">
+                                            {Number(item.total_stock || 0).toLocaleString()}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-slate-400">No stock records yet.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div className="p-5 border-b border-slate-50 flex items-center justify-between">
+                            <h3 className="font-bold text-slate-800">Transfer Trend (7 days)</h3>
+                            <span className="text-xs text-slate-400 uppercase tracking-wider">Shared qty</span>
+                        </div>
+                        <div className="p-5 space-y-3">
+                            {transferTrend.length ? (
+                                transferTrend.map((item) => (
+                                    <div key={item.date} className="flex items-center gap-3">
+                                        <div className="w-24 text-xs text-slate-500">
+                                            {new Date(item.date).toLocaleDateString()}
+                                        </div>
+                                        <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-3 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                                                style={{
+                                                    width:
+                                                        maxTransferQty === 0
+                                                            ? "0%"
+                                                            : `${(Number(item.qty || 0) / maxTransferQty) * 100}%`,
+                                                }}
+                                            ></div>
+                                        </div>
+                                        <div className="w-12 text-right text-sm font-semibold text-slate-700">
+                                            {Number(item.qty || 0)}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-slate-400">No transfer activity yet.</p>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="p-5 border-b border-slate-50 flex items-center justify-between">
+                        <h3 className="font-bold text-slate-800">Recent Orders</h3>
+                        <span className="text-xs text-slate-400 uppercase tracking-wider">Realtime feed</span>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full text-left text-sm">
                             <thead>
                                 <tr className="text-slate-400 text-[11px] uppercase tracking-widest border-b border-slate-50">
-                                    <th className="px-6 py-4 font-bold">Staff</th>
-                                    <th className="px-6 py-4 font-bold">Role</th>
-                                    <th className="px-6 py-4 font-bold">Shop</th>
-                                    <th className="px-6 py-4 font-bold">Status</th>
-                                    <th className="px-6 py-4 font-bold">Today</th>
-                                    <th className="px-6 py-4 font-bold">This Week</th>
-                                    <th className="px-6 py-4 font-bold">Target</th>
+                                    <th className="px-5 py-3 font-bold">Order</th>
+                                    <th className="px-5 py-3 font-bold">Customer</th>
+                                    <th className="px-5 py-3 font-bold">Shop</th>
+                                    <th className="px-5 py-3 font-bold">Amount</th>
+                                    <th className="px-5 py-3 font-bold">Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                {teamAttendance.length ? (
-                                    teamAttendance.map((staff) => (
-                                        <tr key={staff.id} className="hover:bg-slate-50/80 transition">
-                                            <td className="px-6 py-4 text-sm font-semibold text-slate-700">
-                                                {staff.name}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-slate-600 capitalize">
-                                                {staff.role}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-slate-600">
-                                                {staff.shop || "N/A"}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span
-                                                    className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${
-                                                        staff.checked_in
-                                                            ? "bg-emerald-100 text-emerald-700"
-                                                            : "bg-slate-100 text-slate-600"
-                                                    }`}
-                                                >
-                                                    {staff.checked_in ? "Checked In" : "Offline"}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-slate-700">
-                                                {Math.floor((staff.today_worked_minutes || 0) / 60)}h {(staff.today_worked_minutes || 0) % 60}m
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-slate-700">
-                                                {Math.floor((staff.weekly_worked_minutes || 0) / 60)}h {(staff.weekly_worked_minutes || 0) % 60}m
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span
-                                                    className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${
-                                                        staff.met_daily_target
-                                                            ? "bg-blue-100 text-blue-700"
-                                                            : "bg-amber-100 text-amber-700"
-                                                    }`}
-                                                >
-                                                    {staff.met_daily_target ? "Met" : "Pending"}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan="7" className="p-8 text-center text-slate-400 italic">
-                                            No staff attendance records yet.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* 🛒 Recent Orders Table */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                        <h3 className="font-bold text-slate-800">
-                            Recent Orders
-                        </h3>
-                        <span className="text-xs text-slate-400 uppercase tracking-widest">
-                            Live feed
-                        </span>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="text-slate-400 text-[11px] uppercase tracking-widest border-b border-slate-50">
-                                    <th className="px-6 py-4 font-bold">
-                                        Order ID
-                                    </th>
-                                    <th className="px-6 py-4 font-bold">
-                                        Customer
-                                    </th>
-                                    <th className="px-6 py-4 font-bold">
-                                        Shop
-                                    </th>
-                                    <th className="px-6 py-4 font-bold">
-                                        Amount
-                                    </th>
-                                    <th className="px-6 py-4 font-bold">
-                                        Status
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {orders.length > 0 ? (
+                                {orders.length ? (
                                     orders.map((order) => (
-                                        <tr
-                                            key={order.id}
-                                            className="hover:bg-slate-50/80 transition"
-                                        >
-                                            <td className="px-6 py-4 font-bold text-slate-700 text-sm">
-                                                #{order.id}
+                                        <tr key={order.id} className="hover:bg-slate-50/70 transition">
+                                            <td className="px-5 py-3 font-bold text-slate-800">#{order.id}</td>
+                                            <td className="px-5 py-3 text-slate-600">{order.user?.name || "Unknown"}</td>
+                                            <td className="px-5 py-3 text-slate-600">{order.shop?.name || "N/A"}</td>
+                                            <td className="px-5 py-3 font-semibold text-slate-800">
+                                                {Number(order.total_amount || 0).toLocaleString()} MMK
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-slate-600">
-                                                {order.user?.name || "Unknown"}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-slate-600">
-                                                {order.shop?.name || "N/A"}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm font-bold text-slate-900">
-                                                {order.total_amount} MMK
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className="px-3 py-1 bg-green-100 text-green-600 text-[10px] font-black uppercase rounded-full">
-                                                    Completed
+                                            <td className="px-5 py-3">
+                                                <span className="px-2 py-1 rounded-full text-[10px] uppercase font-bold bg-emerald-100 text-emerald-700">
+                                                    {order.status || "pending"}
                                                 </span>
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td
-                                            colSpan="5"
-                                            className="p-20 text-center text-slate-400 italic"
-                                        >
+                                        <td colSpan="5" className="p-10 text-center text-slate-400">
                                             No orders available yet.
                                         </td>
                                     </tr>
@@ -255,123 +311,37 @@ export default function Dashboard({ stats, recentOrders, dailySales = [], teamAt
                             </tbody>
                         </table>
                     </div>
-                </div>
-
-                {/* 📈 Sales Trend (Last 7 Days) */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                        <h3 className="font-bold text-slate-800">
-                            Sales (Last 7 Days)
-                        </h3>
-                        <span className="text-xs text-slate-400">
-                            Non-cancelled orders
-                        </span>
-                    </div>
-                    <div className="p-6">
-                        {dailySales.length ? (
-                            <div className="space-y-3">
-                                {dailySales.map((d) => (
-                                    <div key={d.date} className="flex items-center gap-4">
-                                        <div className="w-24 text-xs text-slate-500">
-                                            {new Date(d.date).toLocaleDateString()}
-                                        </div>
-                                        <div className="flex-1 h-3 bg-slate-100 rounded">
-                                            <div
-                                                className="h-3 bg-orange-500 rounded"
-                                                style={{
-                                                    width:
-                                                        dailySales.reduce(
-                                                            (m, x) => Math.max(m, x.total),
-                                                            0,
-                                                        ) === 0
-                                                            ? "0%"
-                                                            : `${(d.total / dailySales.reduce(
-                                                                  (m, x) => Math.max(m, x.total),
-                                                                  0,
-                                                              )) * 100}%`,
-                                                }}
-                                            ></div>
-                                        </div>
-                                        <div className="w-28 text-right text-sm font-semibold text-slate-700">
-                                            {Number(d.total).toLocaleString()} MMK
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center text-slate-400 py-10">
-                                No sales data yet.
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Role Focus */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                        <p className="text-xs uppercase tracking-widest text-slate-400">
-                            Focus
-                        </p>
-                        <p className="mt-2 font-semibold text-slate-800">
-                            {role === "sales" &&
-                                "Today’s orders and quick approvals"}
-                            {role === "manager" &&
-                                "Inventory flow and team performance"}
-                            {role === "delivery" &&
-                                "Route updates and delivery status"}
-                            {role === "admin" &&
-                                "Revenue, operations, and compliance"}
-                        </p>
-                    </div>
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                        <p className="text-xs uppercase tracking-widest text-slate-400">
-                            Priority
-                        </p>
-                        <p className="mt-2 font-semibold text-slate-800">
-                            {role === "sales" && "Confirm pending orders fast"}
-                            {role === "manager" && "Resolve low stock alerts"}
-                            {role === "delivery" && "Update live locations"}
-                            {role === "admin" && "Review refund requests"}
-                        </p>
-                    </div>
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                        <p className="text-xs uppercase tracking-widest text-slate-400">
-                            Tip
-                        </p>
-                        <p className="mt-2 font-semibold text-slate-800">
-                            {role === "sales" &&
-                                "Use order filters to batch confirm"}
-                            {role === "manager" &&
-                                "Assign staff to high-demand shops"}
-                            {role === "delivery" &&
-                                "Pin routes for faster updates"}
-                            {role === "admin" &&
-                                "Audit slips before confirming refunds"}
-                        </p>
-                    </div>
-                </div>
+                </section>
             </div>
         </AdminLayout>
     );
 }
 
-// Stats Card Component
-function StatCard({ label, value, icon, color }) {
+function StatCard({ label, value, tone = "sky" }) {
+    const tones = {
+        sky: "from-sky-500 to-cyan-400",
+        violet: "from-violet-500 to-fuchsia-400",
+        emerald: "from-emerald-500 to-lime-400",
+        amber: "from-amber-500 to-orange-400",
+        rose: "from-rose-500 to-pink-400",
+    };
+
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5">
-            <div
-                className={`w-12 h-12 ${color} text-white rounded-xl flex items-center justify-center text-xl shadow-lg shadow-inner`}
-            >
-                {icon}
+        <div className="rounded-2xl bg-white border border-slate-100 p-4 shadow-sm">
+            <p className="text-[11px] uppercase tracking-widest text-slate-400 font-bold">{label}</p>
+            <div className="mt-3 flex items-center justify-between">
+                <p className="text-2xl font-black text-slate-900">{value}</p>
+                <div className={`h-2 w-12 rounded-full bg-gradient-to-r ${tones[tone] || tones.sky}`}></div>
             </div>
-            <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                    {label}
-                </p>
-                <p className="text-xl font-black text-slate-800 leading-tight">
-                    {value}
-                </p>
-            </div>
+        </div>
+    );
+}
+
+function MetricPill({ label, value }) {
+    return (
+        <div className="rounded-2xl bg-white/10 border border-white/20 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-widest text-slate-300 font-bold">{label}</p>
+            <p className="mt-1 text-lg font-black text-white">{value}</p>
         </div>
     );
 }

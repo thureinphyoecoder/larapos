@@ -13,6 +13,8 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ShopController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\StaffAttendanceController;
+use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\GlobalSearchController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -90,6 +92,10 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery'])->pr
 
     // Products Management
     Route::resource('products', AdminProductController::class)->except(['destroy']);
+    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::post('/inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+    Route::post('/inventory/transfer', [InventoryController::class, 'transfer'])->name('inventory.transfer');
+    Route::get('/search', [GlobalSearchController::class, 'index'])->name('search.index');
 
     // Admin Orders
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
@@ -111,6 +117,7 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery'])->pr
 
     Route::middleware(['role:admin'])->group(function () {
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('/inventory/share', [InventoryController::class, 'toggleShare'])->name('inventory.share');
     });
 
     // Delivery tracking updates (admin/manager/delivery)

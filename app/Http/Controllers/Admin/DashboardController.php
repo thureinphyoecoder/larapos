@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order; // Model ရှိရမယ်
+use App\Models\ProductVariant;
 use App\Models\Shop;  // Model ရှိရမယ်
 use App\Models\StaffAttendance;
+use App\Models\StockTransfer;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -40,7 +42,70 @@ class DashboardController extends Controller
                     $date = $from->copy()->addDays($i)->toDateString();
                     return [
                         'date' => $date,
+                        'label' => Carbon::parse($date)->format('D'),
                         'total' => (float) ($dailySalesRaw[$date]->total ?? 0),
+                    ];
+                });
+
+                $weeklyAnchor = Carbon::now()->startOfWeek();
+                $weeklyFrom = $weeklyAnchor->copy()->subWeeks(7)->startOfDay();
+                $weeklyRaw = Order::where('status', '!=', 'cancelled')
+                    ->where('created_at', '>=', $weeklyFrom)
+                    ->selectRaw('YEARWEEK(created_at, 1) as yw')
+                    ->selectRaw('SUM(total_amount) as total')
+                    ->groupBy('yw')
+                    ->orderBy('yw')
+                    ->get()
+                    ->keyBy('yw');
+
+                $weeklySales = collect(range(0, 7))->map(function ($i) use ($weeklyRaw, $weeklyAnchor) {
+                    $start = $weeklyAnchor->copy()->subWeeks(7 - $i)->startOfWeek();
+                    $yw = (int) $start->format('oW');
+                    return [
+                        'date' => $start->toDateString(),
+                        'label' => 'W' . $start->format('W'),
+                        'total' => (float) ($weeklyRaw[$yw]->total ?? 0),
+                    ];
+                });
+
+                $monthlyAnchor = Carbon::now()->startOfMonth();
+                $monthlyFrom = $monthlyAnchor->copy()->subMonths(11)->startOfDay();
+                $monthlyRaw = Order::where('status', '!=', 'cancelled')
+                    ->where('created_at', '>=', $monthlyFrom)
+                    ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym")
+                    ->selectRaw('SUM(total_amount) as total')
+                    ->groupBy('ym')
+                    ->orderBy('ym')
+                    ->get()
+                    ->keyBy('ym');
+
+                $monthlySales = collect(range(0, 11))->map(function ($i) use ($monthlyRaw, $monthlyAnchor) {
+                    $month = $monthlyAnchor->copy()->subMonths(11 - $i);
+                    $key = $month->format('Y-m');
+                    return [
+                        'date' => $month->toDateString(),
+                        'label' => $month->format('M'),
+                        'total' => (float) ($monthlyRaw[$key]->total ?? 0),
+                    ];
+                });
+
+                $yearlyAnchor = Carbon::now()->startOfYear();
+                $yearlyFrom = $yearlyAnchor->copy()->subYears(4)->startOfDay();
+                $yearlyRaw = Order::where('status', '!=', 'cancelled')
+                    ->where('created_at', '>=', $yearlyFrom)
+                    ->selectRaw('YEAR(created_at) as y')
+                    ->selectRaw('SUM(total_amount) as total')
+                    ->groupBy('y')
+                    ->orderBy('y')
+                    ->get()
+                    ->keyBy('y');
+
+                $yearlySales = collect(range(0, 4))->map(function ($i) use ($yearlyRaw, $yearlyAnchor) {
+                    $year = (int) $yearlyAnchor->copy()->subYears(4 - $i)->format('Y');
+                    return [
+                        'date' => (string) $year,
+                        'label' => (string) $year,
+                        'total' => (float) ($yearlyRaw[$year]->total ?? 0),
                     ];
                 });
 
@@ -99,11 +164,57 @@ class DashboardController extends Controller
                     'checked_in_staff' => $teamAttendance->where('checked_in', true)->count(),
                 ];
 
+                $stockByShop = Shop::query()
+                    ->leftJoin('products', 'products.shop_id', '=', 'shops.id')
+                    ->leftJoin('product_variants', function ($join) {
+                        $join->on('product_variants.product_id', '=', 'products.id')
+                            ->where('product_variants.is_active', true);
+                    })
+                    ->groupBy('shops.id', 'shops.name')
+                    ->orderBy('shops.name')
+                    ->get([
+                        'shops.id',
+                        'shops.name',
+                        DB::raw('COALESCE(SUM(product_variants.stock_level), 0) as total_stock'),
+                        DB::raw('SUM(CASE WHEN product_variants.stock_level <= 5 THEN 1 ELSE 0 END) as low_stock_variants'),
+                    ])
+                    ->map(fn ($row) => [
+                        'id' => (int) $row->id,
+                        'shop' => $row->name,
+                        'total_stock' => (int) $row->total_stock,
+                        'low_stock_variants' => (int) $row->low_stock_variants,
+                    ])
+                    ->values();
+
+                $transferFrom = Carbon::now()->subDays(6)->startOfDay();
+                $transferRaw = StockTransfer::where('created_at', '>=', $transferFrom)
+                    ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(quantity) as qty'))
+                    ->groupBy(DB::raw('DATE(created_at)'))
+                    ->orderBy(DB::raw('DATE(created_at)'))
+                    ->get()
+                    ->keyBy('date');
+
+                $transferTrend = collect(range(0, 6))->map(function ($i) use ($transferRaw, $transferFrom) {
+                    $date = $transferFrom->copy()->addDays($i)->toDateString();
+                    return [
+                        'date' => $date,
+                        'qty' => (int) ($transferRaw[$date]->qty ?? 0),
+                    ];
+                });
+
                 return inertia('Admin/Dashboard', [
                     'stats' => $stats,
                     'recentOrders' => $recentOrders,
                     'dailySales' => $dailySales,
+                    'salesTrends' => [
+                        'daily' => $dailySales,
+                        'weekly' => $weeklySales,
+                        'monthly' => $monthlySales,
+                        'yearly' => $yearlySales,
+                    ],
                     'teamAttendance' => $teamAttendance,
+                    'stockByShop' => $stockByShop,
+                    'transferTrend' => $transferTrend,
                 ]);
             }
 
@@ -134,12 +245,18 @@ class DashboardController extends Controller
                     ];
                 });
 
+                $shopOrderStats = Order::where('shop_id', $shopId)
+                    ->selectRaw('COALESCE(SUM(total_amount), 0) as shop_sales')
+                    ->selectRaw('COUNT(*) as total_orders')
+                    ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_orders")
+                    ->first();
+
                 return inertia('Admin/ManagerDashboard', [
                     'shop' => Shop::find($shopId),
                     'stats' => [
-                        'shop_sales' => number_format((float) Order::where('shop_id', $shopId)->sum('total_amount')),
-                        'total_orders' => Order::where('shop_id', $shopId)->count(),
-                        'pending_orders' => Order::where('shop_id', $shopId)->where('status', 'pending')->count(),
+                        'shop_sales' => number_format((float) ($shopOrderStats->shop_sales ?? 0)),
+                        'total_orders' => (int) ($shopOrderStats->total_orders ?? 0),
+                        'pending_orders' => (int) ($shopOrderStats->pending_orders ?? 0),
                         'team_members' => User::where('shop_id', $shopId)->count(),
                     ],
                     'recentOrders' => $recentOrders,
@@ -150,14 +267,22 @@ class DashboardController extends Controller
             if ($user->hasRole('sales')) {
                 $shopId = $user->shop_id;
                 $today = now()->startOfDay();
+                $todayString = $today->toDateTimeString();
+
+                $salesStats = Order::where('shop_id', $shopId)
+                    ->selectRaw("SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as today_orders", [$todayString])
+                    ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_orders")
+                    ->selectRaw("SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_orders")
+                    ->selectRaw("COALESCE(SUM(CASE WHEN created_at >= ? THEN total_amount ELSE 0 END), 0) as today_sales", [$todayString])
+                    ->first();
 
                 return inertia('Admin/SalesDashboard', [
                     'shop' => Shop::find($shopId),
                     'stats' => [
-                        'today_orders' => Order::where('shop_id', $shopId)->where('created_at', '>=', $today)->count(),
-                        'pending_orders' => Order::where('shop_id', $shopId)->where('status', 'pending')->count(),
-                        'confirmed_orders' => Order::where('shop_id', $shopId)->where('status', 'confirmed')->count(),
-                        'today_sales' => number_format((float) Order::where('shop_id', $shopId)->where('created_at', '>=', $today)->sum('total_amount')),
+                        'today_orders' => (int) ($salesStats->today_orders ?? 0),
+                        'pending_orders' => (int) ($salesStats->pending_orders ?? 0),
+                        'confirmed_orders' => (int) ($salesStats->confirmed_orders ?? 0),
+                        'today_sales' => number_format((float) ($salesStats->today_sales ?? 0)),
                     ],
                     'recentOrders' => Order::with(['user', 'shop'])
                         ->where('shop_id', $shopId)
@@ -171,14 +296,23 @@ class DashboardController extends Controller
                 $shopId = $user->shop_id;
                 $deliveryQuery = Order::with(['user', 'shop'])
                     ->when($shopId, fn ($q) => $q->where('shop_id', $shopId));
+                $todayDate = now()->toDateString();
+
+                $deliveryStatsQuery = Order::query()->when($shopId, fn ($q) => $q->where('shop_id', $shopId));
+                $deliveryStats = $deliveryStatsQuery
+                    ->selectRaw("SUM(CASE WHEN status IN ('confirmed', 'shipped') THEN 1 ELSE 0 END) as assigned_orders")
+                    ->selectRaw("SUM(CASE WHEN status = 'shipped' THEN 1 ELSE 0 END) as in_transit")
+                    ->selectRaw("SUM(CASE WHEN DATE(delivered_at) = ? THEN 1 ELSE 0 END) as delivered_today", [$todayDate])
+                    ->selectRaw("SUM(CASE WHEN status = 'shipped' AND delivery_updated_at IS NULL THEN 1 ELSE 0 END) as location_updates_needed")
+                    ->first();
 
                 return inertia('Admin/DeliveryDashboard', [
                     'shop' => $shopId ? Shop::find($shopId) : null,
                     'stats' => [
-                        'assigned_orders' => (clone $deliveryQuery)->whereIn('status', ['confirmed', 'shipped'])->count(),
-                        'in_transit' => (clone $deliveryQuery)->where('status', 'shipped')->count(),
-                        'delivered_today' => (clone $deliveryQuery)->whereDate('delivered_at', now()->toDateString())->count(),
-                        'location_updates_needed' => (clone $deliveryQuery)->where('status', 'shipped')->whereNull('delivery_updated_at')->count(),
+                        'assigned_orders' => (int) ($deliveryStats->assigned_orders ?? 0),
+                        'in_transit' => (int) ($deliveryStats->in_transit ?? 0),
+                        'delivered_today' => (int) ($deliveryStats->delivered_today ?? 0),
+                        'location_updates_needed' => (int) ($deliveryStats->location_updates_needed ?? 0),
                     ],
                     'deliveryOrders' => (clone $deliveryQuery)
                         ->whereIn('status', ['confirmed', 'shipped', 'delivered'])
