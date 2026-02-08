@@ -9,6 +9,18 @@ export default function AdminLayout({ children, header }) {
     const role = auth?.role || "admin";
     const canTrackAttendance = ["admin", "manager", "sales", "delivery"].includes(role);
     const canUseSearch = ["admin", "manager", "sales"].includes(role);
+    const roleLabelMap = {
+        admin: "Super Admin",
+        manager: "Manager",
+        sales: "Sales Staff",
+        delivery: "Rider",
+    };
+    const primaryIdentity = user?.name || "Unknown User";
+    const normalizedRole = (roleLabelMap[role] || "Admin Account").toLowerCase().trim();
+    const normalizedName = String(primaryIdentity).toLowerCase().trim();
+    const secondaryIdentity = normalizedName === normalizedRole
+        ? (user?.email || "System Account")
+        : (roleLabelMap[role] || "Admin Account");
 
     const menuByRole = {
         admin: [
@@ -250,10 +262,10 @@ export default function AdminLayout({ children, header }) {
 
                 <div className="p-4 border-t border-slate-800 bg-slate-900">
                     <p className="text-sm font-semibold text-slate-100 truncate">
-                        {user?.name || "Unknown User"}
+                        {primaryIdentity}
                     </p>
-                    <p className="text-xs text-slate-400 truncate">
-                        {user?.email || ""}
+                    <p className="text-xs text-slate-400 uppercase tracking-wider truncate">
+                        {secondaryIdentity}
                     </p>
                     <Link
                         href={route("logout")}
@@ -268,31 +280,54 @@ export default function AdminLayout({ children, header }) {
 
             {/* Main Content */}
             <div className="flex-1 md:ms-64 flex flex-col min-h-screen">
-                <header className="h-20 bg-white/90 backdrop-blur border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-50">
-                    <div className="flex items-center gap-4">
-                        <div className="text-lg font-black text-slate-900">
+                <header className="h-20 bg-white/90 backdrop-blur border-b border-slate-200 px-6 sticky top-0 z-50">
+                    <div className="h-full grid grid-cols-[auto,1fr,auto] items-center gap-6">
+                        <div className="text-lg font-black text-slate-900 whitespace-nowrap">
                             {header || "Admin"}
                         </div>
-                        {canUseSearch && (
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    router.get(route("admin.search.index"), { q: globalSearch || undefined });
-                                }}
-                                className="hidden xl:flex items-center"
-                            >
-                                <input
-                                    type="text"
-                                    className="w-96 border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white"
-                                    placeholder="Global search: product, variant SKU, order, user..."
-                                    value={globalSearch}
-                                    onChange={(e) => setGlobalSearch(e.target.value)}
-                                />
-                            </form>
-                        )}
-                    </div>
 
-                    <div className="flex items-center gap-6">
+                        <div className="flex justify-center">
+                            {canUseSearch && (
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        router.get(route("admin.search.index"), { q: globalSearch || undefined });
+                                    }}
+                                    className="hidden xl:block w-[42rem] max-w-full"
+                                >
+                                    <div className="relative">
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M21 21l-4.35-4.35m1.6-4.15a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"
+                                            />
+                                        </svg>
+                                        <input
+                                            type="text"
+                                            className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 ps-11 pe-4 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm transition focus:border-orange-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-100"
+                                            placeholder="Search products, SKU, order ID, phone, customer..."
+                                            value={globalSearch}
+                                            onChange={(e) => setGlobalSearch(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Escape") {
+                                                    setGlobalSearch("");
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-6 justify-self-end">
                         {canTrackAttendance && (
                             <div className="hidden lg:flex items-center gap-2 border border-slate-200 rounded-xl px-2 py-1 bg-white shadow-sm">
                                 {attendance?.is_checked_in ? (
@@ -410,8 +445,6 @@ export default function AdminLayout({ children, header }) {
                             )}
                         </div>
 
-                        <div className="hidden md:block text-sm font-bold text-slate-700">
-                            {user?.name || ""}
                         </div>
                     </div>
                 </header>
