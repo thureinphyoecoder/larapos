@@ -19,12 +19,26 @@ function formatMoney(amount) {
     return `${Number(amount || 0).toLocaleString()} MMK`;
 }
 
+function buildOsmEmbedUrl(lat, lng) {
+    const latitude = Number(lat);
+    const longitude = Number(lng);
+    const delta = 0.01;
+    const left = (longitude - delta).toFixed(6);
+    const right = (longitude + delta).toFixed(6);
+    const top = (latitude + delta).toFixed(6);
+    const bottom = (latitude - delta).toFixed(6);
+
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+}
+
 export default function Show({ order }) {
     const { auth } = usePage().props;
     const role = auth?.role || "user";
     const [liveOrder, setLiveOrder] = useState(order);
     const [showSlip, setShowSlip] = useState(false);
     const [deliveryProof, setDeliveryProof] = useState(null);
+    const [isLocating, setIsLocating] = useState(false);
+    const [locationError, setLocationError] = useState("");
 
     const items = liveOrder?.items || [];
     const customer = liveOrder?.user;
@@ -56,6 +70,66 @@ export default function Show({ order }) {
                 },
             );
         });
+    };
+
+    const saveDeliveryLocation = (lat, lng) => {
+        router.patch(
+            route("admin.orders.updateLocation", order.id),
+            { delivery_lat: lat, delivery_lng: lng },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setLiveOrder((prev) => ({
+                        ...prev,
+                        delivery_lat: lat,
+                        delivery_lng: lng,
+                        delivery_updated_at: new Date().toISOString(),
+                    }));
+                    Swal.fire("Updated", "Current GPS location saved.", "success");
+                },
+                onError: () => Swal.fire("Error", "Failed to save location.", "error"),
+                onFinish: () => setIsLocating(false),
+            },
+        );
+    };
+
+    const captureCurrentLocation = () => {
+        setLocationError("");
+
+        if (!navigator.geolocation) {
+            setLocationError("This browser does not support GPS location.");
+            return;
+        }
+
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = Number(position.coords.latitude.toFixed(7));
+                const lng = Number(position.coords.longitude.toFixed(7));
+                saveDeliveryLocation(lat, lng);
+            },
+            (error) => {
+                setIsLocating(false);
+                if (error.code === 1) {
+                    setLocationError("Location permission denied. Please allow GPS access.");
+                    return;
+                }
+                if (error.code === 2) {
+                    setLocationError("Location unavailable. Please check GPS/network.");
+                    return;
+                }
+                if (error.code === 3) {
+                    setLocationError("Location request timed out. Try again.");
+                    return;
+                }
+                setLocationError("Could not read current location.");
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 12000,
+                maximumAge: 10000,
+            },
+        );
     };
 
     useEffect(() => {
@@ -182,7 +256,10 @@ export default function Show({ order }) {
                                         <iframe
                                             title="delivery-map"
                                             className="h-56 w-full rounded-xl border"
-                                            src={`https://www.openstreetmap.org/?mlat=${liveOrder.delivery_lat}&mlon=${liveOrder.delivery_lng}#map=14/${liveOrder.delivery_lat}/${liveOrder.delivery_lng}`}
+                                            src={buildOsmEmbedUrl(
+                                                liveOrder.delivery_lat,
+                                                liveOrder.delivery_lng,
+                                            )}
                                         />
                                     </div>
                                 </>
@@ -191,27 +268,29 @@ export default function Show({ order }) {
                             )}
 
                             {["admin", "manager", "delivery"].includes(role) && (
-                                <form
-                                    className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-3"
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        const form = new FormData(e.currentTarget);
-                                        const delivery_lat = form.get("delivery_lat");
-                                        const delivery_lng = form.get("delivery_lng");
-                                        router.patch(
-                                            route("admin.orders.updateLocation", order.id),
-                                            { delivery_lat, delivery_lng },
-                                            {
-                                                preserveScroll: true,
-                                                onSuccess: () => Swal.fire("Updated", "Delivery location saved.", "success"),
-                                            },
-                                        );
-                                    }}
-                                >
-                                    <input name="delivery_lat" placeholder="Latitude" className="rounded-xl border border-slate-300 px-3 py-2 text-sm" />
-                                    <input name="delivery_lng" placeholder="Longitude" className="rounded-xl border border-slate-300 px-3 py-2 text-sm" />
-                                    <button className="rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white">Update Location</button>
-                                </form>
+                                <div className="mt-4 space-y-3">
+                                    <button
+                                        type="button"
+                                        onClick={captureCurrentLocation}
+                                        disabled={isLocating}
+                                        className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                                    >
+                                        {isLocating ? "Getting current GPS..." : "Use Current Location"}
+                                    </button>
+                                    {locationError && (
+                                        <p className="text-xs text-rose-600 font-medium">{locationError}</p>
+                                    )}
+                                    {liveOrder?.delivery_lat && liveOrder?.delivery_lng && (
+                                        <a
+                                            href={`https://www.openstreetmap.org/?mlat=${liveOrder.delivery_lat}&mlon=${liveOrder.delivery_lng}#map=16/${liveOrder.delivery_lat}/${liveOrder.delivery_lng}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex text-xs font-semibold text-sky-600 hover:underline"
+                                        >
+                                            Open full map
+                                        </a>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>
