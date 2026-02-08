@@ -10,6 +10,8 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
 
     const selectedPrice = Number(selectedVariant?.price || 0) * quantity;
     const inStock = Number(selectedVariant?.stock_level || 0) > 0;
+    const avgRating = Number(ratingSummary?.average || 0);
+    const totalRatings = Number(ratingSummary?.count || 0);
 
     const getProductImage = () => {
         if (product?.image) return product.image;
@@ -130,6 +132,29 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                             <h1 className="mt-2 text-3xl sm:text-4xl font-black text-slate-900 leading-tight">
                                 {product.name}
                             </h1>
+                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                                <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 border border-amber-200">
+                                    {"★★★★★".split("").map((star, idx) => (
+                                        <span
+                                            key={idx}
+                                            className={idx < Math.round(avgRating) ? "text-amber-500" : "text-slate-300"}
+                                        >
+                                            {star}
+                                        </span>
+                                    ))}
+                                    <span className="text-sm font-semibold text-slate-700 ms-1">
+                                        {avgRating.toFixed(1)}
+                                    </span>
+                                </div>
+                                <p className="text-sm text-slate-500">
+                                    {totalRatings} ratings
+                                </p>
+                                {totalRatings >= 5 && (
+                                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        Trusted by buyers
+                                    </span>
+                                )}
+                            </div>
                             <p className="mt-3 text-sm text-slate-500">SKU: {selectedVariant?.sku || product.sku || "-"}</p>
                         </div>
 
@@ -254,6 +279,37 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
 
     const averageRating = Number(ratingSummary?.average || 0);
     const ratingCount = Number(ratingSummary?.count || 0);
+    const normalizedDescription = String(description || "").trim();
+    const hasDescription = normalizedDescription.length > 0;
+    const detailSections = [
+        {
+            title: "Product Highlights",
+            items: [
+                "Authentic quality with premium finish",
+                "Carefully selected for daily personal and professional use",
+                "Stable performance and long-term durability",
+                "Easy to use with clean and practical design",
+            ],
+        },
+        {
+            title: "Specifications",
+            items: [
+                `Brand: ${product?.brand?.name || "-"}`,
+                `Category: ${product?.category?.name || "-"}`,
+                `Shop: ${product?.shop?.name || "-"}`,
+                `Available Variants: ${product?.variants?.length || 0}`,
+            ],
+        },
+        {
+            title: "Shipping & Warranty",
+            items: [
+                "Fast delivery service depending on customer location",
+                "Secure packaging to prevent transport damage",
+                "Customer support available for post-purchase issues",
+                "Warranty eligibility depends on product and seller policy",
+            ],
+        },
+    ];
 
     const ensureAuth = () => {
         if (auth?.user) return true;
@@ -330,9 +386,29 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
             <div className="min-h-[220px]">
                 {activeTab === "description" && (
                     <div className="space-y-4">
-                        <div className="prose max-w-none text-slate-600 leading-relaxed whitespace-pre-line">
-                            {description || "ဒီပစ္စည်းအတွက် အသေးစိတ်ဖော်ပြချက် မရှိသေးပါဘူး။"}
-                        </div>
+                        {hasDescription && (
+                            <div className="prose max-w-none text-slate-600 leading-relaxed whitespace-pre-line">
+                                {normalizedDescription}
+                            </div>
+                        )}
+                        {!hasDescription && (
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                                Product summary will appear here when seller adds description details.
+                            </div>
+                        )}
+                        {detailSections.map((section) => (
+                            <div key={section.title} className="p-4 rounded-2xl border border-slate-200 bg-slate-50">
+                                <h3 className="text-sm font-bold text-slate-800">{section.title}</h3>
+                                <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                                    {section.items.map((item) => (
+                                        <li key={item} className="flex items-start gap-2">
+                                            <span className="mt-1 text-orange-500">•</span>
+                                            <span>{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                                 <p className="text-slate-400 text-xs uppercase">Brand</p>

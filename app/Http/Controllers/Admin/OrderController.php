@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB; // Transaction အတွက်
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
@@ -148,8 +149,14 @@ class OrderController extends Controller
         $request->validate([
             'phone' => 'required|min:9|max:15',
             'address' => 'required|string|min:10',
-            'payment_slip' => 'required|string',
+            'payment_slip' => 'required|string|max:255|starts_with:slips/',
         ]);
+
+        if (!Storage::disk('public')->exists($request->payment_slip)) {
+            throw ValidationException::withMessages([
+                'payment_slip' => 'Invalid payment slip reference.',
+            ]);
+        }
 
         $calculatedTotal = $cartItems->sum(fn($item) => $item->variant->price * $item->quantity);
 
@@ -216,7 +223,7 @@ class OrderController extends Controller
             ]);
 
             throw ValidationException::withMessages([
-                'system_error' => 'Order create failed: ' . $e->getMessage(),
+                'system_error' => 'Order create failed. Please try again.',
             ]);
         }
     }

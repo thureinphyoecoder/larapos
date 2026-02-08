@@ -108,6 +108,13 @@ class SupportChatController extends Controller
         ]);
 
         $user = $request->user();
+        $cleanMessage = trim(preg_replace('/\s+/u', ' ', strip_tags($request->string('message')->toString())));
+
+        if (mb_strlen($cleanMessage) < 1) {
+            throw ValidationException::withMessages([
+                'message' => 'Message cannot be empty.',
+            ]);
+        }
 
         if ($user->hasAnyRole(['admin', 'manager', 'sales'])) {
             $customerId = (int) $request->input('customer_id');
@@ -125,7 +132,7 @@ class SupportChatController extends Controller
                 'customer_id' => $customerId,
                 'staff_id' => $user->id,
                 'sender_id' => $user->id,
-                'message' => $request->string('message')->toString(),
+                'message' => $cleanMessage,
             ]);
 
             event(new SupportMessageSent($message));
@@ -139,7 +146,7 @@ class SupportChatController extends Controller
             'customer_id' => $user->id,
             'staff_id' => $staffId,
             'sender_id' => $user->id,
-            'message' => $request->string('message')->toString(),
+            'message' => $cleanMessage,
         ]);
 
         event(new SupportMessageSent($message));

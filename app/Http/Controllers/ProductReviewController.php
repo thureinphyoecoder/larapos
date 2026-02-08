@@ -13,10 +13,20 @@ class ProductReviewController extends Controller
     {
         $validated = $request->validate([
             'rating' => 'nullable|integer|min:1|max:5',
-            'comment' => 'nullable|string|min:2|max:1200',
+            'comment' => 'nullable|string|max:1200',
         ]);
 
-        if (empty($validated['rating']) && empty($validated['comment'])) {
+        $cleanComment = isset($validated['comment'])
+            ? trim(preg_replace('/\s+/u', ' ', strip_tags($validated['comment'])))
+            : null;
+
+        if ($cleanComment !== null && mb_strlen($cleanComment) < 2) {
+            throw ValidationException::withMessages([
+                'comment' => 'Comment must contain at least 2 readable characters.',
+            ]);
+        }
+
+        if (empty($validated['rating']) && empty($cleanComment)) {
             throw ValidationException::withMessages([
                 'review' => 'Please submit a rating or a comment.',
             ]);
@@ -29,7 +39,7 @@ class ProductReviewController extends Controller
             'user_id' => $user?->id,
             'reviewer_name' => $user?->name,
             'rating' => $validated['rating'] ?? null,
-            'comment' => $validated['comment'] ?? null,
+            'comment' => $cleanComment,
         ]);
 
         return back()->with('success', 'Thanks for your review.');
