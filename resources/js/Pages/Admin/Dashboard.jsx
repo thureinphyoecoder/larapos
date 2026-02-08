@@ -289,8 +289,8 @@ export default function Dashboard({
                                     orders.map((order) => (
                                         <tr key={order.id} className="hover:bg-slate-50/70 transition">
                                             <td className="px-5 py-3 font-bold text-slate-800">#{order.id}</td>
-                                            <td className="px-5 py-3 text-slate-600">{order.user?.name || "Unknown"}</td>
-                                            <td className="px-5 py-3 text-slate-600">{order.shop?.name || "N/A"}</td>
+                                            <td className="px-5 py-3 text-slate-600">{order.user?.name || "Customer not set"}</td>
+                                            <td className="px-5 py-3 text-slate-600">{order.shop?.name || "Shop not assigned"}</td>
                                             <td className="px-5 py-3 font-semibold text-slate-800">
                                                 {Number(order.total_amount || 0).toLocaleString()} MMK
                                             </td>

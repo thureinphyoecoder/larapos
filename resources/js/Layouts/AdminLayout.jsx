@@ -43,6 +43,13 @@ export default function AdminLayout({ children, header }) {
 
     const navLinks = menuByRole[role] || menuByRole.admin;
     const canAccessSupport = ["admin", "manager", "sales"].includes(role);
+    const toMinutes = (value) => Math.max(0, Math.round(Number(value || 0)));
+    const formatWorkedTime = (value) => {
+        const minutes = toMinutes(value);
+        const hours = Math.floor(minutes / 60);
+        const remain = minutes % 60;
+        return `${hours}h ${remain}m`;
+    };
 
     // Notification State
     const [showNoti, setShowNoti] = useState(false);
@@ -219,7 +226,7 @@ export default function AdminLayout({ children, header }) {
                                         disabled={attendanceLoading}
                                         className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
-                                        {attendanceLoading ? "Working..." : "Check Out"}
+                                        {attendanceLoading ? "Saving..." : "End Shift"}
                                     </button>
                                 ) : (
                                     <button
@@ -227,13 +234,13 @@ export default function AdminLayout({ children, header }) {
                                         disabled={attendanceLoading}
                                         className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
-                                        {attendanceLoading ? "Working..." : "Check In"}
+                                        {attendanceLoading ? "Saving..." : "Start Shift"}
                                     </button>
                                 )}
                                 <span className="text-[11px] font-semibold text-slate-500">
                                     {attendance?.is_checked_in
-                                        ? `Active ${Math.floor((attendance?.active_minutes || 0) / 60)}h ${(attendance?.active_minutes || 0) % 60}m`
-                                        : `Today ${Math.floor((attendance?.today_worked_minutes || 0) / 60)}h ${(attendance?.today_worked_minutes || 0) % 60}m`}
+                                        ? `On shift ${formatWorkedTime(attendance?.active_minutes)}`
+                                        : `Today worked ${formatWorkedTime(attendance?.today_worked_minutes)}`}
                                 </span>
                             </div>
                         )}

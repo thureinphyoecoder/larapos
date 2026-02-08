@@ -242,7 +242,7 @@ export default function Index({ users, roles, shops, type = "staff", search = ""
                                                                 ))}
                                                             </select>
                                                         ) : (
-                                                            <span>{user.shop?.name || "N/A"}</span>
+                                                            <span>{user.shop?.name || "Not assigned"}</span>
                                                         )}
                                                     </td>
                                                     <td className="px-6 py-4 text-sm text-slate-600">

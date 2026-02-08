@@ -36,10 +36,10 @@ export default function Index({ orders }) {
                                             #{order.id}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-600">
-                                            {order.user?.name || "Unknown"}
+                                            {order.user?.name || "Customer not set"}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-600">
-                                            {order.shop?.name || "N/A"}
+                                            {order.shop?.name || "Shop not assigned"}
                                         </td>
                                         <td className="px-6 py-4 text-sm font-bold text-slate-900">
                                             {order.total_amount} MMK

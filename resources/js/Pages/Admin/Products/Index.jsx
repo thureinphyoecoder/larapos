@@ -60,10 +60,10 @@ export default function Index({ products }) {
                                             {product.name}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-600">
-                                            {product.category?.name || "N/A"}
+                                            {product.category?.name || "Not assigned"}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-600">
-                                            {product.shop?.name || "N/A"}
+                                            {product.shop?.name || "Not assigned"}
                                         </td>
                                         <td className="px-6 py-4 text-sm font-semibold text-slate-700">
                                             {(product.variants || []).filter((variant) => variant.is_active ?? true).length}
@@ -71,7 +71,7 @@ export default function Index({ products }) {
                                         <td className="px-6 py-4 text-sm font-bold text-slate-900">
                                             {(() => {
                                                 const activeVariants = (product.variants || []).filter((variant) => variant.is_active ?? true);
-                                                if (!activeVariants.length) return "N/A";
+                                                if (!activeVariants.length) return "No active variant";
                                                 const prices = activeVariants.map((variant) => Number(variant.price || 0));
                                                 const min = Math.min(...prices);
                                                 const max = Math.max(...prices);

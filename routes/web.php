@@ -116,6 +116,9 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery'])->pr
 
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
+        Route::post('/shops', [ShopController::class, 'store'])->name('shops.store');
+        Route::patch('/shops/{shop}', [ShopController::class, 'update'])->name('shops.update');
+        Route::delete('/shops/{shop}', [ShopController::class, 'destroy'])->name('shops.destroy');
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::post('/inventory/share', [InventoryController::class, 'toggleShare'])->name('inventory.share');

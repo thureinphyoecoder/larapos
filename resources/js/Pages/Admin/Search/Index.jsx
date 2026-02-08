@@ -14,7 +14,7 @@ export default function SearchIndex({ q = "", results = {} }) {
             <div className="space-y-6">
                 <div className="bg-white border border-slate-100 rounded-2xl p-5">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Global Search</p>
-                    <h1 className="mt-2 text-2xl font-black text-slate-900">Results for: "{q || "-"}"</h1>
+                    <h1 className="mt-2 text-2xl font-black text-slate-900">Results for: "{q || "all records"}"</h1>
                     <p className="mt-1 text-sm text-slate-500">Products, variants, orders and staff/users in one place.</p>
                 </div>
 
@@ -23,7 +23,7 @@ export default function SearchIndex({ q = "", results = {} }) {
                         {products.map((item) => (
                             <Link key={item.id} href={route("admin.products.edit", item.id)} className="block p-3 rounded-lg hover:bg-slate-50 border border-slate-100">
                                 <p className="font-semibold text-slate-800">{item.name}</p>
-                                <p className="text-xs text-slate-500">{item.sku} | {item.shop?.name || "N/A"}</p>
+                                <p className="text-xs text-slate-500">{item.sku} | {item.shop?.name || "Shop not assigned"}</p>
                             </Link>
                         ))}
                     </ResultCard>
@@ -41,7 +41,7 @@ export default function SearchIndex({ q = "", results = {} }) {
                         {orders.map((item) => (
                             <Link key={item.id} href={route("admin.orders.show", item.id)} className="block p-3 rounded-lg hover:bg-slate-50 border border-slate-100">
                                 <p className="font-semibold text-slate-800">Order #{item.id}</p>
-                                <p className="text-xs text-slate-500">{item.status} | {item.shop?.name || "N/A"}</p>
+                                <p className="text-xs text-slate-500">{item.status} | {item.shop?.name || "Shop not assigned"}</p>
                             </Link>
                         ))}
                     </ResultCard>
@@ -50,7 +50,7 @@ export default function SearchIndex({ q = "", results = {} }) {
                         {users.map((item) => (
                             <div key={item.id} className="p-3 rounded-lg border border-slate-100">
                                 <p className="font-semibold text-slate-800">{item.name}</p>
-                                <p className="text-xs text-slate-500">{item.email} | {item.shop?.name || "N/A"}</p>
+                                <p className="text-xs text-slate-500">{item.email} | {item.shop?.name || "Shop not assigned"}</p>
                             </div>
                         ))}
                     </ResultCard>
