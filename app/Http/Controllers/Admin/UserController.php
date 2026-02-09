@@ -105,7 +105,7 @@ class UserController extends Controller
             'shop_id' => 'nullable|exists:shops,id',
         ]);
 
-        $staffRoles = ['manager', 'sales', 'delivery'];
+        $staffRoles = ['manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician'];
         if (in_array($validated['role'], $staffRoles, true) && empty($validated['shop_id'])) {
             return back()->withErrors(['shop_id' => 'Staff role သတ်မှတ်ထားရင် shop လည်းရွေးပေးပါ။']);
         }
@@ -137,7 +137,7 @@ class UserController extends Controller
             return back()->withErrors(['role' => 'Manager cannot modify admin/manager accounts.']);
         }
 
-        $staffRoles = ['manager', 'sales', 'delivery'];
+        $staffRoles = ['manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician'];
         if (in_array($validated['role'], $staffRoles, true) && empty($validated['shop_id'])) {
             return back()->withErrors(['shop_id' => 'Staff role သတ်မှတ်ထားရင် shop လည်းရွေးပေးပါ။']);
         }
@@ -169,7 +169,7 @@ class UserController extends Controller
         }
 
         if ($actor?->hasRole('manager')) {
-            return ['sales', 'delivery'];
+            return ['sales', 'delivery', 'cashier', 'technician'];
         }
 
         return [];

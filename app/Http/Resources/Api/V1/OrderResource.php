@@ -12,6 +12,9 @@ class OrderResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'invoice_no' => $this->invoice_no,
+            'receipt_no' => $this->receipt_no,
+            'job_no' => $this->job_no,
             'user_id' => $this->user_id,
             'shop_id' => $this->shop_id,
             'total_amount' => (float) $this->total_amount,

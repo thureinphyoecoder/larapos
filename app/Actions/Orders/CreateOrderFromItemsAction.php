@@ -6,6 +6,9 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Services\Governance\AuditLogger;
+use App\Services\Governance\DocumentNumberService;
+use App\Services\Governance\StockMovementLogger;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +18,9 @@ class CreateOrderFromItemsAction
 {
     public function __construct(
         private readonly RefreshProductStockAction $refreshProductStockAction,
+        private readonly DocumentNumberService $documentNumberService,
+        private readonly StockMovementLogger $stockMovementLogger,
+        private readonly AuditLogger $auditLogger,
     ) {
     }
 
@@ -128,9 +134,13 @@ class CreateOrderFromItemsAction
                 ? $paymentSlip->storePublicly('slips', 'public')
                 : null;
 
+            $shopId = (int) $shopIds->first();
             $order = Order::query()->create([
+                'invoice_no' => $this->documentNumberService->next('invoice', $shopId),
+                'receipt_no' => $this->documentNumberService->next('receipt', $shopId),
+                'job_no' => $this->documentNumberService->next('job', $shopId),
                 'user_id' => $user->id,
-                'shop_id' => (int) $shopIds->first(),
+                'shop_id' => $shopId,
                 'total_amount' => $total,
                 'payment_slip' => $paymentSlipPath,
                 'status' => 'pending',
@@ -157,6 +167,34 @@ class CreateOrderFromItemsAction
             $stockCaseSql = implode(' ', $stockCaseParts);
             DB::update(
                 "UPDATE product_variants SET stock_level = stock_level - CASE id {$stockCaseSql} ELSE 0 END WHERE id IN ({$variantIdList})"
+            );
+
+            foreach ($itemRows as $row) {
+                $this->stockMovementLogger->log(
+                    eventType: 'sale',
+                    productId: (int) $row['product_id'],
+                    variantId: (int) $row['product_variant_id'],
+                    shopId: $shopId,
+                    quantity: -1 * (int) $row['quantity'],
+                    unitPrice: (float) $row['price'],
+                    reference: $order,
+                    actorId: (int) $user->id,
+                );
+            }
+
+            $this->auditLogger->log(
+                event: 'order.created',
+                auditable: $order,
+                old: [],
+                new: [
+                    'invoice_no' => $order->invoice_no,
+                    'receipt_no' => $order->receipt_no,
+                    'job_no' => $order->job_no,
+                    'shop_id' => $order->shop_id,
+                    'total_amount' => (float) $order->total_amount,
+                    'status' => $order->status,
+                ],
+                actor: $user,
             );
 
             $this->refreshProductStockAction->execute($affectedProductIds);

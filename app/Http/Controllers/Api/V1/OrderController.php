@@ -9,7 +9,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Orders\StoreOrderRequest;
 use App\Http\Requests\Api\V1\Orders\UpdateOrderStatusRequest;
 use App\Http\Resources\Api\V1\OrderResource;
+use App\Models\ApprovalRequest;
 use App\Models\Order;
+use App\Services\Governance\AuditLogger;
 use Illuminate\Http\JsonResponse;
 
 class OrderController extends Controller
@@ -18,13 +20,14 @@ class OrderController extends Controller
         private readonly CreateOrderFromCartAction $createOrderFromCartAction,
         private readonly CreateOrderFromItemsAction $createOrderFromItemsAction,
         private readonly RestockOrderItemsAction $restockOrderItemsAction,
+        private readonly AuditLogger $auditLogger,
     ) {
     }
 
     public function index(): JsonResponse
     {
         $user = request()->user();
-        $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery']);
+        $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']);
 
         $orders = Order::query()
             ->with(['user.roles', 'shop', 'items.product', 'items.variant'])
@@ -47,7 +50,7 @@ class OrderController extends Controller
     public function show(Order $order): JsonResponse
     {
         $user = request()->user();
-        $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery']);
+        $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']);
 
         if (! $isStaff && (int) $order->user_id !== (int) $user->id) {
             abort(403);
@@ -89,8 +92,28 @@ class OrderController extends Controller
 
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order): JsonResponse
     {
+        $actor = $request->user();
         $previousStatus = $order->status;
         $nextStatus = $request->string('status')->toString();
+        $approvalRequestId = $request->integer('approval_request_id') ?: null;
+
+        if (in_array($nextStatus, ['refund_requested', 'refunded'], true)) {
+            $isFinanceApprover = $actor?->hasAnyRole(['admin', 'manager', 'accountant']) ?? false;
+            if (! $isFinanceApprover) {
+                $approval = ApprovalRequest::query()
+                    ->whereKey($approvalRequestId)
+                    ->where('order_id', $order->id)
+                    ->where('request_type', 'refund')
+                    ->where('status', 'approved')
+                    ->first();
+
+                if (! $approval) {
+                    return response()->json([
+                        'message' => 'Manager approval is required for refund actions.',
+                    ], 422);
+                }
+            }
+        }
 
         $order->update(['status' => $nextStatus]);
 
@@ -116,6 +139,15 @@ class OrderController extends Controller
         if ($nextStatus === 'delivered') {
             $order->update(['delivered_at' => now()]);
         }
+
+        $this->auditLogger->log(
+            event: 'order.status_updated',
+            auditable: $order,
+            old: ['status' => $previousStatus],
+            new: ['status' => $nextStatus],
+            meta: ['approval_request_id' => $approvalRequestId],
+            actor: $actor,
+        );
 
         event(new \App\Events\OrderStatusUpdated($order));
 

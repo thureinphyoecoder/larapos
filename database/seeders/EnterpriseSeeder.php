@@ -24,7 +24,7 @@ class EnterpriseSeeder extends Seeder
         $now = now();
 
         // ၁။ Roles သတ်မှတ်ခြင်း (Delivery role ပါ ထည့်လိုက်ပြီ)
-        $roles = ['admin', 'manager', 'sales', 'delivery', 'customer'];
+        $roles = ['admin', 'manager', 'sales', 'delivery', 'customer', 'cashier', 'accountant', 'technician'];
         $existingRoles = Role::query()
             ->where('guard_name', 'web')
             ->whereIn('name', $roles)
@@ -103,7 +103,29 @@ class EnterpriseSeeder extends Seeder
                     'email_verified_at' => now(),
                 ]
             );
-            $sales->assignRole('sales');
+            $sales->syncRoles(['sales', 'cashier']);
+
+            $accountant = User::updateOrCreate(
+                ['email' => 'accountant.' . Str::slug($v['name']) . '@larapos.com'],
+                [
+                    'name' => $v['name'] . ' Accountant',
+                    'password' => Hash::make('password'),
+                    'shop_id' => $shop->id,
+                    'email_verified_at' => now(),
+                ]
+            );
+            $accountant->syncRoles(['accountant']);
+
+            $technician = User::updateOrCreate(
+                ['email' => 'technician.' . Str::slug($v['name']) . '@larapos.com'],
+                [
+                    'name' => $v['name'] . ' Technician',
+                    'password' => Hash::make('password'),
+                    'shop_id' => $shop->id,
+                    'email_verified_at' => now(),
+                ]
+            );
+            $technician->syncRoles(['technician']);
 
             // ၇။ Delivery (ပစ္စည်းပို့ဝန်ထမ်း)
             $delivery = User::updateOrCreate(
@@ -261,21 +283,12 @@ class EnterpriseSeeder extends Seeder
             ->limit(3)
             ->get();
         if ($orderShopId && $variants->isNotEmpty()) {
-            $order = Order::create([
-                'user_id' => $customer->id,
-                'shop_id' => $orderShopId,
-                'total_amount' => 0,
-                'payment_slip' => 'slips/sample.jpg',
-                'status' => 'pending',
-                'phone' => '09123456789',
-                'address' => 'Yangon, Sample Address',
-            ]);
-
             $itemRows = [];
+            $orderTotal = 0;
             foreach ($variants as $variant) {
                 $qty = rand(1, 3);
+                $orderTotal += ((float) $variant->price * $qty);
                 $itemRows[] = [
-                    'order_id' => $order->id,
                     'product_id' => $variant->product_id,
                     'product_variant_id' => $variant->id,
                     'quantity' => $qty,
@@ -285,12 +298,19 @@ class EnterpriseSeeder extends Seeder
                 ];
             }
 
-            OrderItem::insert($itemRows);
-
-            Order::query()->whereKey($order->id)->update([
-                'total_amount' => DB::raw('(select coalesce(sum(order_items.price * order_items.quantity), 0) from order_items where order_items.order_id = orders.id)'),
-                'updated_at' => $now,
+            $order = Order::create([
+                'user_id' => $customer->id,
+                'shop_id' => $orderShopId,
+                'total_amount' => $orderTotal,
+                'payment_slip' => 'slips/sample.jpg',
+                'status' => 'pending',
+                'phone' => '09123456789',
+                'address' => 'Yangon, Sample Address',
             ]);
+
+            $itemRows = collect($itemRows)->map(fn (array $row) => $row + ['order_id' => $order->id])->all();
+
+            OrderItem::insert($itemRows);
         }
 
         // ၁၀။ Product Reviews (dummy comments + ratings)

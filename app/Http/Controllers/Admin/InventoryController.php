@@ -8,6 +8,8 @@ use App\Models\ProductVariant;
 use App\Models\Shop;
 use App\Models\ShopStockShare;
 use App\Models\StockTransfer;
+use App\Services\Governance\AuditLogger;
+use App\Services\Governance\StockMovementLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +18,12 @@ use Inertia\Inertia;
 
 class InventoryController extends Controller
 {
+    public function __construct(
+        private readonly StockMovementLogger $stockMovementLogger,
+        private readonly AuditLogger $auditLogger,
+    ) {
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -103,6 +111,7 @@ class InventoryController extends Controller
         $this->authorizeVariantAccess($user, $variant);
 
         $quantity = (int) $validated['quantity'];
+        $currentStock = (int) $variant->stock_level;
         $nextStock = match ($validated['action']) {
             'set' => $quantity,
             'add' => $variant->stock_level + $quantity,
@@ -111,6 +120,27 @@ class InventoryController extends Controller
 
         $variant->update(['stock_level' => $nextStock]);
         $this->refreshProductStock($variant->product);
+
+        $delta = $nextStock - $currentStock;
+        $this->stockMovementLogger->log(
+            eventType: 'adjust',
+            productId: (int) $variant->product_id,
+            variantId: (int) $variant->id,
+            shopId: (int) $variant->product->shop_id,
+            quantity: $delta,
+            unitPrice: (float) $variant->price,
+            reference: $variant->product,
+            actorId: (int) $user->id,
+            note: $validated['note'] ?? 'Manual stock adjustment',
+        );
+        $this->auditLogger->log(
+            event: 'stock.adjusted',
+            auditable: $variant,
+            old: ['stock_level' => $currentStock],
+            new: ['stock_level' => $nextStock],
+            meta: ['action' => $validated['action'], 'note' => $validated['note'] ?? null],
+            actor: $user,
+        );
 
         return back()->with('success', 'Stock updated successfully.');
     }
@@ -213,6 +243,43 @@ class InventoryController extends Controller
                 'status' => 'completed',
                 'note' => $validated['note'] ?? null,
             ]);
+
+            $this->stockMovementLogger->log(
+                eventType: 'transfer',
+                productId: (int) $lockedSource->product_id,
+                variantId: (int) $lockedSource->id,
+                shopId: $fromShopId,
+                quantity: -1 * $qty,
+                unitPrice: (float) $lockedSource->price,
+                reference: $lockedSource->product,
+                actorId: (int) $user->id,
+                note: $validated['note'] ?? 'Stock transfer out',
+                meta: ['to_shop_id' => $toShopId],
+            );
+            $this->stockMovementLogger->log(
+                eventType: 'transfer',
+                productId: (int) $destinationVariant->product_id,
+                variantId: (int) $destinationVariant->id,
+                shopId: $toShopId,
+                quantity: $qty,
+                unitPrice: (float) $destinationVariant->price,
+                reference: $destinationProduct,
+                actorId: (int) $user->id,
+                note: $validated['note'] ?? 'Stock transfer in',
+                meta: ['from_shop_id' => $fromShopId],
+            );
+            $this->auditLogger->log(
+                event: 'stock.transferred',
+                auditable: $destinationVariant,
+                old: [],
+                new: [
+                    'from_shop_id' => $fromShopId,
+                    'to_shop_id' => $toShopId,
+                    'quantity' => $qty,
+                ],
+                meta: ['source_variant_id' => $lockedSource->id, 'destination_variant_id' => $destinationVariant->id],
+                actor: $user,
+            );
         });
 
         return back()->with('success', 'Stock transferred successfully.');

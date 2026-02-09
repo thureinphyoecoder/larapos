@@ -49,7 +49,7 @@ class OrderController extends Controller
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
         $isStaff = $user && method_exists($user, 'hasAnyRole')
-            ? $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery'])
+            ? $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician'])
             : false;
 
         if (!$isStaff && $order->user_id !== Auth::id()) {

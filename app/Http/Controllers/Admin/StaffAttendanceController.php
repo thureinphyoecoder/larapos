@@ -13,7 +13,7 @@ class StaffAttendanceController extends Controller
     {
         $user = $request->user();
 
-        abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery']), 403);
+        abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']), 403);
 
         $openShift = StaffAttendance::where('user_id', $user->id)
             ->whereNull('check_out_at')
@@ -37,7 +37,7 @@ class StaffAttendanceController extends Controller
     {
         $user = $request->user();
 
-        abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery']), 403);
+        abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']), 403);
 
         $openShift = StaffAttendance::where('user_id', $user->id)
             ->whereNull('check_out_at')
