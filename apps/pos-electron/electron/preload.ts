@@ -7,4 +7,18 @@ contextBridge.exposeInMainWorld("desktopBridge", {
     appVersion: string;
     platform: string;
   }>,
+  offlineStatus: async () =>
+    ipcRenderer.invoke("offline:status") as Promise<{ online: boolean; pending: number; lastSyncAt: string | null }>,
+  offlineCacheProducts: async (products: unknown[]) => ipcRenderer.invoke("offline:cache-products", products),
+  offlineGetProducts: async (query: string) => ipcRenderer.invoke("offline:get-products", query) as Promise<unknown[]>,
+  offlineCacheOrders: async (orders: unknown[]) => ipcRenderer.invoke("offline:cache-orders", orders),
+  offlineGetOrders: async () => ipcRenderer.invoke("offline:get-orders") as Promise<unknown[]>,
+  offlineQueueOrder: async (payload: unknown) => ipcRenderer.invoke("offline:queue-order", payload),
+  offlineSyncNow: async (payload: { apiBaseUrl: string; token: string | null }) =>
+    ipcRenderer.invoke("offline:sync-now", payload) as Promise<{
+      synced: number;
+      failed: number;
+      pending: number;
+      lastSyncAt: string | null;
+    }>,
 });

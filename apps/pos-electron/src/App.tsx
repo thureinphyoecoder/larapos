@@ -1,10 +1,10 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { HttpError } from "./core/api/httpClient";
 import { authService } from "./features/auth/authService";
 import { catalogService } from "./features/catalog/catalogService";
 import { orderService } from "./features/orders/orderService";
-import { sessionStore } from "./state/sessionStore";
 import type { Order, Product, User } from "./core/types/contracts";
-import { HttpError } from "./core/api/httpClient";
+import { sessionStore } from "./state/sessionStore";
 import { StatusBadge } from "./components/StatusBadge";
 
 type CartLine = {
@@ -15,16 +15,40 @@ type CartLine = {
   price: number;
 };
 
+type OfflineStatus = {
+  online: boolean;
+  pending: number;
+  lastSyncAt: string | null;
+};
+
+type DetectorResult = { rawValue?: string };
+type BarcodeDetectorLike = {
+  detect: (source: ImageBitmapSource) => Promise<DetectorResult[]>;
+};
+type BarcodeDetectorCtor = new (options?: { formats?: string[] }) => BarcodeDetectorLike;
+
+const DEFAULT_OFFLINE_STATUS: OfflineStatus = {
+  online: true,
+  pending: 0,
+  lastSyncAt: null,
+};
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [systemInfo, setSystemInfo] = useState<{ appName: string; appVersion: string; platform: string } | null>(null);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [isRestoring, setIsRestoring] = useState(true);
 
   const [authBusy, setAuthBusy] = useState(false);
   const [productsBusy, setProductsBusy] = useState(false);
   const [ordersBusy, setOrdersBusy] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [syncBusy, setSyncBusy] = useState(false);
+
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraBusy, setCameraBusy] = useState(false);
+  const [cameraSupported, setCameraSupported] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,12 +59,32 @@ export default function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(DEFAULT_OFFLINE_STATUS);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const scanTimerRef = useRef<number | null>(null);
+  const scanningLockRef = useRef(false);
+
+  const cartTotal = useMemo(() => cart.reduce((sum, line) => sum + line.price * line.qty, 0), [cart]);
+
+  useEffect(() => {
+    const detectorCtor = getBarcodeDetectorCtor();
+    setCameraSupported(Boolean(detectorCtor) && Boolean(navigator.mediaDevices?.getUserMedia));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopCameraScanner();
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
 
     sessionStore.bootstrap();
-    window.desktopBridge?.systemInfo?.().then(setSystemInfo).catch(() => undefined);
+    window.desktopBridge.systemInfo().then(setSystemInfo).catch(() => undefined);
+    void refreshOfflineStatus();
 
     const token = sessionStore.getToken();
     const cachedUser = sessionStore.getUser();
@@ -50,7 +94,9 @@ export default function App() {
 
     if (!token) {
       setIsRestoring(false);
-      return;
+      return () => {
+        active = false;
+      };
     }
 
     authService
@@ -77,7 +123,83 @@ export default function App() {
     };
   }, []);
 
-  const cartTotal = useMemo(() => cart.reduce((sum, line) => sum + line.price * line.qty, 0), [cart]);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void refreshOfflineStatus();
+    }, 20000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let buffer = "";
+    let lastKeyAt = 0;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (
+        target?.isContentEditable ||
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT"
+      ) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastKeyAt > 140) {
+        buffer = "";
+      }
+      lastKeyAt = now;
+
+      if (event.key === "Enter") {
+        if (buffer.length >= 4) {
+          void handleScannedCode(buffer);
+        }
+        buffer = "";
+        return;
+      }
+
+      if (event.key.length === 1) {
+        buffer += event.key;
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [user, products]);
+
+  const refreshOfflineStatus = async (): Promise<void> => {
+    try {
+      const status = await window.desktopBridge.offlineStatus();
+      setOfflineStatus(status);
+    } catch {
+      // Keep UI usable if bridge call fails.
+    }
+  };
+
+  const runSync = async (): Promise<void> => {
+    const token = sessionStore.getToken();
+    if (!token) return;
+
+    try {
+      setSyncBusy(true);
+      setError("");
+      const result = await orderService.syncQueuedOrders(token);
+      setNotice(`Sync finished: ${result.synced} synced, ${result.pending} pending.`);
+      await loadOrders({ silentErrors: true });
+      await refreshOfflineStatus();
+    } catch (err) {
+      setError(parseApiError(err));
+    } finally {
+      setSyncBusy(false);
+    }
+  };
 
   const loadProducts = async (
     searchKeyword = keyword,
@@ -96,6 +218,7 @@ export default function App() {
       }
     } finally {
       setProductsBusy(false);
+      await refreshOfflineStatus();
     }
   };
 
@@ -113,6 +236,7 @@ export default function App() {
       }
     } finally {
       setOrdersBusy(false);
+      await refreshOfflineStatus();
     }
   };
 
@@ -130,6 +254,7 @@ export default function App() {
       sessionStore.setSession(response.token, response.user);
       setUser(response.user);
       await refreshDashboard();
+      await runSync();
     } catch (err) {
       setError(parseApiError(err));
     } finally {
@@ -143,6 +268,7 @@ export default function App() {
     } catch {
       // Token may already be invalid; clear client session anyway.
     } finally {
+      stopCameraScanner();
       sessionStore.clearSession();
       setUser(null);
       setProducts([]);
@@ -150,6 +276,7 @@ export default function App() {
       setCart([]);
       setPhone("");
       setAddress("");
+      setNotice("");
     }
   };
 
@@ -176,6 +303,133 @@ export default function App() {
         },
       ];
     });
+  };
+
+  const addToCartFromScan = async (rawCode: string): Promise<void> => {
+    const code = rawCode.trim();
+    if (!code) return;
+
+    setKeyword(code);
+    await loadProducts(code, { silentErrors: true });
+
+    const nextProducts = await catalogService.listProducts(code);
+    const found = findProductByScanCode(nextProducts.data, code);
+
+    if (!found) {
+      setNotice(`Scanned: ${code} (no matching product)`);
+      return;
+    }
+
+    addToCart(found);
+    setNotice(`Scanned and added: ${code}`);
+  };
+
+  const handleScannedCode = async (code: string): Promise<void> => {
+    if (scanningLockRef.current) return;
+    scanningLockRef.current = true;
+
+    try {
+      setError("");
+      await addToCartFromScan(code);
+    } finally {
+      window.setTimeout(() => {
+        scanningLockRef.current = false;
+      }, 250);
+    }
+  };
+
+  const openCameraScanner = async (): Promise<void> => {
+    if (!cameraSupported) {
+      setError("Camera barcode/QR scan is not supported on this device.");
+      return;
+    }
+
+    try {
+      setCameraBusy(true);
+      setError("");
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+      setCameraOpen(true);
+
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        await video.play();
+      }
+
+      startCameraLoop();
+    } catch (err) {
+      setError(parseApiError(err));
+      stopCameraScanner();
+    } finally {
+      setCameraBusy(false);
+    }
+  };
+
+  const startCameraLoop = () => {
+    const detectorCtor = getBarcodeDetectorCtor();
+    const video = videoRef.current;
+    if (!detectorCtor || !video) return;
+
+    const detector = new detectorCtor({
+      formats: ["code_128", "ean_13", "ean_8", "upc_a", "upc_e", "qr_code"],
+    });
+
+    const loop = async () => {
+      if (!videoRef.current || videoRef.current.readyState < 2 || !cameraOpen) {
+        scanTimerRef.current = window.setTimeout(() => {
+          void loop();
+        }, 400);
+        return;
+      }
+
+      try {
+        const results = await detector.detect(videoRef.current);
+        const code = results.find((item) => typeof item.rawValue === "string")?.rawValue?.trim();
+        if (code) {
+          await handleScannedCode(code);
+          stopCameraScanner();
+          return;
+        }
+      } catch {
+        // ignore single detect errors and continue polling
+      }
+
+      scanTimerRef.current = window.setTimeout(() => {
+        void loop();
+      }, 400);
+    };
+
+    void loop();
+  };
+
+  const stopCameraScanner = () => {
+    if (scanTimerRef.current) {
+      window.clearTimeout(scanTimerRef.current);
+      scanTimerRef.current = null;
+    }
+
+    if (streamRef.current) {
+      for (const track of streamRef.current.getTracks()) {
+        track.stop();
+      }
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    setCameraOpen(false);
   };
 
   const updateCartQty = (variantId: number, qty: number) => {
@@ -211,11 +465,17 @@ export default function App() {
     try {
       setCheckoutBusy(true);
       setError("");
-      await orderService.createOrder({
+      setNotice("");
+      const result = await orderService.createOrder({
         phone: phone.trim(),
         address: address.trim(),
         items: cart.map((line) => ({ variant_id: line.variantId, quantity: line.qty })),
       });
+      if (result.data.status === "pending_sync") {
+        setNotice("Order queued locally. It will sync automatically when internet is available.");
+      } else {
+        setNotice("Order created successfully.");
+      }
       setCart([]);
       await loadOrders({ silentErrors: true });
     } catch (err) {
@@ -288,6 +548,15 @@ export default function App() {
           <p className="muted">Signed in as {user.name}</p>
         </div>
         <div className="topbar-actions">
+          <StatusBadge tone={offlineStatus.online ? "success" : "warning"}>
+            {offlineStatus.online ? "Online" : "Offline"}
+          </StatusBadge>
+          <StatusBadge tone={offlineStatus.pending > 0 ? "warning" : "neutral"}>
+            Queue {offlineStatus.pending}
+          </StatusBadge>
+          <button onClick={() => void runSync()} disabled={syncBusy || !offlineStatus.online}>
+            {syncBusy ? "Syncing..." : "Sync Now"}
+          </button>
           <button onClick={() => void refreshDashboard()} disabled={productsBusy || ordersBusy}>
             {productsBusy || ordersBusy ? "Refreshing..." : "Refresh Data"}
           </button>
@@ -298,6 +567,7 @@ export default function App() {
       </header>
 
       {error ? <p className="error">{error}</p> : null}
+      {notice ? <p className="notice">{notice}</p> : null}
 
       <section className="grid">
         <article className="card panel-products">
@@ -316,6 +586,22 @@ export default function App() {
               {productsBusy ? "Loading..." : "Search"}
             </button>
           </div>
+
+          <div className="scan-toolbar">
+            <button onClick={() => void openCameraScanner()} disabled={cameraBusy || !cameraSupported}>
+              {cameraBusy ? "Opening camera..." : "Scan via Camera"}
+            </button>
+            <p className="tiny muted">Barcode gun scan works globally outside input fields.</p>
+          </div>
+
+          {cameraOpen ? (
+            <div className="camera-shell">
+              <video ref={videoRef} className="camera-view" muted playsInline autoPlay />
+              <button className="btn-secondary" onClick={() => stopCameraScanner()}>
+                Stop Scanner
+              </button>
+            </div>
+          ) : null}
 
           <div className="list">
             {products.length === 0 ? <p className="muted">No products available.</p> : null}
@@ -413,7 +699,7 @@ export default function App() {
             {orders.map((order) => (
               <div key={order.id} className="list-item static">
                 <div>
-                  <strong>#{order.id}</strong>
+                  <strong>#{order.id > 0 ? order.id : `Q${Math.abs(order.id)}`}</strong>
                   <p className="tiny muted">{new Date(order.created_at).toLocaleString()}</p>
                 </div>
                 <div className="right-text">
@@ -443,7 +729,26 @@ function parseApiError(error: unknown): string {
 
 function statusTone(status: string): "neutral" | "success" | "warning" | "danger" {
   if (["delivered", "confirmed"].includes(status)) return "success";
-  if (["pending", "shipped"].includes(status)) return "warning";
+  if (["pending", "shipped", "pending_sync"].includes(status)) return "warning";
   if (["cancelled", "refunded", "returned"].includes(status)) return "danger";
   return "neutral";
+}
+
+function findProductByScanCode(products: Product[], code: string): Product | null {
+  const normalized = code.trim().toLowerCase();
+  if (!normalized) return null;
+
+  for (const product of products) {
+    if (product.sku?.toLowerCase() === normalized) return product;
+
+    const variant = product.active_variants?.find((item) => item.sku.toLowerCase() === normalized);
+    if (variant) return product;
+  }
+
+  return null;
+}
+
+function getBarcodeDetectorCtor(): BarcodeDetectorCtor | null {
+  const detector = (window as unknown as { BarcodeDetector?: BarcodeDetectorCtor }).BarcodeDetector;
+  return detector ?? null;
 }

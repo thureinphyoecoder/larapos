@@ -227,6 +227,36 @@ button:disabled {
   font-weight: 600;
 }
 
+.notice {
+  color: #0f6a2f;
+  margin: 0;
+  font-weight: 600;
+}
+
+.scan-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.camera-shell {
+  display: grid;
+  gap: 8px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  background: #eef5fb;
+}
+
+.camera-view {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  background: #0c1118;
+  object-fit: cover;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
