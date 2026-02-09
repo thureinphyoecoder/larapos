@@ -18,7 +18,7 @@ class RestockOrderItemsAction
     {
         DB::transaction(function () use ($order): void {
             $rows = $order->items()
-                ->selectRaw('product_variant_id, product_id, SUM(quantity) as qty')
+                ->selectRaw('product_variant_id, product_id, SUM(COALESCE(qty, quantity)) as qty')
                 ->groupBy('product_variant_id', 'product_id')
                 ->get();
 

@@ -56,6 +56,7 @@ class CreateOrderFromItemsAction
                 'variant_id' => (int) $variantId,
                 'quantity' => (int) $group->sum('quantity'),
             ])
+            ->sortBy('variant_id')
             ->values();
 
         if ($normalized->isEmpty()) {
@@ -100,8 +101,6 @@ class CreateOrderFromItemsAction
             $itemRows = [];
             $affectedProductIds = [];
             $total = 0.0;
-            $stockCaseParts = [];
-            $stockVariantIds = [];
 
             foreach ($normalized as $item) {
                 $variant = $variants[$item['variant_id']];
@@ -129,9 +128,6 @@ class CreateOrderFromItemsAction
                     'quantity' => $qty,
                     'price' => $price,
                 ];
-
-                $stockCaseParts[] = "WHEN {$variant->id} THEN {$qty}";
-                $stockVariantIds[] = (int) $variant->id;
             }
 
             $paymentSlipPath = $paymentSlip
@@ -183,11 +179,19 @@ class CreateOrderFromItemsAction
 
             OrderItem::query()->insert($payload);
 
-            $variantIdList = implode(',', $stockVariantIds);
-            $stockCaseSql = implode(' ', $stockCaseParts);
-            DB::update(
-                "UPDATE product_variants SET stock_level = stock_level - CASE id {$stockCaseSql} ELSE 0 END WHERE id IN ({$variantIdList})"
-            );
+            foreach ($itemRows as $row) {
+                $affected = ProductVariant::query()
+                    ->whereKey((int) $row['product_variant_id'])
+                    ->where('stock_level', '>=', (int) $row['quantity'])
+                    ->decrement('stock_level', (int) $row['quantity']);
+
+                if ($affected !== 1) {
+                    $variant = $variants[(int) $row['product_variant_id']];
+                    throw ValidationException::withMessages([
+                        'items' => "Insufficient stock for {$variant->sku}.",
+                    ]);
+                }
+            }
 
             if ($paymentSlipPath) {
                 Payment::query()->create([

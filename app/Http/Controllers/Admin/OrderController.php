@@ -243,7 +243,16 @@ class OrderController extends Controller
 
                 ]);
 
-                $variant->decrement('stock_level', (int) $item->quantity);
+                $affected = ProductVariant::query()
+                    ->whereKey((int) $variant->id)
+                    ->where('stock_level', '>=', (int) $item->quantity)
+                    ->decrement('stock_level', (int) $item->quantity);
+
+                if ($affected !== 1) {
+                    throw ValidationException::withMessages([
+                        'system_error' => "Insufficient stock for {$variant->sku}.",
+                    ]);
+                }
                 $affectedProductIds[] = (int) $item->product_id;
             }
 

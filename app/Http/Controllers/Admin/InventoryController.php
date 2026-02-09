@@ -107,40 +107,46 @@ class InventoryController extends Controller
             'note' => 'nullable|string|max:255',
         ]);
 
-        $variant = ProductVariant::with('product')->findOrFail($validated['variant_id']);
-        $this->authorizeVariantAccess($user, $variant);
+        DB::transaction(function () use ($validated, $user): void {
+            $variant = ProductVariant::with('product')
+                ->whereKey($validated['variant_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $quantity = (int) $validated['quantity'];
-        $currentStock = (int) $variant->stock_level;
-        $nextStock = match ($validated['action']) {
-            'set' => $quantity,
-            'add' => $variant->stock_level + $quantity,
-            'remove' => max(0, $variant->stock_level - $quantity),
-        };
+            $this->authorizeVariantAccess($user, $variant);
 
-        $variant->update(['stock_level' => $nextStock]);
-        $this->refreshProductStock($variant->product);
+            $quantity = (int) $validated['quantity'];
+            $currentStock = (int) $variant->stock_level;
+            $nextStock = match ($validated['action']) {
+                'set' => $quantity,
+                'add' => $variant->stock_level + $quantity,
+                'remove' => max(0, $variant->stock_level - $quantity),
+            };
 
-        $delta = $nextStock - $currentStock;
-        $this->stockMovementLogger->log(
-            eventType: 'adjust',
-            productId: (int) $variant->product_id,
-            variantId: (int) $variant->id,
-            shopId: (int) $variant->product->shop_id,
-            quantity: $delta,
-            unitPrice: (float) $variant->price,
-            reference: $variant->product,
-            actorId: (int) $user->id,
-            note: $validated['note'] ?? 'Manual stock adjustment',
-        );
-        $this->auditLogger->log(
-            event: 'stock.adjusted',
-            auditable: $variant,
-            old: ['stock_level' => $currentStock],
-            new: ['stock_level' => $nextStock],
-            meta: ['action' => $validated['action'], 'note' => $validated['note'] ?? null],
-            actor: $user,
-        );
+            $variant->update(['stock_level' => $nextStock]);
+            $this->refreshProductStock($variant->product);
+
+            $delta = $nextStock - $currentStock;
+            $this->stockMovementLogger->log(
+                eventType: 'adjust',
+                productId: (int) $variant->product_id,
+                variantId: (int) $variant->id,
+                shopId: (int) $variant->product->shop_id,
+                quantity: $delta,
+                unitPrice: (float) $variant->price,
+                reference: $variant->product,
+                actorId: (int) $user->id,
+                note: $validated['note'] ?? 'Manual stock adjustment',
+            );
+            $this->auditLogger->log(
+                event: 'stock.adjusted',
+                auditable: $variant,
+                old: ['stock_level' => $currentStock],
+                new: ['stock_level' => $nextStock],
+                meta: ['action' => $validated['action'], 'note' => $validated['note'] ?? null],
+                actor: $user,
+            );
+        });
 
         return back()->with('success', 'Stock updated successfully.');
     }
