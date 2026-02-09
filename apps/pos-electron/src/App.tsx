@@ -3,7 +3,7 @@ import { HttpError } from "./core/api/httpClient";
 import { authService } from "./features/auth/authService";
 import { catalogService } from "./features/catalog/catalogService";
 import { orderService } from "./features/orders/orderService";
-import type { Order, Product, User } from "./core/types/contracts";
+import type { Order, Product, User, Variant } from "./core/types/contracts";
 import { sessionStore } from "./state/sessionStore";
 import { StatusBadge } from "./components/StatusBadge";
 
@@ -13,6 +13,7 @@ type CartLine = {
   productName: string;
   qty: number;
   price: number;
+  maxStock: number;
 };
 
 type OfflineStatus = {
@@ -67,6 +68,16 @@ export default function App() {
   const scanningLockRef = useRef(false);
 
   const cartTotal = useMemo(() => cart.reduce((sum, line) => sum + line.price * line.qty, 0), [cart]);
+
+  const resolveStockForVariant = (variantId: number): number | null => {
+    for (const product of products) {
+      const variant = product.active_variants?.find((item) => item.id === variantId);
+      if (variant) return Number(variant.stock_level);
+    }
+
+    const inCart = cart.find((line) => line.variantId === variantId);
+    return inCart ? Number(inCart.maxStock) : null;
+  };
 
   useEffect(() => {
     const detectorCtor = getBarcodeDetectorCtor();
@@ -280,15 +291,24 @@ export default function App() {
     }
   };
 
-  const addToCart = (product: Product) => {
-    const variant = product.active_variants?.[0];
-    if (!variant || variant.stock_level <= 0) return;
+  const addVariantToCart = (product: Product, variantId?: number) => {
+    const variant = variantId
+      ? product.active_variants?.find((item) => item.id === variantId)
+      : product.active_variants?.[0];
+    if (!variant || Number(variant.stock_level) <= 0) return;
 
     setCart((current) => {
       const existing = current.find((line) => line.variantId === variant.id);
       if (existing) {
+        if (existing.qty >= Number(variant.stock_level)) {
+          setNotice(`Stock limit reached for ${variant.sku}.`);
+          return current;
+        }
+
         return current.map((line) =>
-          line.variantId === variant.id ? { ...line, qty: line.qty + 1 } : line,
+          line.variantId === variant.id
+            ? { ...line, qty: line.qty + 1, maxStock: Number(variant.stock_level) }
+            : line,
         );
       }
 
@@ -300,6 +320,7 @@ export default function App() {
           productName: product.name,
           qty: 1,
           price: variant.price,
+          maxStock: Number(variant.stock_level),
         },
       ];
     });
@@ -310,18 +331,17 @@ export default function App() {
     if (!code) return;
 
     setKeyword(code);
-    await loadProducts(code, { silentErrors: true });
-
-    const nextProducts = await catalogService.listProducts(code);
-    const found = findProductByScanCode(nextProducts.data, code);
+    const response = await catalogService.listProducts(code);
+    setProducts(response.data);
+    const found = findProductByScanCode(response.data, code);
 
     if (!found) {
       setNotice(`Scanned: ${code} (no matching product)`);
       return;
     }
 
-    addToCart(found);
-    setNotice(`Scanned and added: ${code}`);
+    addVariantToCart(found.product, found.variant?.id);
+    setNotice(`Scanned and added: ${found.variant?.sku ?? found.product.sku ?? code}`);
   };
 
   const handleScannedCode = async (code: string): Promise<void> => {
@@ -434,10 +454,17 @@ export default function App() {
 
   const updateCartQty = (variantId: number, qty: number) => {
     if (!Number.isFinite(qty)) return;
+    const requested = Math.max(1, Math.round(qty));
+    const available = resolveStockForVariant(variantId);
+    const cappedQty = available === null ? requested : Math.min(requested, available);
+
+    if (available !== null && requested > available) {
+      setNotice(`Requested qty exceeds stock. Max available: ${available}.`);
+    }
 
     setCart((current) =>
       current
-        .map((line) => (line.variantId === variantId ? { ...line, qty: Math.max(1, Math.round(qty)) } : line))
+        .map((line) => (line.variantId === variantId ? { ...line, qty: cappedQty } : line))
         .filter((line) => line.qty > 0),
     );
   };
@@ -460,6 +487,14 @@ export default function App() {
     if (address.trim().length < 5) {
       setError("Valid delivery address is required.");
       return;
+    }
+
+    for (const line of cart) {
+      const stock = resolveStockForVariant(line.variantId);
+      if (stock !== null && line.qty > stock) {
+        setError(`Insufficient stock for ${line.sku}. Available: ${stock}.`);
+        return;
+      }
     }
 
     try {
@@ -613,7 +648,7 @@ export default function App() {
                 <button
                   key={product.id}
                   className="list-item"
-                  onClick={() => addToCart(product)}
+                  onClick={() => addVariantToCart(product)}
                   disabled={isOutOfStock}
                 >
                   <div>
@@ -734,15 +769,22 @@ function statusTone(status: string): "neutral" | "success" | "warning" | "danger
   return "neutral";
 }
 
-function findProductByScanCode(products: Product[], code: string): Product | null {
+function findProductByScanCode(
+  products: Product[],
+  code: string,
+): { product: Product; variant?: Variant } | null {
   const normalized = code.trim().toLowerCase();
   if (!normalized) return null;
 
   for (const product of products) {
-    if (product.sku?.toLowerCase() === normalized) return product;
+    if (product.sku?.toLowerCase() === normalized) {
+      const firstActive = product.active_variants?.find((item) => item.is_active);
+      if (!firstActive) continue;
+      return { product, variant: firstActive };
+    }
 
     const variant = product.active_variants?.find((item) => item.sku.toLowerCase() === normalized);
-    if (variant) return product;
+    if (variant) return { product, variant };
   }
 
   return null;
