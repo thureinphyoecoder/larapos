@@ -39,6 +39,20 @@ class Order extends Model
         'delivered_at',
     ];
 
+    protected $casts = [
+        'total_amount' => 'decimal:2',
+        'delivery_lat' => 'float',
+        'delivery_lng' => 'float',
+        'delivery_updated_at' => 'datetime',
+        'shipped_at' => 'datetime',
+        'slip_checked_at' => 'datetime',
+        'refund_requested_at' => 'datetime',
+        'refunded_at' => 'datetime',
+        'return_requested_at' => 'datetime',
+        'returned_at' => 'datetime',
+        'delivered_at' => 'datetime',
+    ];
+
     protected static function booted(): void
     {
         static::creating(function (self $order): void {

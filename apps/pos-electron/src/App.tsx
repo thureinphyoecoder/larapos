@@ -33,6 +33,8 @@ const DEFAULT_OFFLINE_STATUS: OfflineStatus = {
   pending: 0,
   lastSyncAt: null,
 };
+const LOW_STOCK_THRESHOLD_KEY = "larapos.pos.low_stock_threshold";
+const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -61,13 +63,34 @@ export default function App() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(DEFAULT_OFFLINE_STATUS);
+  const [lowStockThreshold, setLowStockThreshold] = useState<number>(() => {
+    const raw = window.localStorage.getItem(LOW_STOCK_THRESHOLD_KEY);
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed) || parsed < 1) return DEFAULT_LOW_STOCK_THRESHOLD;
+    return Math.min(100, Math.round(parsed));
+  });
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const scanTimerRef = useRef<number | null>(null);
   const scanningLockRef = useRef(false);
+  const lowStockNotifiedRef = useRef(false);
 
   const cartTotal = useMemo(() => cart.reduce((sum, line) => sum + line.price * line.qty, 0), [cart]);
+  const lowStockItems = useMemo(() => {
+    return products
+      .flatMap((product) =>
+        (product.active_variants ?? [])
+          .filter((variant) => Number(variant.stock_level) <= lowStockThreshold)
+          .map((variant) => ({
+            productName: product.name,
+            sku: variant.sku,
+            stock: Number(variant.stock_level),
+          })),
+      )
+      .sort((a, b) => a.stock - b.stock)
+      .slice(0, 8);
+  }, [products, lowStockThreshold]);
 
   const resolveStockForVariant = (variantId: number): number | null => {
     for (const product of products) {
@@ -141,6 +164,34 @@ export default function App() {
 
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const timer = setInterval(() => {
+      void loadOrders({ silentErrors: true });
+    }, 15000);
+
+    return () => clearInterval(timer);
+  }, [user]);
+
+  useEffect(() => {
+    window.localStorage.setItem(LOW_STOCK_THRESHOLD_KEY, String(lowStockThreshold));
+  }, [lowStockThreshold]);
+
+  useEffect(() => {
+    if (lowStockItems.length === 0) {
+      lowStockNotifiedRef.current = false;
+      return;
+    }
+
+    if (lowStockNotifiedRef.current) {
+      return;
+    }
+
+    lowStockNotifiedRef.current = true;
+    setNotice(`Low stock alert: ${lowStockItems.length} variants are at or below ${lowStockThreshold}.`);
+  }, [lowStockItems, lowStockThreshold]);
 
   useEffect(() => {
     if (!user) return;
@@ -608,6 +659,26 @@ export default function App() {
             <h2>Products</h2>
             <StatusBadge tone="neutral">{products.length} Items</StatusBadge>
           </div>
+          <div className="row between">
+            <p className="tiny muted">Low-stock threshold</p>
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={lowStockThreshold}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (!Number.isFinite(next)) return;
+                setLowStockThreshold(Math.min(100, Math.max(1, Math.round(next))));
+              }}
+              className="threshold-input"
+            />
+          </div>
+          {lowStockItems.length > 0 ? (
+            <p className="notice">
+              Low stock: {lowStockItems.length} variants at or below {lowStockThreshold}.
+            </p>
+          ) : null}
 
           <div className="row">
             <input
@@ -660,6 +731,15 @@ export default function App() {
               );
             })}
           </div>
+          {lowStockItems.length > 0 ? (
+            <div className="low-stock-list">
+              {lowStockItems.map((item) => (
+                <p key={`${item.sku}-${item.stock}`} className="tiny muted">
+                  {item.productName} ({item.sku}) - stock {item.stock}
+                </p>
+              ))}
+            </div>
+          ) : null}
         </article>
 
         <article className="card panel-checkout">

@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 class OrderResource extends JsonResource
@@ -26,13 +27,30 @@ class OrderResource extends JsonResource
             'phone' => $this->phone,
             'address' => $this->address,
             'payment_slip_url' => $this->payment_slip ? Storage::disk('public')->url($this->payment_slip) : null,
-            'delivered_at' => $this->delivered_at?->toISOString(),
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            'delivered_at' => $this->toIsoString($this->delivered_at),
+            'created_at' => $this->toIsoString($this->created_at),
+            'updated_at' => $this->toIsoString($this->updated_at),
             'user' => $this->whenLoaded('user', fn () => new UserResource($this->user)),
             'customer' => $this->whenLoaded('customer', fn () => new CustomerResource($this->customer)),
             'shop' => $this->whenLoaded('shop', fn () => new ShopResource($this->shop)),
             'items' => $this->whenLoaded('items', fn () => OrderItemResource::collection($this->items)),
         ];
+    }
+
+    private function toIsoString(mixed $value): ?string
+    {
+        if ($value instanceof Carbon) {
+            return $value->toISOString();
+        }
+
+        if (is_string($value) && trim($value) !== '') {
+            try {
+                return Carbon::parse($value)->toISOString();
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        return null;
     }
 }
