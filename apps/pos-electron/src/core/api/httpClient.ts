@@ -42,6 +42,25 @@ export class HttpClient {
       }
 
       return payload as T;
+    } catch (error) {
+      if (error instanceof HttpError) {
+        throw error;
+      }
+
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw new HttpError(
+          `Request timeout after ${POS_CONFIG.requestTimeoutMs}ms`,
+          408,
+          { path, method },
+        );
+      }
+
+      // Network-level failure (backend unreachable, DNS, CORS/network policy, etc.)
+      throw new HttpError(
+        `Network error: cannot reach API at ${POS_CONFIG.apiBaseUrl}`,
+        0,
+        { path, method },
+      );
     } finally {
       clearTimeout(timeout);
     }

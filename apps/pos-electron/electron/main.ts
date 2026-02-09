@@ -1,9 +1,16 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const isDev = !app.isPackaged;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function createWindow(): void {
+  const preloadPath = isDev
+    ? path.join(process.cwd(), "electron", "preload.cjs")
+    : path.join(__dirname, "preload.cjs");
+
   const window = new BrowserWindow({
     width: 1480,
     height: 920,
@@ -15,7 +22,7 @@ function createWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      preload: path.join(__dirname, "preload.js"),
+      preload: preloadPath,
     },
   });
 

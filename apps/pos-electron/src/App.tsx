@@ -33,7 +33,7 @@ export default function App() {
 
   useEffect(() => {
     sessionStore.bootstrap();
-    window.desktopBridge.systemInfo().then(setSystemInfo).catch(() => undefined);
+    window.desktopBridge?.systemInfo?.().then(setSystemInfo).catch(() => undefined);
 
     const token = sessionStore.getToken();
     if (!token) return;

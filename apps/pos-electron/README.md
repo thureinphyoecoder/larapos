@@ -16,7 +16,7 @@ Enterprise desktop POS scaffold built with Electron + React + TypeScript.
 Create `.env` inside this folder if needed:
 
 ```bash
-VITE_POS_API_BASE_URL=http://127.0.0.1:8000/api/v1
+VITE_POS_API_BASE_URL=http://127.0.0.1:8001/api/v1
 VITE_POS_REQUEST_TIMEOUT_MS=15000
 ```
 
