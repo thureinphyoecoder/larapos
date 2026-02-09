@@ -2,6 +2,7 @@ import { httpClient } from "../core/api/httpClient";
 import type { User } from "../core/types/contracts";
 
 const TOKEN_KEY = "pos_auth_token";
+const USER_KEY = "pos_auth_user";
 
 class SessionStore {
   private token: string | null = null;
@@ -9,6 +10,7 @@ class SessionStore {
 
   bootstrap(): void {
     this.token = localStorage.getItem(TOKEN_KEY);
+    this.user = this.readUser();
     httpClient.setToken(this.token);
   }
 
@@ -16,6 +18,7 @@ class SessionStore {
     this.token = token;
     this.user = user;
     localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
     httpClient.setToken(token);
   }
 
@@ -23,6 +26,7 @@ class SessionStore {
     this.token = null;
     this.user = null;
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
     httpClient.setToken(null);
   }
 
@@ -36,6 +40,27 @@ class SessionStore {
 
   setUser(user: User | null): void {
     this.user = user;
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      return;
+    }
+
+    localStorage.removeItem(USER_KEY);
+  }
+
+  private readUser(): User | null {
+    const raw = localStorage.getItem(USER_KEY);
+    if (!raw) return null;
+
+    try {
+      const parsed = JSON.parse(raw) as User;
+      if (typeof parsed?.id !== "number" || typeof parsed?.email !== "string") {
+        return null;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
   }
 }
 

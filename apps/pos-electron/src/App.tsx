@@ -18,61 +18,106 @@ type CartLine = {
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [systemInfo, setSystemInfo] = useState<{ appName: string; appVersion: string; platform: string } | null>(null);
-  const [error, setError] = useState<string>("");
-  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [isRestoring, setIsRestoring] = useState(true);
 
-  const [email, setEmail] = useState("admin@larapos.com");
-  const [password, setPassword] = useState("password");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [productsBusy, setProductsBusy] = useState(false);
+  const [ordersBusy, setOrdersBusy] = useState(false);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const [keyword, setKeyword] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [phone, setPhone] = useState("09123456789");
-  const [address, setAddress] = useState("Yangon, Sample POS Address");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
 
   useEffect(() => {
+    let active = true;
+
     sessionStore.bootstrap();
     window.desktopBridge?.systemInfo?.().then(setSystemInfo).catch(() => undefined);
 
     const token = sessionStore.getToken();
-    if (!token) return;
+    const cachedUser = sessionStore.getUser();
+    if (cachedUser) {
+      setUser(cachedUser);
+    }
+
+    if (!token) {
+      setIsRestoring(false);
+      return;
+    }
 
     authService
       .me()
-      .then((profile) => {
+      .then(async (profile) => {
+        if (!active) return;
         sessionStore.setUser(profile);
         setUser(profile);
+        await Promise.all([loadProducts("", { silentErrors: true }), loadOrders({ silentErrors: true })]);
       })
       .catch(() => {
+        if (!active) return;
         sessionStore.clearSession();
+        setUser(null);
+      })
+      .finally(() => {
+        if (active) {
+          setIsRestoring(false);
+        }
       });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const cartTotal = useMemo(
-    () => cart.reduce((sum, line) => sum + line.price * line.qty, 0),
-    [cart],
-  );
+  const cartTotal = useMemo(() => cart.reduce((sum, line) => sum + line.price * line.qty, 0), [cart]);
 
-  const loadProducts = async () => {
+  const loadProducts = async (
+    searchKeyword = keyword,
+    options?: { silentErrors?: boolean },
+  ): Promise<void> => {
     try {
-      setBusy(true);
-      const response = await catalogService.listProducts(keyword);
+      setProductsBusy(true);
+      if (!options?.silentErrors) {
+        setError("");
+      }
+      const response = await catalogService.listProducts(searchKeyword);
       setProducts(response.data);
     } catch (err) {
-      setError(parseApiError(err));
+      if (!options?.silentErrors) {
+        setError(parseApiError(err));
+      }
     } finally {
-      setBusy(false);
+      setProductsBusy(false);
     }
   };
 
-  const loadOrders = async () => {
+  const loadOrders = async (options?: { silentErrors?: boolean }): Promise<void> => {
     try {
+      setOrdersBusy(true);
+      if (!options?.silentErrors) {
+        setError("");
+      }
       const response = await orderService.listOrders();
       setOrders(response.data);
     } catch (err) {
-      setError(parseApiError(err));
+      if (!options?.silentErrors) {
+        setError(parseApiError(err));
+      }
+    } finally {
+      setOrdersBusy(false);
     }
+  };
+
+  const refreshDashboard = async (): Promise<void> => {
+    await Promise.all([loadProducts(""), loadOrders()]);
   };
 
   const handleLogin = async (event: FormEvent) => {
@@ -80,15 +125,15 @@ export default function App() {
     setError("");
 
     try {
-      setBusy(true);
-      const response = await authService.login(email, password);
+      setAuthBusy(true);
+      const response = await authService.login(email.trim(), password);
       sessionStore.setSession(response.token, response.user);
       setUser(response.user);
-      await Promise.all([loadProducts(), loadOrders()]);
+      await refreshDashboard();
     } catch (err) {
       setError(parseApiError(err));
     } finally {
-      setBusy(false);
+      setAuthBusy(false);
     }
   };
 
@@ -103,12 +148,14 @@ export default function App() {
       setProducts([]);
       setOrders([]);
       setCart([]);
+      setPhone("");
+      setAddress("");
     }
   };
 
   const addToCart = (product: Product) => {
     const variant = product.active_variants?.[0];
-    if (!variant) return;
+    if (!variant || variant.stock_level <= 0) return;
 
     setCart((current) => {
       const existing = current.find((line) => line.variantId === variant.id);
@@ -132,11 +179,17 @@ export default function App() {
   };
 
   const updateCartQty = (variantId: number, qty: number) => {
+    if (!Number.isFinite(qty)) return;
+
     setCart((current) =>
       current
-        .map((line) => (line.variantId === variantId ? { ...line, qty: Math.max(1, qty) } : line))
+        .map((line) => (line.variantId === variantId ? { ...line, qty: Math.max(1, Math.round(qty)) } : line))
         .filter((line) => line.qty > 0),
     );
+  };
+
+  const removeCartItem = (variantId: number) => {
+    setCart((current) => current.filter((line) => line.variantId !== variantId));
   };
 
   const submitOrder = async () => {
@@ -145,29 +198,51 @@ export default function App() {
       return;
     }
 
+    if (phone.trim().length < 7) {
+      setError("Valid customer phone is required.");
+      return;
+    }
+
+    if (address.trim().length < 5) {
+      setError("Valid delivery address is required.");
+      return;
+    }
+
     try {
-      setBusy(true);
+      setCheckoutBusy(true);
       setError("");
       await orderService.createOrder({
-        phone,
-        address,
+        phone: phone.trim(),
+        address: address.trim(),
         items: cart.map((line) => ({ variant_id: line.variantId, quantity: line.qty })),
       });
       setCart([]);
-      await loadOrders();
+      await loadOrders({ silentErrors: true });
     } catch (err) {
       setError(parseApiError(err));
     } finally {
-      setBusy(false);
+      setCheckoutBusy(false);
     }
   };
 
-  if (!user) {
+  if (isRestoring) {
     return (
       <main className="screen screen-center">
         <section className="card auth-card">
-          <h1>LaraPOS Desktop</h1>
-          <p className="muted">Enterprise POS client with secured API session.</p>
+          <h1>LaraPee POS</h1>
+          <p className="muted">Restoring secure session...</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="screen screen-center auth-screen">
+        <section className="card auth-card">
+          <p className="eyebrow">Enterprise Console</p>
+          <h1>LaraPee POS Desktop</h1>
+          <p className="muted">Staff authentication and synchronized checkout operations.</p>
           {systemInfo ? (
             <p className="tiny muted">
               {systemInfo.appName} v{systemInfo.appVersion} ({systemInfo.platform})
@@ -176,14 +251,26 @@ export default function App() {
           <form onSubmit={handleLogin} className="stack">
             <label>
               Email
-              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
+              <input
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                type="email"
+                autoComplete="username"
+                required
+              />
             </label>
             <label>
               Password
-              <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
+              <input
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                type="password"
+                autoComplete="current-password"
+                required
+              />
             </label>
-            <button type="submit" disabled={busy}>
-              {busy ? "Signing in..." : "Sign in"}
+            <button type="submit" disabled={authBusy}>
+              {authBusy ? "Signing in..." : "Sign in"}
             </button>
           </form>
           {error ? <p className="error">{error}</p> : null}
@@ -193,43 +280,61 @@ export default function App() {
   }
 
   return (
-    <main className="screen">
+    <main className="screen app-shell">
       <header className="topbar">
         <div>
-          <h1>Enterprise POS</h1>
+          <p className="eyebrow">Operations</p>
+          <h1>POS Control Center</h1>
           <p className="muted">Signed in as {user.name}</p>
         </div>
         <div className="topbar-actions">
-          <button onClick={() => void loadProducts()} disabled={busy}>Refresh Products</button>
-          <button onClick={() => void loadOrders()} disabled={busy}>Refresh Orders</button>
-          <button onClick={() => void handleLogout()}>Logout</button>
+          <button onClick={() => void refreshDashboard()} disabled={productsBusy || ordersBusy}>
+            {productsBusy || ordersBusy ? "Refreshing..." : "Refresh Data"}
+          </button>
+          <button onClick={() => void handleLogout()} className="btn-secondary">
+            Logout
+          </button>
         </div>
       </header>
 
       {error ? <p className="error">{error}</p> : null}
 
       <section className="grid">
-        <article className="card">
-          <h2>Products</h2>
+        <article className="card panel-products">
+          <div className="row between">
+            <h2>Products</h2>
+            <StatusBadge tone="neutral">{products.length} Items</StatusBadge>
+          </div>
+
           <div className="row">
             <input
               value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Search product or SKU"
+              onChange={(event) => setKeyword(event.target.value)}
+              placeholder="Search by product or SKU"
             />
-            <button onClick={() => void loadProducts()} disabled={busy}>Search</button>
+            <button onClick={() => void loadProducts()} disabled={productsBusy}>
+              {productsBusy ? "Loading..." : "Search"}
+            </button>
           </div>
 
           <div className="list">
+            {products.length === 0 ? <p className="muted">No products available.</p> : null}
             {products.map((product) => {
               const variant = product.active_variants?.[0];
+              const isOutOfStock = !variant || variant.stock_level <= 0;
+
               return (
-                <button key={product.id} className="list-item" onClick={() => addToCart(product)}>
+                <button
+                  key={product.id}
+                  className="list-item"
+                  onClick={() => addToCart(product)}
+                  disabled={isOutOfStock}
+                >
                   <div>
                     <strong>{product.name}</strong>
                     <p className="tiny muted">{variant?.sku ?? "No active variant"}</p>
                   </div>
-                  <StatusBadge tone={variant && variant.stock_level > 0 ? "success" : "warning"}>
+                  <StatusBadge tone={isOutOfStock ? "warning" : "success"}>
                     {variant ? `${variant.price.toLocaleString()} MMK` : "Unavailable"}
                   </StatusBadge>
                 </button>
@@ -238,18 +343,27 @@ export default function App() {
           </div>
         </article>
 
-        <article className="card">
+        <article className="card panel-checkout">
           <h2>Checkout</h2>
           <label>
-            Phone
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} />
+            Customer Phone
+            <input
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              placeholder="09xxxxxxxxx"
+            />
           </label>
           <label>
-            Address
-            <input value={address} onChange={(e) => setAddress(e.target.value)} />
+            Delivery Address
+            <input
+              value={address}
+              onChange={(event) => setAddress(event.target.value)}
+              placeholder="No. 00, Township, City"
+            />
           </label>
 
-          <div className="list">
+          <div className="list cart-list">
+            {cart.length === 0 ? <p className="muted">Your cart is empty.</p> : null}
             {cart.map((line) => (
               <div key={line.variantId} className="list-item static">
                 <div>
@@ -261,27 +375,41 @@ export default function App() {
                     type="number"
                     min={1}
                     value={line.qty}
-                    onChange={(e) => updateCartQty(line.variantId, Number(e.target.value))}
+                    onChange={(event) => updateCartQty(line.variantId, Number(event.target.value))}
                   />
                   <strong>{(line.qty * line.price).toLocaleString()} MMK</strong>
+                  <button
+                    className="btn-ghost"
+                    onClick={() => removeCartItem(line.variantId)}
+                    aria-label="Remove item"
+                  >
+                    Remove
+                  </button>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="row between">
+          <div className="row between total-row">
             <strong>Total</strong>
             <strong>{cartTotal.toLocaleString()} MMK</strong>
           </div>
 
-          <button onClick={() => void submitOrder()} disabled={busy || cart.length === 0}>
-            {busy ? "Processing..." : "Create Order"}
+          <button onClick={() => void submitOrder()} disabled={checkoutBusy || cart.length === 0}>
+            {checkoutBusy ? "Processing..." : "Create Order"}
           </button>
         </article>
 
-        <article className="card">
-          <h2>Recent Orders</h2>
+        <article className="card panel-orders">
+          <div className="row between">
+            <h2>Recent Orders</h2>
+            <button onClick={() => void loadOrders()} disabled={ordersBusy} className="btn-secondary">
+              {ordersBusy ? "Loading..." : "Reload"}
+            </button>
+          </div>
+
           <div className="list">
+            {orders.length === 0 ? <p className="muted">No recent orders.</p> : null}
             {orders.map((order) => (
               <div key={order.id} className="list-item static">
                 <div>
