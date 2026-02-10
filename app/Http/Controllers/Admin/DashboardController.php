@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DailyBranchClosing;
 use App\Models\Order; // Model ရှိရမယ်
 use App\Models\ProductVariant;
 use App\Models\Shop;  // Model ရှိရမယ်
@@ -202,6 +203,32 @@ class DashboardController extends Controller
                     ];
                 });
 
+                $todayDate = Carbon::now()->toDateString();
+                $todayClosings = DailyBranchClosing::query()
+                    ->whereDate('business_date', $todayDate)
+                    ->with(['closer:id,name'])
+                    ->get()
+                    ->keyBy('shop_id');
+
+                $managerCloseStatus = Shop::query()
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+                    ->map(function ($shop) use ($todayClosings, $todayDate) {
+                        $closing = $todayClosings->get($shop->id);
+
+                        return [
+                            'shop_id' => (int) $shop->id,
+                            'shop' => $shop->name,
+                            'business_date' => $todayDate,
+                            'submitted' => (bool) $closing,
+                            'orders_count' => (int) ($closing?->orders_count ?? 0),
+                            'net_amount' => (float) ($closing?->net_amount ?? 0),
+                            'closed_at' => $closing?->updated_at?->toDateTimeString(),
+                            'closed_by' => $closing?->closer?->name,
+                        ];
+                    })
+                    ->values();
+
                 return inertia('Admin/Dashboard', [
                     'stats' => $stats,
                     'recentOrders' => $recentOrders,
@@ -215,6 +242,7 @@ class DashboardController extends Controller
                     'teamAttendance' => $teamAttendance,
                     'stockByShop' => $stockByShop,
                     'transferTrend' => $transferTrend,
+                    'managerCloseStatus' => $managerCloseStatus,
                 ]);
             }
 
@@ -251,6 +279,58 @@ class DashboardController extends Controller
                     ->selectRaw("SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_orders")
                     ->first();
 
+                $shopTeam = User::with(['roles'])
+                    ->where('shop_id', $shopId)
+                    ->whereHas('roles', fn ($query) => $query->whereIn('name', ['manager', 'sales', 'delivery']))
+                    ->orderBy('name')
+                    ->get();
+
+                $todayStart = Carbon::now()->startOfDay();
+                $attendanceRows = StaffAttendance::whereIn('user_id', $shopTeam->pluck('id'))
+                    ->where('check_in_at', '>=', $todayStart)
+                    ->orderByDesc('check_in_at')
+                    ->get()
+                    ->groupBy('user_id');
+
+                $teamAttendance = $shopTeam->map(function ($staff) use ($attendanceRows, $todayStart) {
+                    $rows = $attendanceRows->get($staff->id, collect());
+                    $latest = $rows->first();
+                    $todayMinutes = (int) $rows->sum(function ($row) {
+                        if ($row->check_out_at) {
+                            return (int) $row->worked_minutes;
+                        }
+
+                        return (int) $row->check_in_at->diffInMinutes(now());
+                    });
+
+                    return [
+                        'id' => $staff->id,
+                        'name' => $staff->name,
+                        'role' => $staff->roles->pluck('name')->first(),
+                        'checked_in' => (bool) ($latest && $latest->check_out_at === null),
+                        'check_in_at' => $latest?->check_in_at?->toDateTimeString(),
+                        'today_worked_minutes' => $todayMinutes,
+                        'met_daily_target' => $todayMinutes >= 480,
+                    ];
+                })->values();
+
+                $dailyClosings = DailyBranchClosing::query()
+                    ->with(['closer:id,name'])
+                    ->where('shop_id', $shopId)
+                    ->latest('business_date')
+                    ->take(14)
+                    ->get()
+                    ->map(fn ($row) => [
+                        'id' => $row->id,
+                        'business_date' => optional($row->business_date)->toDateString(),
+                        'orders_count' => (int) $row->orders_count,
+                        'gross_amount' => (float) $row->gross_amount,
+                        'refund_amount' => (float) $row->refund_amount,
+                        'net_amount' => (float) $row->net_amount,
+                        'closed_by' => $row->closer?->name,
+                        'updated_at' => optional($row->updated_at)->toDateTimeString(),
+                    ]);
+
                 return inertia('Admin/ManagerDashboard', [
                     'shop' => Shop::find($shopId),
                     'stats' => [
@@ -261,6 +341,8 @@ class DashboardController extends Controller
                     ],
                     'recentOrders' => $recentOrders,
                     'dailySales' => $dailySales,
+                    'teamAttendance' => $teamAttendance,
+                    'dailyClosings' => $dailyClosings,
                 ]);
             }
 

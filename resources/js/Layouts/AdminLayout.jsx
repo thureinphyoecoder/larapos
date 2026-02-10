@@ -26,6 +26,7 @@ export default function AdminLayout({ children, header }) {
     const menuByRole = {
         admin: [
             { label: "Dashboard", route: "admin.dashboard", activePatterns: ["admin.dashboard"] },
+            { label: "Payroll", route: "admin.payroll.index", activePatterns: ["admin.payroll.*"] },
             { label: "Inventory", route: "admin.inventory.index", activePatterns: ["admin.inventory.*"] },
             { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
             { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
@@ -51,6 +52,7 @@ export default function AdminLayout({ children, header }) {
             { label: "Categories", route: "admin.categories.index", activePatterns: ["admin.categories.*"] },
         ],
         accountant: [
+            { label: "Payroll", route: "admin.payroll.index", activePatterns: ["admin.payroll.*"] },
             { label: "Payments", route: "admin.payments.index", activePatterns: ["admin.payments.*"] },
             { label: "Stock Logs", route: "admin.stock-movements.index", activePatterns: ["admin.stock-movements.*"] },
             { label: "Audit Logs", route: "admin.audit-logs.index", activePatterns: ["admin.audit-logs.*"] },
@@ -168,6 +170,19 @@ export default function AdminLayout({ children, header }) {
         return Number.isNaN(date.getTime()) ? null : date.toISOString();
     };
 
+    const containDropdownScroll = (event) => {
+        const el = event.currentTarget;
+        const atTop = el.scrollTop <= 0;
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+        const scrollingDown = event.deltaY > 0;
+        const scrollingUp = event.deltaY < 0;
+
+        if ((atTop && scrollingUp) || (atBottom && scrollingDown)) {
+            event.preventDefault();
+        }
+        event.stopPropagation();
+    };
+
     useEffect(() => {
         const timer = window.setInterval(() => {
             setTimeTick((prev) => prev + 1);
@@ -210,6 +225,21 @@ export default function AdminLayout({ children, header }) {
                         createdAt: e.created_at || new Date().toISOString(),
                         isRead: false,
                         url: route("admin.support.index", { customer: e.customer_id }),
+                    };
+                    setNotifications((prev) => [next, ...prev].slice(0, 80));
+                },
+            );
+
+            window.Echo.channel("admin-notifications").listen(
+                ".ManagerReportSubmitted",
+                (e) => {
+                    const next = {
+                        id: `daily-close-${e.shop_id || "unknown"}-${Date.now()}`,
+                        type: "daily-close",
+                        message: e.message || `Manager report submitted by ${e.manager_name || "Manager"}.`,
+                        createdAt: e.created_at || new Date().toISOString(),
+                        isRead: false,
+                        url: route("admin.dashboard"),
                     };
                     setNotifications((prev) => [next, ...prev].slice(0, 80));
                 },
@@ -389,7 +419,7 @@ export default function AdminLayout({ children, header }) {
                         </div>
 
                         <div className="flex items-center gap-6 justify-self-end">
-                        {canTrackAttendance && (
+                        {canTrackAttendance && role !== "admin" && (
                             <div className="hidden lg:flex items-center gap-2 border border-slate-200 rounded-xl px-2 py-1 bg-white shadow-sm">
                                 {attendance?.is_checked_in ? (
                                     <button
@@ -471,7 +501,7 @@ export default function AdminLayout({ children, header }) {
                                                 Recent
                                             </span>
                                         </div>
-                                        <div className="max-h-96 overflow-y-auto">
+                                        <div className="max-h-96 overflow-y-auto overscroll-contain" onWheel={containDropdownScroll}>
                                             {notifications.length > 0 ? (
                                                 notifications.map((n) => (
                                                     <button

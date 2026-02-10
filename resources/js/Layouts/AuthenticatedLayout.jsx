@@ -19,6 +19,18 @@ export default function AuthenticatedLayout({ header, children }) {
         const date = new Date(value);
         return Number.isNaN(date.getTime()) ? null : date.toISOString();
     };
+    const containDropdownScroll = (event) => {
+        const el = event.currentTarget;
+        const atTop = el.scrollTop <= 0;
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+        const scrollingDown = event.deltaY > 0;
+        const scrollingUp = event.deltaY < 0;
+
+        if ((atTop && scrollingUp) || (atBottom && scrollingDown)) {
+            event.preventDefault();
+        }
+        event.stopPropagation();
+    };
     const formatRelativeTime = (value) => {
         if (!value) return "just now";
         const date = new Date(value);
@@ -319,7 +331,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                             Recent
                                         </span>
                                     </div>
-                                    <div className="max-h-80 overflow-y-auto">
+                                    <div className="max-h-80 overflow-y-auto overscroll-contain" onWheel={containDropdownScroll}>
                                         {notifications.length > 0 ? (
                                             notifications.map((n) => (
                                                 <button

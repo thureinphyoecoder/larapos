@@ -27,6 +27,7 @@ export default function Dashboard({
     teamAttendance = [],
     stockByShop = [],
     transferTrend = [],
+    managerCloseStatus = [],
 }) {
     const [orders, setOrders] = useState(recentOrders || []);
     const [liveStats, setLiveStats] = useState(stats || {});
@@ -35,9 +36,13 @@ export default function Dashboard({
     const [attendanceSeries, setAttendanceSeries] = useState(teamAttendance || []);
     const [stockSeries, setStockSeries] = useState(stockByShop || []);
     const [transferSeries, setTransferSeries] = useState(transferTrend || []);
+    const [closeStatusSeries, setCloseStatusSeries] = useState(managerCloseStatus || []);
     const [refreshing, setRefreshing] = useState(false);
     const [lastSyncAt, setLastSyncAt] = useState(() => new Date());
     const [period, setPeriod] = useState("daily");
+    const [attendancePage, setAttendancePage] = useState(1);
+    const [closeStatusPage, setCloseStatusPage] = useState(1);
+    const pageSize = 6;
 
     useEffect(() => {
         setOrders(recentOrders || []);
@@ -47,8 +52,11 @@ export default function Dashboard({
         setAttendanceSeries(teamAttendance || []);
         setStockSeries(stockByShop || []);
         setTransferSeries(transferTrend || []);
+        setCloseStatusSeries(managerCloseStatus || []);
+        setAttendancePage(1);
+        setCloseStatusPage(1);
         setLastSyncAt(new Date());
-    }, [recentOrders, stats, dailySales, salesTrends, teamAttendance, stockByShop, transferTrend]);
+    }, [recentOrders, stats, dailySales, salesTrends, teamAttendance, stockByShop, transferTrend, managerCloseStatus]);
 
     useEffect(() => {
         if (!window.Echo) return;
@@ -81,6 +89,7 @@ export default function Dashboard({
                     "teamAttendance",
                     "stockByShop",
                     "transferTrend",
+                    "managerCloseStatus",
                 ],
                 preserveState: true,
                 preserveScroll: true,
@@ -174,6 +183,20 @@ export default function Dashboard({
         () => transferSummary.reduce((max, item) => Math.max(max, Number(item.qty || 0)), 0),
         [transferSummary],
     );
+    const managerKpis = useMemo(() => {
+        const total = closeStatusSeries.length;
+        const submitted = closeStatusSeries.filter((row) => row.submitted).length;
+        return {
+            total,
+            submitted,
+            missing: Math.max(0, total - submitted),
+        };
+    }, [closeStatusSeries]);
+
+    const attendancePages = Math.max(1, Math.ceil(attendanceSeries.length / pageSize));
+    const closeStatusPages = Math.max(1, Math.ceil(closeStatusSeries.length / pageSize));
+    const attendanceRows = attendanceSeries.slice((attendancePage - 1) * pageSize, attendancePage * pageSize);
+    const closeStatusRows = closeStatusSeries.slice((closeStatusPage - 1) * pageSize, closeStatusPage * pageSize);
 
     return (
         <AdminLayout>
@@ -272,7 +295,13 @@ export default function Dashboard({
                     <StatCard label="System Users" value={liveStats.system_users || 0} tone="violet" />
                     <StatCard label="Orders" value={liveStats.total_orders || 0} tone="emerald" />
                     <StatCard label="Low Stock Shops" value={stockSummary.filter((s) => Number(s.low_stock_variants || 0) > 0).length} tone="amber" />
-                    <StatCard label="Tracked Staff" value={attendanceSeries.length} tone="rose" />
+                    <StatCard label="Active Staff" value={`${liveStats.checked_in_staff ?? 0}/${attendanceSeries.length}`} tone="rose" />
+                </section>
+
+                <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <StatCard label="Branches Reported Today" value={`${managerKpis.submitted}/${managerKpis.total}`} tone="emerald" />
+                    <StatCard label="Pending Daily Close" value={managerKpis.missing} tone="amber" />
+                    <StatCard label="Managers Tracked" value={attendanceSeries.filter((row) => row.role === "manager").length} tone="violet" />
                 </section>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -412,8 +441,102 @@ export default function Dashboard({
                         </table>
                     </div>
                 </section>
+
+                <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div className="p-5 border-b border-slate-100">
+                            <h3 className="font-bold text-slate-800">Team Active Status</h3>
+                            <p className="text-xs text-slate-500 mt-1">Super Admin can quickly monitor who is on shift now.</p>
+                        </div>
+                        <div className="divide-y divide-slate-100">
+                            {attendanceRows.length ? (
+                                attendanceRows.map((member) => (
+                                    <div key={member.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="font-semibold text-slate-800">{member.name}</p>
+                                            <p className="text-xs uppercase text-slate-500">
+                                                {member.role || "staff"} {member.shop ? `• ${member.shop}` : ""}
+                                            </p>
+                                        </div>
+                                        <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${member.checked_in ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                                            {member.checked_in ? "active now" : "offline"}
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="px-5 py-8 text-sm text-slate-400">No staff attendance data.</div>
+                            )}
+                        </div>
+                        <SimplePager current={attendancePage} total={attendancePages} onChange={setAttendancePage} />
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div className="p-5 border-b border-slate-100">
+                            <h3 className="font-bold text-slate-800">Daily Close Submission Status</h3>
+                            <p className="text-xs text-slate-500 mt-1">Manager reports by branch for today.</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-left text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-100">
+                                        <th className="px-5 py-3">Branch</th>
+                                        <th className="px-5 py-3">Orders</th>
+                                        <th className="px-5 py-3">Net</th>
+                                        <th className="px-5 py-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {closeStatusRows.length ? (
+                                        closeStatusRows.map((row) => (
+                                            <tr key={row.shop_id}>
+                                                <td className="px-5 py-3 font-semibold text-slate-700">{row.shop}</td>
+                                                <td className="px-5 py-3">{row.orders_count}</td>
+                                                <td className="px-5 py-3">{Number(row.net_amount || 0).toLocaleString()} MMK</td>
+                                                <td className="px-5 py-3">
+                                                    <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${row.submitted ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                                                        {row.submitted ? "submitted" : "pending"}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" className="px-5 py-10 text-center text-slate-400">No branch close status.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <SimplePager current={closeStatusPage} total={closeStatusPages} onChange={setCloseStatusPage} />
+                    </div>
+                </section>
             </div>
         </AdminLayout>
+    );
+}
+
+function SimplePager({ current, total, onChange }) {
+    if (total <= 1) return null;
+    return (
+        <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
+            <button
+                type="button"
+                onClick={() => onChange(Math.max(1, current - 1))}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 disabled:opacity-50"
+                disabled={current <= 1}
+            >
+                Previous
+            </button>
+            <span className="text-xs text-slate-500">Page {current} / {total}</span>
+            <button
+                type="button"
+                onClick={() => onChange(Math.min(total, current + 1))}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 disabled:opacity-50"
+                disabled={current >= total}
+            >
+                Next
+            </button>
+        </div>
     );
 }
 

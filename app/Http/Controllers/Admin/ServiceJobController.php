@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\ManagerReportSubmitted;
 use App\Http\Controllers\Controller;
+use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -73,11 +75,33 @@ class ServiceJobController extends Controller
             '--closed_by' => (string) $user->id,
         ];
 
-        if (!empty($validated['shop_id'])) {
-            $arguments['--shop_id'] = [(string) $validated['shop_id']];
+        $targetShopId = !empty($validated['shop_id']) ? (int) $validated['shop_id'] : null;
+        if ($user->hasRole('manager')) {
+            $managerShopId = (int) $user->shop_id;
+            if ($managerShopId <= 0) {
+                return back()->withErrors(['shop_id' => 'Manager shop is not assigned.']);
+            }
+
+            if ($targetShopId !== null && $targetShopId !== $managerShopId) {
+                abort(403);
+            }
+
+            $targetShopId = $managerShopId;
+        }
+
+        if ($targetShopId !== null) {
+            $arguments['--shop_id'] = [(string) $targetShopId];
         }
 
         Artisan::call('pos:daily-close', $arguments);
+
+        if ($user->hasRole('manager')) {
+            event(new ManagerReportSubmitted(
+                manager: $user,
+                shop: $targetShopId ? Shop::query()->find($targetShopId) : null,
+                businessDate: (string) $arguments['--date'],
+            ));
+        }
 
         return back()->with('success', 'Daily close executed.');
     }
