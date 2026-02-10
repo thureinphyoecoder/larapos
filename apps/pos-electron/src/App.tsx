@@ -69,6 +69,7 @@ export default function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [needsCustomerDetails, setNeedsCustomerDetails] = useState(false);
   const [receiptPreviewText, setReceiptPreviewText] = useState<string>(
     () => window.sessionStorage.getItem(LAST_RECEIPT_KEY) ?? "",
   );
@@ -498,6 +499,7 @@ export default function App() {
       setCart([]);
       setPhone("");
       setAddress("");
+      setNeedsCustomerDetails(false);
       setNotice("");
       setReceiptPreviewText("");
       window.sessionStorage.removeItem(LAST_RECEIPT_KEY);
@@ -683,10 +685,10 @@ export default function App() {
       return;
     }
 
-    const normalizedPhone = phone.trim();
-    const normalizedAddress = address.trim();
+    const normalizedPhone = needsCustomerDetails ? phone.trim() : "";
+    const normalizedAddress = needsCustomerDetails ? address.trim() : "";
 
-    if (normalizedPhone.length > 0 && normalizedPhone.length < 7) {
+    if (needsCustomerDetails && normalizedPhone.length > 0 && normalizedPhone.length < 7) {
       setError("Customer phone must be at least 7 characters or left blank for walk-in.");
       return;
     }
@@ -706,6 +708,7 @@ export default function App() {
       const result = await orderService.createOrder({
         phone: normalizedPhone !== "" ? normalizedPhone : null,
         address: normalizedAddress !== "" ? normalizedAddress : null,
+        shop_id: user.shop_id ?? undefined,
         items: cart.map((line) => ({ variant_id: line.variantId, quantity: line.qty })),
       });
       const receiptText = receiptService.buildText({
@@ -730,6 +733,9 @@ export default function App() {
         : `ပြေစာထုတ်ရန် မပြီးသေးပါ (${printResult.message ?? "printer မအသင့်မဖြစ်သေးပါ"})။ အပေါ်ဘက်က 'ပြေစာထုတ်ရန်' ကို နှိပ်ပြီး ထပ်စမ်းပါ။`;
       setNotice(`${orderMessage} ${printMessage}`);
       setCart([]);
+      setNeedsCustomerDetails(false);
+      setPhone("");
+      setAddress("");
       await loadOrders({ silentErrors: true });
     } catch (err) {
       setError(parseApiError(err));
@@ -944,22 +950,41 @@ export default function App() {
               <h2>Checkout</h2>
               <p className="tiny muted">Walk-in checkout: customer details are optional.</p>
             </div>
-            <label>
-              Customer Phone (optional)
+            <label className="row" style={{ gap: "10px" }}>
               <input
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                placeholder="09xxxxxxxxx (leave empty for walk-in)"
+                type="checkbox"
+                checked={needsCustomerDetails}
+                onChange={(event) => {
+                  const next = event.target.checked;
+                  setNeedsCustomerDetails(next);
+                  if (!next) {
+                    setPhone("");
+                    setAddress("");
+                  }
+                }}
               />
+              <span>Need delivery/service customer details</span>
             </label>
-            <label>
-              Delivery Address (optional)
-              <input
-                value={address}
-                onChange={(event) => setAddress(event.target.value)}
-                placeholder="No. 00, Township, City"
-              />
-            </label>
+            {needsCustomerDetails ? (
+              <>
+                <label>
+                  Customer Phone (optional)
+                  <input
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    placeholder="09xxxxxxxxx"
+                  />
+                </label>
+                <label>
+                  Delivery Address (optional)
+                  <input
+                    value={address}
+                    onChange={(event) => setAddress(event.target.value)}
+                    placeholder="No. 00, Township, City"
+                  />
+                </label>
+              </>
+            ) : null}
 
             <div className="list cart-list">
               {cart.length === 0 ? <p className="muted">Your cart is empty.</p> : null}
