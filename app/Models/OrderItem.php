@@ -11,9 +11,21 @@ class OrderItem extends Model
         'order_id',
         'product_id',
         'product_variant_id',
+        'qty',
+        'unit_price',
         'quantity',
         'price'
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'qty' => 'integer',
+            'quantity' => 'integer',
+            'unit_price' => 'decimal:2',
+            'price' => 'decimal:2',
+        ];
+    }
 
     public function product(): BelongsTo
     {

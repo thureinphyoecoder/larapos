@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\SupportAutoReplyService;
 use App\Services\SupportChatQueryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -91,6 +92,61 @@ class SupportChatController extends Controller
         }
 
         return back()->with('success', $isStaff ? 'Reply sent.' : 'Message sent to support team.');
+    }
+
+    public function update(Request $request, SupportMessage $message)
+    {
+        $user = $request->user();
+        abort_unless($user, 403);
+        abort_unless((int) $message->sender_id === (int) $user->id, 403);
+        abort_unless($this->canAccessMessage($user, $message), 403);
+
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $clean = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $validated['message'])) ?? '');
+        if ($clean === '') {
+            return back()->withErrors(['message' => 'Message cannot be empty.']);
+        }
+
+        $message->update(['message' => $clean]);
+
+        return back()->with('success', 'Message updated.');
+    }
+
+    public function destroy(Request $request, SupportMessage $message)
+    {
+        $user = $request->user();
+        abort_unless($user, 403);
+        abort_unless((int) $message->sender_id === (int) $user->id, 403);
+        abort_unless($this->canAccessMessage($user, $message), 403);
+
+        if ($message->attachment_path) {
+            Storage::disk('public')->delete($message->attachment_path);
+        }
+
+        $message->delete();
+
+        return back()->with('success', 'Message deleted.');
+    }
+
+    private function canAccessMessage(User $user, SupportMessage $message): bool
+    {
+        if ((int) $message->customer_id === (int) $user->id) {
+            return true;
+        }
+
+        if (! $user->hasAnyRole(['admin', 'manager', 'sales'])) {
+            return false;
+        }
+
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return (int) ($message->staff_id ?? 0) === (int) $user->id
+            || (int) $message->sender_id === (int) $user->id;
     }
 
     private function sendAutoReply(User $customer, ?int $staffId, string $incomingMessage): void

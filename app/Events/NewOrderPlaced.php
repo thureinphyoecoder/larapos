@@ -49,6 +49,7 @@ class NewOrderPlaced implements ShouldBroadcastNow
             'message' => "Order အသစ် #{$this->order->id} တက်လာပါပြီ။",
             'amount' => number_format($this->order->total_amount) . ' MMK',
             'time' => now()->diffForHumans(),
+            'created_at' => $this->order->created_at?->toISOString(),
             'order' => [
                 'id' => $this->order->id,
                 'status' => $this->order->status,

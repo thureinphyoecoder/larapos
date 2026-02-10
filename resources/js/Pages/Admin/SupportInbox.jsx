@@ -13,6 +13,8 @@ export default function SupportInbox({
     const listRef = useRef(null);
     const lastMessageIdRef = useRef(null);
     const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+    const [editingMessageId, setEditingMessageId] = useState(null);
+    const [editingMessage, setEditingMessage] = useState("");
     const { data, setData, post, processing, reset } = useForm({
         message: "",
         customer_id: activeCustomerId || "",
@@ -123,6 +125,41 @@ export default function SupportInbox({
         });
     };
 
+    const beginEdit = (message) => {
+        setEditingMessageId(message.id);
+        setEditingMessage(message.message || "");
+    };
+
+    const cancelEdit = () => {
+        setEditingMessageId(null);
+        setEditingMessage("");
+    };
+
+    const submitEdit = (messageId) => {
+        const trimmed = editingMessage.trim();
+        if (!trimmed) return;
+
+        router.patch(
+            route("admin.support.update", messageId),
+            { message: trimmed },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => cancelEdit(),
+            },
+        );
+    };
+
+    const removeMessage = (messageId) => {
+        const ok = window.confirm("ဒီ message ကိုဖျက်မှာ သေချာပါသလား?");
+        if (!ok) return;
+
+        router.delete(route("admin.support.destroy", messageId), {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
+
     return (
         <AdminLayout header="Support Inbox">
             <Head title="Support Inbox" />
@@ -199,7 +236,45 @@ export default function SupportInbox({
                                                 mine ? "bg-sky-600 text-white" : "bg-slate-100 text-slate-700"
                                             }`}
                                         >
-                                            {m.message ? <p>{m.message}</p> : null}
+                                            <p className={`text-[11px] mb-1 font-semibold ${mine ? "text-white/80" : "text-slate-500"}`}>
+                                                {mine ? "You" : m.sender?.name || "Customer"}
+                                            </p>
+                                            {editingMessageId === m.id ? (
+                                                <div className="space-y-2">
+                                                    <textarea
+                                                        value={editingMessage}
+                                                        onChange={(e) => setEditingMessage(e.target.value)}
+                                                        rows={3}
+                                                        className={`w-full rounded-lg border px-2 py-1 text-sm ${
+                                                            mine
+                                                                ? "border-white/40 bg-white/10 text-white placeholder:text-white/70"
+                                                                : "border-slate-300 bg-white text-slate-700"
+                                                        }`}
+                                                    />
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={cancelEdit}
+                                                            className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                                                                mine ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                                                            }`}
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => submitEdit(m.id)}
+                                                            className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                                                                mine ? "bg-white text-sky-700" : "bg-sky-600 text-white"
+                                                            }`}
+                                                        >
+                                                            Save
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                m.message ? <p>{m.message}</p> : null
+                                            )}
                                             {m.attachment_url ? (
                                                 <a
                                                     href={m.attachment_url}
@@ -218,6 +293,24 @@ export default function SupportInbox({
                                                 {m.sender?.name || "User"} - {new Date(m.created_at).toLocaleString()}
                                                 {mine ? ` • ${m.seen_at ? "Seen" : "Sent"}` : ""}
                                             </p>
+                                            {mine && editingMessageId !== m.id ? (
+                                                <div className="mt-2 flex items-center justify-end gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => beginEdit(m)}
+                                                        className={`text-[11px] font-semibold ${mine ? "text-white/90" : "text-slate-500"}`}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeMessage(m.id)}
+                                                        className={`text-[11px] font-semibold ${mine ? "text-rose-100" : "text-rose-600"}`}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            ) : null}
                                         </div>
                                     </div>
                                 );

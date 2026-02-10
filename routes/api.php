@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\ApprovalRequestController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\FinancialAdjustmentController;
 use App\Http\Controllers\Api\V1\OrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +43,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
+        Route::post('/orders/{order}/approval-requests', [ApprovalRequestController::class, 'store'])->name('orders.approvals.store');
+        Route::post('/orders/{order}/financial-adjustments', [FinancialAdjustmentController::class, 'store'])->name('orders.adjustments.store');
+        Route::patch('/approval-requests/{approvalRequest}/approve', [ApprovalRequestController::class, 'approve'])->name('approvals.approve');
+        Route::patch('/approval-requests/{approvalRequest}/reject', [ApprovalRequestController::class, 'reject'])->name('approvals.reject');
 
         Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     });

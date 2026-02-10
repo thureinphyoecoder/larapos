@@ -34,7 +34,7 @@ export type Order = {
   id: number;
   status: string;
   total_amount: number;
-  phone: string;
-  address: string;
+  phone: string | null;
+  address: string | null;
   created_at: string;
 };

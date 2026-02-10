@@ -7,6 +7,8 @@ use App\Actions\Orders\RestockOrderItemsAction;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\CartItem;
+use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -49,7 +51,7 @@ class OrderController extends Controller
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
         $isStaff = $user && method_exists($user, 'hasAnyRole')
-            ? $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery'])
+            ? $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician'])
             : false;
 
         if (!$isStaff && $order->user_id !== Auth::id()) {
@@ -200,8 +202,14 @@ class OrderController extends Controller
             );
 
             // Order Table ထဲ သိမ်း
+            $customer = Customer::query()->firstOrCreate(
+                ['phone' => $request->phone, 'name' => $user->name ?: 'POS Customer'],
+                ['address' => $request->address, 'created_by' => $user->id],
+            );
+
             $order = Order::create([
                 'user_id' => $user->id,
+                'customer_id' => $customer->id,
                 'shop_id' => (int) $shopIds->first(),
                 'total_amount' => $calculatedTotal, // 🎯 Backend calculated value
                 'payment_slip' => $request->payment_slip,
@@ -228,16 +236,37 @@ class OrderController extends Controller
                 $order->items()->create([
                     'product_id' => $item->product_id,
                     'product_variant_id' => $item->variant_id,
+                    'qty' => (int) $item->quantity,
+                    'unit_price' => $variant->price,
                     'quantity' => $item->quantity,
                     'price' => $variant->price,
 
                 ]);
 
-                $variant->decrement('stock_level', (int) $item->quantity);
+                $affected = ProductVariant::query()
+                    ->whereKey((int) $variant->id)
+                    ->where('stock_level', '>=', (int) $item->quantity)
+                    ->decrement('stock_level', (int) $item->quantity);
+
+                if ($affected !== 1) {
+                    throw ValidationException::withMessages([
+                        'system_error' => "Insufficient stock for {$variant->sku}.",
+                    ]);
+                }
                 $affectedProductIds[] = (int) $item->product_id;
             }
 
             $this->refreshProductStockAction->execute($affectedProductIds);
+
+            Payment::query()->create([
+                'order_id' => $order->id,
+                'event_type' => 'deposit',
+                'amount' => $calculatedTotal,
+                'status' => 'pending_verification',
+                'note' => 'Checkout deposit from uploaded slip',
+                'actor_id' => $user->id,
+                'meta' => ['payment_slip' => $request->payment_slip],
+            ]);
 
             // ခြင်းတောင်း ရှင်း
             CartItem::where('user_id', $user->id)->delete();

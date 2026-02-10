@@ -13,6 +13,27 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const [showNoti, setShowNoti] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const [, setTimeTick] = useState(0);
+    const normalizeTimestamp = (value) => {
+        if (!value) return null;
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    };
+    const formatRelativeTime = (value) => {
+        if (!value) return "just now";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return String(value);
+        }
+
+        const diffMs = date.getTime() - Date.now();
+        const absMs = Math.abs(diffMs);
+        const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+        if (absMs < 60 * 1000) return rtf.format(Math.round(diffMs / 1000), "second");
+        if (absMs < 60 * 60 * 1000) return rtf.format(Math.round(diffMs / (60 * 1000)), "minute");
+        if (absMs < 24 * 60 * 60 * 1000) return rtf.format(Math.round(diffMs / (60 * 60 * 1000)), "hour");
+        return rtf.format(Math.round(diffMs / (24 * 60 * 60 * 1000)), "day");
+    };
     const notificationStorageKey = user?.id
         ? `larapos_user_notifications_${user.id}`
         : null;
@@ -43,7 +64,20 @@ export default function AuthenticatedLayout({ header, children }) {
             if (!raw) return;
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) {
-                setNotifications(parsed);
+                const migrated = parsed
+                    .map((n) => ({
+                        ...n,
+                        createdAt: normalizeTimestamp(n.createdAt || n.created_at || null),
+                    }))
+                    .filter((n) => n.createdAt);
+
+                setNotifications(
+                    migrated,
+                );
+
+                if (migrated.length !== parsed.length) {
+                    window.localStorage.setItem(notificationStorageKey, JSON.stringify(migrated.slice(0, 80)));
+                }
             }
         } catch {
             setNotifications([]);
@@ -59,6 +93,16 @@ export default function AuthenticatedLayout({ header, children }) {
     }, [notifications, notificationStorageKey]);
 
     useEffect(() => {
+        const timer = window.setInterval(() => {
+            setTimeTick((prev) => prev + 1);
+        }, 30000);
+
+        return () => {
+            window.clearInterval(timer);
+        };
+    }, []);
+
+    useEffect(() => {
         if (!window.Echo || !user?.id) return;
 
         const channel = `user.${user.id}`;
@@ -66,7 +110,7 @@ export default function AuthenticatedLayout({ header, children }) {
             const next = {
                 id: `${e.id}-${Date.now()}`,
                 message: e.message || "Order status updated",
-                time: new Date().toLocaleString(),
+                createdAt: new Date().toISOString(),
                 isRead: false,
                 url: route("orders.show", e.id),
             };
@@ -94,7 +138,7 @@ export default function AuthenticatedLayout({ header, children }) {
             const next = {
                 id: `support-${e.id}-${Date.now()}`,
                 message: `Support: ${e.message || "New message"}`,
-                time: new Date().toLocaleString(),
+                createdAt: e.created_at || new Date().toISOString(),
                 isRead: false,
                 url: route("support.index"),
             };
@@ -288,7 +332,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         {n.message}
                                                     </p>
                                                     <p className="text-[11px] text-slate-400 mt-1">
-                                                        {n.time}
+                                                        {formatRelativeTime(n.createdAt)}
                                                     </p>
                                                 </button>
                                             ))

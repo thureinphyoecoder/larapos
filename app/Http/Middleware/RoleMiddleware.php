@@ -16,7 +16,7 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!Auth::check() || !in_array(Auth::user()->role, $roles)) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole($roles)) {
             abort(403, 'ဒီစာမျက်နှာကို ဝင်ရောက်ဖို့ ခွင့်ပြုချက်မရှိပါဗျာ။');
         }
 
