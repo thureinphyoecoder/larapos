@@ -38,6 +38,7 @@ class CreateOrderFromItemsAction
         ?int $customerId = null,
         ?int $forcedShopId = null,
         ?UploadedFile $paymentSlip = null,
+        ?string $idempotencyKey = null,
     ): Order {
         if ($items === []) {
             throw ValidationException::withMessages([
@@ -65,7 +66,18 @@ class CreateOrderFromItemsAction
             ]);
         }
 
-        return DB::transaction(function () use ($user, $normalized, $phone, $address, $customerName, $customerId, $forcedShopId, $paymentSlip): Order {
+        return DB::transaction(function () use ($user, $normalized, $phone, $address, $customerName, $customerId, $forcedShopId, $paymentSlip, $idempotencyKey): Order {
+            if ($idempotencyKey) {
+                $existing = Order::query()
+                    ->where('user_id', $user->id)
+                    ->where('idempotency_key', $idempotencyKey)
+                    ->first();
+
+                if ($existing) {
+                    return $existing->load(['user.roles', 'shop', 'items.product.shop', 'items.variant']);
+                }
+            }
+
             $variantIds = $normalized->pluck('variant_id')->all();
             $normalizedPhone = trim((string) $phone);
             $normalizedAddress = trim((string) $address);
@@ -163,6 +175,7 @@ class CreateOrderFromItemsAction
                 'invoice_no' => $this->documentNumberService->next('invoice', $shopId),
                 'receipt_no' => $this->documentNumberService->next('receipt', $shopId),
                 'job_no' => $this->documentNumberService->next('job', $shopId),
+                'idempotency_key' => $idempotencyKey,
                 'user_id' => $user->id,
                 'customer_id' => $resolvedCustomer?->id,
                 'shop_id' => $shopId,

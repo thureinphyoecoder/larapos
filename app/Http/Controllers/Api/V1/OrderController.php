@@ -64,6 +64,27 @@ class OrderController extends Controller
     public function store(StoreOrderRequest $request): JsonResponse
     {
         $user = $request->user();
+        $idempotencyKey = trim((string) $request->header('X-Idempotency-Key'));
+        if ($idempotencyKey !== '' && strlen($idempotencyKey) > 120) {
+            return response()->json([
+                'message' => 'X-Idempotency-Key must be 120 characters or fewer.',
+            ], 422);
+        }
+        $idempotencyKey = $idempotencyKey !== '' ? $idempotencyKey : null;
+
+        if ($idempotencyKey) {
+            $existingOrder = Order::query()
+                ->where('user_id', $user->id)
+                ->where('idempotency_key', $idempotencyKey)
+                ->first();
+
+            if ($existingOrder) {
+                return response()->json([
+                    'message' => 'Order already processed for this idempotency key.',
+                    'data' => new OrderResource($existingOrder->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'])),
+                ]);
+            }
+        }
 
         $order = $request->filled('items')
             ? $this->createOrderFromItemsAction->execute(
@@ -75,6 +96,7 @@ class OrderController extends Controller
                 customerId: $request->integer('customer_id') ?: null,
                 forcedShopId: $request->integer('shop_id') ?: null,
                 paymentSlip: $request->file('payment_slip'),
+                idempotencyKey: $idempotencyKey,
             )
             : $this->createOrderFromCartAction->execute(
                 user: $user,
@@ -82,6 +104,7 @@ class OrderController extends Controller
                 address: $request->input('address'),
                 shopId: $request->integer('shop_id') ?: null,
                 paymentSlip: $request->file('payment_slip'),
+                idempotencyKey: $idempotencyKey,
             );
 
         event(new \App\Events\NewOrderPlaced($order));

@@ -21,6 +21,7 @@ class CreateOrderFromCartAction
         ?string $address = null,
         ?int $shopId = null,
         ?UploadedFile $paymentSlip = null,
+        ?string $idempotencyKey = null,
     ): Order {
         $cartItems = CartItem::query()
             ->with('variant:id')
@@ -49,6 +50,7 @@ class CreateOrderFromCartAction
             customerId: null,
             forcedShopId: $shopId,
             paymentSlip: $paymentSlip,
+            idempotencyKey: $idempotencyKey,
         );
 
         CartItem::query()->where('user_id', $user->id)->delete();

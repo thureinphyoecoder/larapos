@@ -12,6 +12,7 @@ class Order extends Model
         'invoice_no',
         'receipt_no',
         'job_no',
+        'idempotency_key',
         'user_id',
         'customer_id',
         'shop_id',
