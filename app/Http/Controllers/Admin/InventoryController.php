@@ -219,14 +219,20 @@ class InventoryController extends Controller
                 ]);
             }
 
+            $destinationSkuPrefix = $lockedSource->sku . '-S' . $toShopId;
             $destinationVariant = ProductVariant::where('product_id', $destinationProduct->id)
-                ->where('sku', $lockedSource->sku)
+                ->where(function ($query) use ($lockedSource, $destinationSkuPrefix): void {
+                    $query->where('sku', $lockedSource->sku)
+                        ->orWhere('sku', 'like', $destinationSkuPrefix . '%');
+                })
+                ->orderBy('id')
                 ->first();
 
             if (!$destinationVariant) {
+                $destinationVariantSku = $this->nextAvailableVariantSku($lockedSource->sku, $toShopId);
                 $destinationVariant = ProductVariant::create([
                     'product_id' => $destinationProduct->id,
-                    'sku' => $lockedSource->sku,
+                    'sku' => $destinationVariantSku,
                     'price' => $lockedSource->price,
                     'stock_level' => 0,
                     'is_active' => true,
@@ -343,5 +349,19 @@ class InventoryController extends Controller
             'price' => (float) ($activeVariants->min('price') ?? 0),
             'stock_level' => (int) $activeVariants->sum('stock_level'),
         ]);
+    }
+
+    private function nextAvailableVariantSku(string $sourceSku, int $toShopId): string
+    {
+        $base = $sourceSku . '-S' . $toShopId;
+        $candidate = $base;
+        $counter = 1;
+
+        while (ProductVariant::query()->where('sku', $candidate)->exists()) {
+            $counter++;
+            $candidate = $base . '-' . $counter;
+        }
+
+        return $candidate;
     }
 }

@@ -23,6 +23,10 @@ class PaymentController extends Controller
             ->with(['user:id,name,email', 'shop:id,name'])
             ->latest('id');
 
+        if ($user->hasRole('manager')) {
+            $orderQuery->where('shop_id', (int) $user->shop_id);
+        }
+
         if ($request->filled('status')) {
             $orderQuery->where('status', (string) $request->string('status'));
         }
@@ -42,18 +46,27 @@ class PaymentController extends Controller
         $orders = $orderQuery->paginate(20)->withQueryString();
         $payments = Payment::query()
             ->with(['order:id,invoice_no,status,total_amount', 'actor:id,name', 'approver:id,name'])
+            ->when($user->hasRole('manager'), function ($query) use ($user): void {
+                $query->whereHas('order', fn ($sub) => $sub->where('shop_id', (int) $user->shop_id));
+            })
             ->latest('id')
             ->paginate(40, ['*'], 'payment_page')
             ->withQueryString();
 
         $approvals = ApprovalRequest::query()
             ->with(['order:id,invoice_no,status,total_amount', 'requester:id,name', 'approver:id,name'])
+            ->when($user->hasRole('manager'), function ($query) use ($user): void {
+                $query->whereHas('order', fn ($sub) => $sub->where('shop_id', (int) $user->shop_id));
+            })
             ->latest('id')
             ->paginate(20, ['*'], 'approval_page')
             ->withQueryString();
 
         $adjustments = FinancialAdjustment::query()
             ->with(['order:id,invoice_no,total_amount', 'creator:id,name', 'approvalRequest:id,status'])
+            ->when($user->hasRole('manager'), function ($query) use ($user): void {
+                $query->whereHas('order', fn ($sub) => $sub->where('shop_id', (int) $user->shop_id));
+            })
             ->latest('id')
             ->paginate(20, ['*'], 'adjustment_page')
             ->withQueryString();
@@ -82,6 +95,9 @@ class PaymentController extends Controller
             'reason' => ['required', 'string', 'max:255'],
         ]);
 
+        $order = Order::query()->findOrFail((int) $validated['order_id']);
+        $this->authorizeOrderAccess($user, $order);
+
         ApprovalRequest::query()->create([
             'request_type' => $validated['request_type'],
             'status' => 'pending',
@@ -98,6 +114,12 @@ class PaymentController extends Controller
     {
         $user = $request->user();
         abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'accountant']), 403);
+        if ($approvalRequest->order_id) {
+            $order = Order::query()->find($approvalRequest->order_id);
+            if ($order) {
+                $this->authorizeOrderAccess($user, $order);
+            }
+        }
 
         if ($approvalRequest->status !== 'pending') {
             return back()->withErrors(['approval' => 'Only pending requests can be approved.']);
@@ -116,6 +138,12 @@ class PaymentController extends Controller
     {
         $user = $request->user();
         abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'accountant']), 403);
+        if ($approvalRequest->order_id) {
+            $order = Order::query()->find($approvalRequest->order_id);
+            if ($order) {
+                $this->authorizeOrderAccess($user, $order);
+            }
+        }
 
         if ($approvalRequest->status !== 'pending') {
             return back()->withErrors(['approval' => 'Only pending requests can be rejected.']);
@@ -142,6 +170,9 @@ class PaymentController extends Controller
             'reason' => ['required', 'string', 'max:255'],
             'approval_request_id' => ['nullable', 'integer', 'exists:approval_requests,id'],
         ]);
+
+        $order = Order::query()->findOrFail((int) $validated['order_id']);
+        $this->authorizeOrderAccess($user, $order);
 
         if (!empty($validated['approval_request_id'])) {
             $approved = ApprovalRequest::query()
@@ -183,6 +214,7 @@ class PaymentController extends Controller
     {
         $user = $request->user();
         abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'accountant']), 403);
+        $this->authorizeOrderAccess($user, $order);
 
         $validated = $request->validate([
             'amount' => ['nullable', 'numeric', 'min:0'],
@@ -209,6 +241,7 @@ class PaymentController extends Controller
     {
         $user = $request->user();
         abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'accountant']), 403);
+        $this->authorizeOrderAccess($user, $order);
 
         $validated = $request->validate([
             'reference_no' => ['nullable', 'string', 'max:120'],
@@ -234,17 +267,22 @@ class PaymentController extends Controller
     {
         $user = $request->user();
         abort_unless($user && $user->hasAnyRole(['admin', 'manager', 'accountant']), 403);
+        $this->authorizeOrderAccess($user, $order);
 
         $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01'],
+            'amount' => ['nullable', 'numeric', 'min:0.01'],
             'reference_no' => ['nullable', 'string', 'max:120'],
             'note' => ['required', 'string', 'max:1000'],
         ]);
+        $refundAmount = abs((float) ($validated['amount'] ?? $order->total_amount ?? 0));
+        if ($refundAmount <= 0) {
+            return back()->withErrors(['amount' => 'Refund amount is invalid.']);
+        }
 
         Payment::query()->create([
             'order_id' => $order->id,
             'event_type' => 'refund',
-            'amount' => -1 * abs((float) $validated['amount']),
+            'amount' => -1 * $refundAmount,
             'status' => 'approved',
             'reference_no' => $validated['reference_no'] ?? null,
             'note' => $validated['note'],
@@ -254,5 +292,12 @@ class PaymentController extends Controller
         ]);
 
         return back()->with('success', 'Refund event recorded.');
+    }
+
+    private function authorizeOrderAccess($user, Order $order): void
+    {
+        if ($user && $user->hasRole('manager')) {
+            abort_if((int) $order->shop_id !== (int) $user->shop_id, 403);
+        }
     }
 }

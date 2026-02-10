@@ -20,11 +20,15 @@ class StockMovementLogController extends Controller
             ->with(['product:id,name,sku', 'variant:id,sku', 'shop:id,name', 'actor:id,name'])
             ->latest('id');
 
+        if ($user->hasRole('manager')) {
+            $query->where('shop_id', (int) $user->shop_id);
+        }
+
         if ($request->filled('event_type')) {
             $query->where('event_type', (string) $request->string('event_type'));
         }
 
-        if ($request->filled('shop_id')) {
+        if ($request->filled('shop_id') && !$user->hasRole('manager')) {
             $query->where('shop_id', (int) $request->integer('shop_id'));
         }
 
@@ -40,11 +44,16 @@ class StockMovementLogController extends Controller
 
         return Inertia::render('Admin/StockMovements/Index', [
             'movements' => $query->paginate(30)->withQueryString(),
-            'shops' => Shop::query()->orderBy('name')->get(['id', 'name']),
+            'shops' => Shop::query()
+                ->when($user->hasRole('manager'), fn ($sub) => $sub->where('id', (int) $user->shop_id))
+                ->orderBy('name')
+                ->get(['id', 'name']),
             'filters' => [
                 'q' => $request->string('q')->toString(),
                 'event_type' => $request->string('event_type')->toString(),
-                'shop_id' => $request->integer('shop_id') ?: null,
+                'shop_id' => $user->hasRole('manager')
+                    ? (int) $user->shop_id
+                    : ($request->integer('shop_id') ?: null),
             ],
         ]);
     }

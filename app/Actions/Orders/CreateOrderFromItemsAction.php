@@ -107,9 +107,13 @@ class CreateOrderFromItemsAction
                 $shopIds = $shopIds->unique()->values();
             }
 
+            if ($shopIds->isEmpty() && $user->shop_id) {
+                $shopIds->push((int) $user->shop_id);
+            }
+
             if ($shopIds->count() !== 1) {
                 throw ValidationException::withMessages([
-                    'items' => 'All items must belong to the same shop.',
+                    'items' => 'Unable to resolve shop for this order. Please assign shop to product or user.',
                 ]);
             }
 

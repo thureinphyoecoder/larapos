@@ -26,10 +26,17 @@ class OrderController extends Controller
     ) {
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $user = $request->user();
+        $ordersQuery = Order::with(['user', 'items.product'])->latest();
+
+        if ($user && method_exists($user, 'hasRole') && $user->hasRole('manager')) {
+            $ordersQuery->where('shop_id', (int) $user->shop_id);
+        }
+
         return Inertia::render('Admin/Orders/Index', [
-            'orders' => Order::with(['user', 'items.product'])->latest()->paginate(10)
+            'orders' => $ordersQuery->paginate(10)
         ]);
     }
 
@@ -56,6 +63,9 @@ class OrderController extends Controller
 
         if (!$isStaff && $order->user_id !== Auth::id()) {
             abort(403);
+        }
+        if ($isStaff) {
+            $this->authorizeStaffOrderAccess($user, $order);
         }
 
         return Inertia::render('Admin/Orders/Show', [
@@ -301,6 +311,8 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, Order $order)
     {
+        $this->authorizeStaffOrderAccess($request->user(), $order);
+
         $request->validate([
             'status' => 'required|in:pending,confirmed,shipped,delivered,cancelled,refund_requested,refunded,return_requested,returned'
         ]);
@@ -412,6 +424,8 @@ class OrderController extends Controller
 
     public function updateLocation(Request $request, Order $order)
     {
+        $this->authorizeStaffOrderAccess($request->user(), $order);
+
         $request->validate([
             'delivery_lat' => 'required|numeric|between:-90,90',
             'delivery_lng' => 'required|numeric|between:-180,180',
@@ -430,6 +444,8 @@ class OrderController extends Controller
 
     public function confirmShipment(Request $request, Order $order)
     {
+        $this->authorizeStaffOrderAccess($request->user(), $order);
+
         $request->validate([
             'delivery_proof' => 'required|image|mimes:jpeg,png,jpg,webp|max:4096',
         ]);
@@ -455,6 +471,8 @@ class OrderController extends Controller
 
     public function verifySlip(Order $order)
     {
+        $this->authorizeStaffOrderAccess(request()->user(), $order);
+
         if (!$order->payment_slip) {
             return back()->withErrors(['slip' => 'Payment slip not found.']);
         }
@@ -467,5 +485,20 @@ class OrderController extends Controller
     private function restockOrderItems(Order $order): void
     {
         $this->restockOrderItemsAction->execute($order);
+    }
+
+    private function authorizeStaffOrderAccess($user, Order $order): void
+    {
+        if (!$user || !method_exists($user, 'hasRole')) {
+            return;
+        }
+
+        if ($user->hasRole('admin')) {
+            return;
+        }
+
+        if ($user->hasRole('manager')) {
+            abort_if((int) $order->shop_id !== (int) $user->shop_id, 403);
+        }
     }
 }

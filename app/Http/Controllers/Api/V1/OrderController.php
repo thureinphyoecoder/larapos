@@ -64,6 +64,7 @@ class OrderController extends Controller
     public function store(StoreOrderRequest $request): JsonResponse
     {
         $user = $request->user();
+        $resolvedShopId = $request->integer('shop_id') ?: ($user->shop_id ?: null);
         $idempotencyKey = trim((string) $request->header('X-Idempotency-Key'));
         if ($idempotencyKey !== '' && strlen($idempotencyKey) > 120) {
             return response()->json([
@@ -94,7 +95,7 @@ class OrderController extends Controller
                 address: $request->input('address'),
                 customerName: $request->string('customer_name')->toString() ?: null,
                 customerId: $request->integer('customer_id') ?: null,
-                forcedShopId: $request->integer('shop_id') ?: null,
+                forcedShopId: $resolvedShopId,
                 paymentSlip: $request->file('payment_slip'),
                 idempotencyKey: $idempotencyKey,
             )
@@ -102,7 +103,7 @@ class OrderController extends Controller
                 user: $user,
                 phone: $request->input('phone'),
                 address: $request->input('address'),
-                shopId: $request->integer('shop_id') ?: null,
+                shopId: $resolvedShopId,
                 paymentSlip: $request->file('payment_slip'),
                 idempotencyKey: $idempotencyKey,
             );
