@@ -52,32 +52,35 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
             <Head title="Payments" />
 
             <div className="space-y-6">
+                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+                    ငွေပေးချေမှုစာမျက်နှာကို ရိုးရှင်းစွာ ပြန်စီထားပါတယ်။ အပေါ်က Filter နဲ့ order ရှာပြီး အောက်မှာ approve/refund/reject ကိုတန်းလုပ်နိုင်ပါတယ်။
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <MetricCard label="Visible Orders" value={rows.length} />
-                    <MetricCard label="Gross Total" value={`${totals.gross.toLocaleString()} MMK`} tone="emerald" />
-                    <MetricCard label="Refund Exposure" value={`${totals.refund.toLocaleString()} MMK`} tone="rose" />
+                    <MetricCard label="ပြနေသော Orders" value={rows.length} />
+                    <MetricCard label="စုစုပေါင်း ရောင်းအား" value={`${totals.gross.toLocaleString()} MMK`} tone="emerald" />
+                    <MetricCard label="Refund အလားအလာ" value={`${totals.refund.toLocaleString()} MMK`} tone="rose" />
                 </div>
 
                 <div className="bg-white border border-slate-200 rounded-2xl p-5">
-                    <h3 className="font-black text-slate-900">Payment Orders</h3>
+                    <h3 className="font-black text-slate-900">Order ငွေပေးချေမှုစာရင်း</h3>
                     <form onSubmit={submitFilters} className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-3">
                         <input
                             className="border border-slate-300 rounded-xl px-3 py-2.5"
-                            placeholder="Search invoice / receipt / phone"
+                            placeholder="Invoice / Receipt / Customer ရှာမည်"
                             value={q}
                             onChange={(e) => setQ(e.target.value)}
                         />
                         <select className="border border-slate-300 rounded-xl px-3 py-2.5" value={status} onChange={(e) => setStatus(e.target.value)}>
-                            <option value="">All statuses</option>
+                            <option value="">Status အားလုံး</option>
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
                             <option value="refund_requested">Refund Requested</option>
                             <option value="refunded">Refunded</option>
                             <option value="returned">Returned</option>
                         </select>
-                        <button className="bg-slate-900 text-white rounded-xl font-bold">Apply</button>
+                        <button className="bg-slate-900 text-white rounded-xl font-bold">စစ်ထုတ်မည်</button>
                         <a href={route("admin.payments.index")} className="text-center border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-600">
-                            Reset
+                            ပြန်ဖြုတ်မည်
                         </a>
                     </form>
 
@@ -88,7 +91,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                                     <th className="py-2 text-left">Invoice</th>
                                     <th className="py-2 text-left">Receipt</th>
                                     <th className="py-2 text-left">Customer</th>
-                                    <th className="py-2 text-left">Amount</th>
+                                    <th className="py-2 text-left">ပမာဏ</th>
                                     <th className="py-2 text-left">Status</th>
                                 </tr>
                             </thead>
@@ -109,7 +112,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="bg-white border border-slate-200 rounded-2xl p-5">
-                        <h3 className="font-black text-slate-900">Request Approval</h3>
+                        <h3 className="font-black text-slate-900">Approval တင်မည်</h3>
                         <form
                             className="mt-4 space-y-3"
                             onSubmit={(e) => {
@@ -123,7 +126,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                                 onChange={(e) => approvalForm.setData("order_id", e.target.value)}
                                 required
                             >
-                                <option value="">Select order</option>
+                                <option value="">Order ရွေးပါ</option>
                                 {rows.map((order) => (
                                     <option key={order.id} value={order.id}>
                                         {order.invoice_no || `#${order.id}`} - {order.user?.name}
@@ -143,24 +146,24 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                                     type="number"
                                     min="0"
                                     className="border border-slate-300 rounded-xl px-3 py-2.5"
-                                    placeholder="Amount (optional)"
+                                    placeholder="ပမာဏ (optional)"
                                     value={approvalForm.data.amount}
                                     onChange={(e) => approvalForm.setData("amount", e.target.value)}
                                 />
                             </div>
                             <input
                                 className="w-full border border-slate-300 rounded-xl px-3 py-2.5"
-                                placeholder="Reason"
+                                placeholder="အကြောင်းပြချက်"
                                 value={approvalForm.data.reason}
                                 onChange={(e) => approvalForm.setData("reason", e.target.value)}
                                 required
                             />
-                            <button className="w-full bg-orange-600 text-white rounded-xl py-2.5 font-bold">Submit Approval Request</button>
+                            <button className="w-full bg-orange-600 text-white rounded-xl py-2.5 font-bold">တင်ပို့မည်</button>
                         </form>
                     </div>
 
                     <div className="bg-white border border-slate-200 rounded-2xl p-5">
-                        <h3 className="font-black text-slate-900">Create Financial Adjustment</h3>
+                        <h3 className="font-black text-slate-900">ငွေစာရင်း ပြင်ဆင်ချက်ထည့်မည်</h3>
                         <form
                             className="mt-4 space-y-3"
                             onSubmit={(e) => {
@@ -174,7 +177,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                                 onChange={(e) => adjustmentForm.setData("order_id", e.target.value)}
                                 required
                             >
-                                <option value="">Select order</option>
+                                <option value="">Order ရွေးပါ</option>
                                 {rows.map((order) => (
                                     <option key={order.id} value={order.id}>
                                         {order.invoice_no || `#${order.id}`} - {order.user?.name}
@@ -195,7 +198,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                                     min="0.01"
                                     step="0.01"
                                     className="border border-slate-300 rounded-xl px-3 py-2.5"
-                                    placeholder="Amount"
+                                    placeholder="ပမာဏ"
                                     value={adjustmentForm.data.amount}
                                     onChange={(e) => adjustmentForm.setData("amount", e.target.value)}
                                     required
@@ -203,7 +206,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                             </div>
                             <input
                                 className="w-full border border-slate-300 rounded-xl px-3 py-2.5"
-                                placeholder="Reason"
+                                placeholder="အကြောင်းပြချက်"
                                 value={adjustmentForm.data.reason}
                                 onChange={(e) => adjustmentForm.setData("reason", e.target.value)}
                                 required
@@ -213,32 +216,32 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                                 value={adjustmentForm.data.approval_request_id}
                                 onChange={(e) => adjustmentForm.setData("approval_request_id", e.target.value)}
                             >
-                                <option value="">Approval request (optional)</option>
+                                <option value="">ချိတ်မည့် approval (optional)</option>
                                 {approvalRows.map((row) => (
                                     <option key={row.id} value={row.id}>
                                         #{row.id} - {row.request_type} ({row.status})
                                     </option>
                                 ))}
                             </select>
-                            <button className="w-full bg-slate-900 text-white rounded-xl py-2.5 font-bold">Record Adjustment</button>
+                            <button className="w-full bg-slate-900 text-white rounded-xl py-2.5 font-bold">သိမ်းမည်</button>
                         </form>
                     </div>
                 </div>
 
                 <div className="bg-white border border-slate-200 rounded-2xl p-5">
-                    <h3 className="font-black text-slate-900">Payment Ledger Events (Append-Only)</h3>
-                    <p className="text-xs text-slate-500 mt-1">Verify / Reject / Refund create new rows only.</p>
+                    <h3 className="font-black text-slate-900">Payment Ledger Events</h3>
+                    <p className="text-xs text-slate-500 mt-1">Verify / Reject / Refund လုပ်တိုင်း ledger entry အသစ်တစ်ကြောင်းတိုးပါမည်။</p>
                     <div className="mt-4 overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
                                 <tr>
-                                    <th className="py-2 text-left">Time</th>
+                                    <th className="py-2 text-left">အချိန်</th>
                                     <th className="py-2 text-left">Order</th>
                                     <th className="py-2 text-left">Event</th>
-                                    <th className="py-2 text-left">Amount</th>
+                                    <th className="py-2 text-left">ပမာဏ</th>
                                     <th className="py-2 text-left">Status</th>
-                                    <th className="py-2 text-left">Actor</th>
-                                    <th className="py-2 text-left">Note</th>
+                                    <th className="py-2 text-left">လုပ်ဆောင်သူ</th>
+                                    <th className="py-2 text-left">မှတ်ချက်</th>
                                 </tr>
                             </thead>
                             <tbody>
