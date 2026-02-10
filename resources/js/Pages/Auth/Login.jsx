@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Head, Link, useForm } from "@inertiajs/react";
-import Swal from "sweetalert2";
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -33,7 +32,7 @@ export default function Login({ status, canResetPassword }) {
                     <p className="text-orange-100 text-lg">
                         မြန်မာနိုင်ငံ၏ အကောင်းဆုံး Online Marketplace
                     </p>
-                    <div className="mt-8 text-6xl opacity-20">🛒</div>
+                    <div className="mt-10 text-8xl animate-bounce">🛒</div>
                 </div>
 
                 {/* ညာဘက်ခြမ်း: Login Form */}
