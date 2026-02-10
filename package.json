@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "dev:docker": "VITE_USE_POLLING=true VITE_HOST=0.0.0.0 VITE_HMR_HOST=localhost vite"
     },
     "devDependencies": {
         "@headlessui/react": "^2.0.0",

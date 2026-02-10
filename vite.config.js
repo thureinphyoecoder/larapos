@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import laravel from "laravel-vite-plugin";
 import react from "@vitejs/plugin-react";
 
+const usePolling = process.env.VITE_USE_POLLING === "true";
+
 export default defineConfig({
     plugins: [
         laravel({
@@ -10,16 +12,20 @@ export default defineConfig({
         }),
         react(),
     ],
-    // 👇 ဒီအပိုင်းလေးက Docker အတွက် အသက်ပဲဗျ
     server: {
-        host: "0.0.0.0", // Docker ကနေ အပြင်ကို လှမ်းထုတ်ပေးဖို့
-        port: 5173,
+        host: process.env.VITE_HOST ?? "localhost",
+        port: Number(process.env.VITE_PORT ?? 5173),
         strictPort: true,
-        hmr: {
-            host: "localhost", // Browser ကနေ ပြန်နားထောင်ဖို့
-        },
-        watch: {
-            usePolling: true, // Docker ထဲမှာ ဖိုင်ပြောင်းလဲမှုကို အမြဲစောင့်ကြည့်ဖို့
-        },
+        hmr: process.env.VITE_HMR_HOST
+            ? {
+                  host: process.env.VITE_HMR_HOST,
+              }
+            : undefined,
+        watch: usePolling
+            ? {
+                  usePolling: true,
+                  interval: 1000,
+              }
+            : undefined,
     },
 });
