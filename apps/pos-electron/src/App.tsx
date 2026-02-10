@@ -38,6 +38,7 @@ const DEFAULT_OFFLINE_STATUS: OfflineStatus = {
 };
 const LAST_RECEIPT_KEY = "larapos.pos.last_receipt";
 const DEVICE_SIM_MODE_KEY = "larapos.pos.device_sim_mode";
+const NOTIFICATION_SOUND_KEY = "larapos.pos.notification_sound";
 const SEARCH_DEBOUNCE_MS = 280;
 
 export default function App() {
@@ -73,6 +74,9 @@ export default function App() {
   );
   const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>(DEFAULT_OFFLINE_STATUS);
   const [deviceSimMode, setDeviceSimMode] = useState<boolean>(() => window.localStorage.getItem(DEVICE_SIM_MODE_KEY) === "1");
+  const [notificationSoundEnabled, setNotificationSoundEnabled] = useState<boolean>(
+    () => window.localStorage.getItem(NOTIFICATION_SOUND_KEY) === "1",
+  );
   const [simulatedScanCode, setSimulatedScanCode] = useState("");
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -83,6 +87,7 @@ export default function App() {
   const toastIdRef = useRef(0);
   const toastTimersRef = useRef(new Map<number, number>());
   const toastMetaRef = useRef(new Map<number, { startAt: number; remainingMs: number }>());
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   const cartTotal = useMemo(() => cart.reduce((sum, line) => sum + line.price * line.qty, 0), [cart]);
 
@@ -112,6 +117,10 @@ export default function App() {
       }
       toastTimersRef.current.clear();
       toastMetaRef.current.clear();
+      if (audioCtxRef.current) {
+        void audioCtxRef.current.close();
+        audioCtxRef.current = null;
+      }
     };
   }, []);
 
@@ -183,6 +192,10 @@ export default function App() {
   useEffect(() => {
     window.localStorage.setItem(DEVICE_SIM_MODE_KEY, deviceSimMode ? "1" : "0");
   }, [deviceSimMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem(NOTIFICATION_SOUND_KEY, notificationSoundEnabled ? "1" : "0");
+  }, [notificationSoundEnabled]);
 
   useEffect(() => {
     if (!error) return;
@@ -378,6 +391,36 @@ export default function App() {
     const remainingMs = 4200;
     setToasts((current) => [...current, { id, tone, message, remainingMs }]);
     startToastTimer(id, remainingMs);
+    if (tone === "error") {
+      playNotificationTone();
+    }
+  };
+
+  const playNotificationTone = (): void => {
+    if (!notificationSoundEnabled) return;
+    if (typeof window === "undefined" || typeof window.AudioContext === "undefined") return;
+
+    try {
+      const audioCtx = audioCtxRef.current ?? new window.AudioContext();
+      audioCtxRef.current = audioCtx;
+      if (audioCtx.state === "suspended") {
+        void audioCtx.resume();
+      }
+
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.value = 660;
+      gainNode.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.055, audioCtx.currentTime + 0.018);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.16);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.18);
+    } catch {
+      // Avoid blocking UX when audio playback is unavailable.
+    }
   };
 
   const startToastTimer = (id: number, durationMs: number): void => {
@@ -781,6 +824,9 @@ export default function App() {
               </button>
               <button onClick={() => setDeviceSimMode((current) => !current)} className="btn-secondary">
                 {deviceSimMode ? "Device Sim: On" : "Device Sim: Off"}
+              </button>
+              <button onClick={() => setNotificationSoundEnabled((current) => !current)} className="btn-secondary">
+                {notificationSoundEnabled ? "Sound: On" : "Sound: Off"}
               </button>
               <button onClick={() => void printLastReceipt()} className="btn-secondary">
                 ပြေစာထုတ်ရန်
