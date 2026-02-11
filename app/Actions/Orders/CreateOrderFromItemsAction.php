@@ -8,6 +8,7 @@ use App\Models\OrderDiscount;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\ProductVariant;
+use App\Models\Shop;
 use App\Models\User;
 use App\Services\Governance\AuditLogger;
 use App\Services\Governance\DocumentNumberService;
@@ -110,6 +111,13 @@ class CreateOrderFromItemsAction
 
             if ($shopIds->isEmpty() && $user->shop_id) {
                 $shopIds->push((int) $user->shop_id);
+            }
+
+            if ($shopIds->isEmpty()) {
+                $defaultShopId = Shop::query()->orderBy('id')->value('id');
+                if ($defaultShopId) {
+                    $shopIds->push((int) $defaultShopId);
+                }
             }
 
             if ($shopIds->count() !== 1) {
