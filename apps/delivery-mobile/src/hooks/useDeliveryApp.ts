@@ -52,6 +52,7 @@ export function useDeliveryApp() {
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const orderSnapshotRef = useRef<Map<number, string>>(new Map());
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const enableRemotePush = process.env.EXPO_PUBLIC_ENABLE_REMOTE_PUSH === "1";
 
   useEffect(() => {
     void bootstrap();
@@ -66,13 +67,15 @@ export function useDeliveryApp() {
       return;
     }
 
-    void registerPushToken();
+    if (enableRemotePush) {
+      void registerPushToken();
+    }
     // Reduce notification latency while app is active.
     void loadOrders();
     const intervalMs = selectedOrder ? 2200 : 3200;
     const timer = setInterval(() => void loadOrders(), intervalMs);
     return () => clearInterval(timer);
-  }, [token, user, selectedOrder]);
+  }, [token, user, selectedOrder, enableRemotePush]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextState) => {

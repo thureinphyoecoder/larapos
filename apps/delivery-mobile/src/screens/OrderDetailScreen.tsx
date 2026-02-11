@@ -169,7 +169,7 @@ export function OrderDetailScreen({
         </View>
 
         <View className={`rounded-2xl border p-4 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
-          <Text className={`text-xs font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "actions")}</Text>
+          <Text className={`text-sm font-bold ${dark ? "text-slate-200" : "text-slate-700"}`}>{tr(locale, "actions")}</Text>
 
           <Pressable
             className={`mt-3 flex-row items-center justify-between rounded-xl px-4 py-3 ${busyAction ? "bg-slate-700" : dark ? "bg-slate-800" : "bg-slate-900"}`}
@@ -195,17 +195,19 @@ export function OrderDetailScreen({
             {busyAction ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="chevron-forward" size={16} color="#fff" />}
           </Pressable>
 
-          <Pressable
-            className={`mt-2 flex-row items-center justify-between rounded-xl px-4 py-3 ${order.status === "shipped" && !busyAction ? "bg-emerald-500" : "bg-slate-700"}`}
-            disabled={order.status !== "shipped" || busyAction}
-            onPress={onMarkDelivered}
-          >
-            <View className="flex-row items-center">
-              <Ionicons name="checkmark-done-outline" size={16} color="#fff" />
-              <Text className="ml-2 text-sm font-bold text-white">{tr(locale, "markDelivered")}</Text>
-            </View>
-            {busyAction ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="chevron-forward" size={16} color="#fff" />}
-          </Pressable>
+          {order.status === "shipped" ? (
+            <Pressable
+              className={`mt-2 flex-row items-center justify-between rounded-xl px-4 py-3 ${busyAction ? "bg-slate-700" : "bg-emerald-500"}`}
+              disabled={busyAction}
+              onPress={onMarkDelivered}
+            >
+              <View className="flex-row items-center">
+                <Ionicons name="checkmark-done-outline" size={16} color="#fff" />
+                <Text className="ml-2 text-sm font-bold text-white">{tr(locale, "markDelivered")}</Text>
+              </View>
+              {busyAction ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="chevron-forward" size={16} color="#fff" />}
+            </Pressable>
+          ) : null}
 
           <View className={`mt-3 rounded-xl px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
             <Text className={`text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>
