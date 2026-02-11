@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "LaraPOS Delivery",
+    "slug": "larapos-delivery-mobile-v2",
+    "version": "0.2.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "orders"
+        }
+      ]
+    ],
+    "extra": {
+      "apiBaseUrl": "http://10.0.2.2:8001/api/v1"
+    }
+  }
+}
