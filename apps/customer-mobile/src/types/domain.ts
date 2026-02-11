@@ -7,6 +7,7 @@ export type ApiUser = {
   name: string;
   email: string;
   roles?: string[];
+  email_verified_at?: string | null;
 };
 
 export type AuthSession = {

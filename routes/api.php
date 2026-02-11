@@ -22,6 +22,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::prefix('auth')->name('auth.')->middleware('throttle:30,1')->group(function () {
         Route::post('/register', [AuthController::class, 'register'])->name('register');
         Route::post('/login', [AuthController::class, 'login'])->name('login');
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.email');
+        Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
+        Route::post('/email/verification-notification/request', [AuthController::class, 'sendEmailVerificationByEmail'])->name('verification.request');
     });
 
     Route::get('/catalog/products', [CatalogController::class, 'products'])->name('catalog.products');
@@ -34,6 +37,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::get('/me', [AuthController::class, 'me'])->name('me');
             Route::patch('/me', [AuthController::class, 'updateMe'])->name('me.update');
             Route::post('/me/photo', [AuthController::class, 'updateMePhoto'])->name('me.photo.update');
+            Route::post('/email/verification-notification', [AuthController::class, 'sendEmailVerification'])->name('verification.send');
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
 

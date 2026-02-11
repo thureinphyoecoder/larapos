@@ -12,12 +12,15 @@ type Props = {
   password: string;
   busy: boolean;
   error: string;
+  message: string;
   onRegisterNameChange: (value: string) => void;
   onRegisterConfirmPasswordChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmitLogin: () => void;
   onSubmitRegister: () => void;
+  onForgotPassword: () => void;
+  onResendVerification: () => void;
 };
 
 export function LoginScreen({
@@ -28,12 +31,15 @@ export function LoginScreen({
   password,
   busy,
   error,
+  message,
   onRegisterNameChange,
   onRegisterConfirmPasswordChange,
   onEmailChange,
   onPasswordChange,
   onSubmitLogin,
   onSubmitRegister,
+  onForgotPassword,
+  onResendVerification,
 }: Props) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [remember, setRemember] = useState(true);
@@ -155,11 +161,14 @@ export function LoginScreen({
                 </View>
                 <Text className="text-xs text-slate-600">မှတ်ထားမည်</Text>
               </Pressable>
-              <Text className="text-xs font-semibold text-orange-500">Forgot your password?</Text>
+              <Pressable onPress={onForgotPassword} disabled={busy}>
+                <Text className="text-xs font-semibold text-orange-500">Forgot your password?</Text>
+              </Pressable>
             </View>
           )}
 
           {error ? <Text className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">{error}</Text> : null}
+          {message ? <Text className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{message}</Text> : null}
 
           <Pressable onPress={mode === "login" ? onSubmitLogin : onSubmitRegister} disabled={busy} className="mt-4 rounded-xl bg-orange-500 py-3">
             <Text className="text-center text-lg font-black uppercase text-white">{busy ? tr(locale, "signingIn") : mode === "login" ? "Log In" : "Create Account"}</Text>
@@ -172,14 +181,24 @@ export function LoginScreen({
           </View>
 
           {mode === "login" ? (
-            <Pressable onPress={() => setMode("register")} className="mt-3 rounded-xl border border-slate-300 bg-white py-3">
-              <Text className="text-center text-lg font-semibold text-slate-700">Create new account</Text>
-            </Pressable>
+            <>
+              <Pressable onPress={() => setMode("register")} className="mt-3 rounded-xl border border-slate-300 bg-white py-3">
+                <Text className="text-center text-lg font-semibold text-slate-700">Create new account</Text>
+              </Pressable>
+              <Pressable onPress={onResendVerification} disabled={busy} className="mt-2 rounded-xl border border-slate-300 bg-white py-3">
+                <Text className="text-center text-sm font-semibold text-slate-700">Resend verification email</Text>
+              </Pressable>
+            </>
           ) : (
             <Pressable onPress={() => setMode("login")} className="mt-3 rounded-xl border border-slate-300 bg-white py-3">
-              <Text className="text-center text-lg font-semibold text-slate-700">Back to login</Text>
+              <Text className="text-center text-lg font-semibold text-slate-700">Create new account</Text>
             </Pressable>
           )}
+          {mode === "register" ? (
+            <Pressable onPress={() => setMode("login")} className="mt-2 rounded-xl border border-slate-300 bg-white py-3">
+              <Text className="text-center text-lg font-semibold text-slate-700">Back to login</Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     </View>

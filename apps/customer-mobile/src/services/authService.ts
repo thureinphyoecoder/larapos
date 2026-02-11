@@ -51,6 +51,33 @@ export async function register(baseUrl: string, payload: RegisterPayload): Promi
   };
 }
 
+export async function requestPasswordReset(baseUrl: string, email: string): Promise<{ message: string }> {
+  return requestJson<{ message: string }>({
+    baseUrl,
+    path: "/auth/forgot-password",
+    method: "POST",
+    body: { email },
+  });
+}
+
+export async function resendEmailVerification(baseUrl: string, token: string): Promise<{ message: string; already_verified: boolean }> {
+  return requestJson<{ message: string; already_verified: boolean }>({
+    baseUrl,
+    path: "/auth/email/verification-notification",
+    method: "POST",
+    token,
+  });
+}
+
+export async function resendEmailVerificationByEmail(baseUrl: string, email: string): Promise<{ message: string }> {
+  return requestJson<{ message: string }>({
+    baseUrl,
+    path: "/auth/email/verification-notification/request",
+    method: "POST",
+    body: { email },
+  });
+}
+
 export async function logout(baseUrl: string, token: string): Promise<void> {
   await requestJson({
     baseUrl,

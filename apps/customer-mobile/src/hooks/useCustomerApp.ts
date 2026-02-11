@@ -5,7 +5,17 @@ import { ApiError } from "../lib/http";
 import { clearSession, loadLocale, loadSession, loadTheme, saveLocale, saveSession, saveTheme } from "../lib/storage";
 import { addCartItem, fetchCart, removeCartItem } from "../services/cartService";
 import { fetchCategories, fetchProductDetail, fetchProducts, submitProductReview } from "../services/catalogService";
-import { fetchMe, logout as logoutService, register as registerService, signIn, updateMe, updateMePhoto } from "../services/authService";
+import {
+  fetchMe,
+  logout as logoutService,
+  register as registerService,
+  requestPasswordReset,
+  resendEmailVerificationByEmail,
+  resendEmailVerification,
+  signIn,
+  updateMe,
+  updateMePhoto,
+} from "../services/authService";
 import { cancelOrder, fetchOrderDetail, fetchOrders, placeOrderFromCart, requestRefund, requestReturn } from "../services/orderService";
 import { fetchSupportMessages, sendSupportMessage } from "../services/supportService";
 import type { CartItem, Category, CustomerOrder, CustomerTab, Locale, MePayload, Product, SupportMessage, ThemeMode } from "../types/domain";
@@ -26,6 +36,7 @@ export function useCustomerApp() {
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
 
   const [query, setQuery] = useState("");
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
@@ -236,6 +247,7 @@ export function useCustomerApp() {
 
     setAuthBusy(true);
     setAuthError("");
+    setAuthMessage("");
 
     try {
       const nextSession = await signIn(API_BASE_URL, email.trim(), password);
@@ -280,6 +292,7 @@ export function useCustomerApp() {
 
     setAuthBusy(true);
     setAuthError("");
+    setAuthMessage("");
 
     try {
       const nextSession = await registerService(API_BASE_URL, {
@@ -294,6 +307,7 @@ export function useCustomerApp() {
       setProfileEmail(nextSession.user.email || "");
       setActiveTab("home");
       await Promise.all([hydratePrivateData(nextSession.token), syncMe(nextSession.token), loadSupport(nextSession.token)]);
+      setAuthMessage("Account created. Verification email has been sent.");
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 0) {
@@ -317,6 +331,60 @@ export function useCustomerApp() {
     registerName,
     syncMe,
   ]);
+
+  const handleForgotPassword = useCallback(async () => {
+    if (!email.trim()) {
+      setAuthError(tr(locale, "invalidCredentials"));
+      return;
+    }
+
+    setAuthBusy(true);
+    setAuthError("");
+    setAuthMessage("");
+
+    try {
+      const response = await requestPasswordReset(API_BASE_URL, email.trim());
+      setAuthMessage(response.message || "Password reset link sent.");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setAuthError(error.message || tr(locale, "unknownError"));
+      } else {
+        setAuthError(tr(locale, "unknownError"));
+      }
+    } finally {
+      setAuthBusy(false);
+    }
+  }, [email, locale]);
+
+  const handleResendVerification = useCallback(async () => {
+    if (!session?.token && !email.trim()) {
+      setAuthError("Please enter your email first.");
+      return;
+    }
+
+    setAuthBusy(true);
+    setAuthError("");
+    setAuthMessage("");
+
+    try {
+      if (session?.token) {
+        const response = await resendEmailVerification(API_BASE_URL, session.token);
+        setAuthMessage(response.message || "Verification email sent.");
+        await syncMe(session.token);
+      } else {
+        const response = await resendEmailVerificationByEmail(API_BASE_URL, email.trim());
+        setAuthMessage(response.message || "Verification email sent.");
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setAuthError(error.message || tr(locale, "unknownError"));
+      } else {
+        setAuthError(tr(locale, "unknownError"));
+      }
+    } finally {
+      setAuthBusy(false);
+    }
+  }, [email, locale, session?.token, syncMe]);
 
   const handleAddToCart = useCallback(
     async (product: Product, variantId?: number, quantity = 1) => {
@@ -814,12 +882,15 @@ export function useCustomerApp() {
       password,
       busy: authBusy,
       error: authError,
+      message: authMessage,
       setRegisterName,
       setRegisterConfirmPassword,
       setEmail,
       setPassword,
       submit: handleSignIn,
       submitRegister: handleRegister,
+      forgotPassword: handleForgotPassword,
+      resendVerification: handleResendVerification,
     },
     catalog: {
       query,

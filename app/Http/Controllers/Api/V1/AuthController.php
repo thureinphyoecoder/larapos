@@ -9,10 +9,13 @@ use App\Http\Requests\Api\V1\Auth\UpdateMeRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
 use App\Support\Payroll\PayrollCalculator;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
@@ -34,6 +37,10 @@ class AuthController extends Controller
 
         if (Role::query()->where('name', 'customer')->exists()) {
             $user->assignRole('customer');
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
         }
 
         $token = $user->createToken($request->input('device_name', 'pos-client'))->plainTextToken;
@@ -172,6 +179,95 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logged out successfully.',
+        ]);
+    }
+
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $status = Password::sendResetLink([
+            'email' => $validated['email'],
+        ]);
+
+        if ($status !== Password::RESET_LINK_SENT) {
+            throw ValidationException::withMessages([
+                'email' => [trans($status)],
+            ]);
+        }
+
+        return response()->json([
+            'message' => trans($status),
+        ]);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $status = Password::reset(
+            $validated,
+            function (User $user, string $password): void {
+                $user->forceFill([
+                    'password' => $password,
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                event(new PasswordReset($user));
+            },
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            throw ValidationException::withMessages([
+                'email' => [trans($status)],
+            ]);
+        }
+
+        return response()->json([
+            'message' => trans($status),
+        ]);
+    }
+
+    public function sendEmailVerification(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Email is already verified.',
+                'already_verified' => true,
+            ]);
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        return response()->json([
+            'message' => 'Verification link sent to your email.',
+            'already_verified' => false,
+        ]);
+    }
+
+    public function sendEmailVerificationByEmail(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $user = User::query()->where('email', $validated['email'])->first();
+
+        if ($user && ! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+        }
+
+        return response()->json([
+            'message' => 'If your account exists, a verification email has been sent.',
         ]);
     }
 }

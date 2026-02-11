@@ -68,12 +68,15 @@ export default function App() {
             password={app.login.password}
             busy={app.login.busy}
             error={app.login.error}
+            message={app.login.message}
             onRegisterNameChange={app.login.setRegisterName}
             onRegisterConfirmPasswordChange={app.login.setRegisterConfirmPassword}
             onEmailChange={app.login.setEmail}
             onPasswordChange={app.login.setPassword}
             onSubmitLogin={() => void app.login.submit()}
             onSubmitRegister={() => void app.login.submitRegister()}
+            onForgotPassword={() => void app.login.forgotPassword()}
+            onResendVerification={() => void app.login.resendVerification()}
           />
         </SafeAreaView>
       </SafeAreaProvider>
