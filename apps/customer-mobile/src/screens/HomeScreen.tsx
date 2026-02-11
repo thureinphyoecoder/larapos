@@ -21,7 +21,6 @@ type Props = {
   onSelectCategory: (id: number | null) => void;
   onAddToCart: (product: Product) => void;
   onOpenProduct: (product: Product) => void;
-  onOpenSupport: () => void;
   onRefresh: () => void;
 };
 
@@ -39,7 +38,6 @@ export function HomeScreen({
   onSelectCategory,
   onAddToCart,
   onOpenProduct,
-  onOpenSupport,
   onRefresh,
 }: Props) {
   const sliderItems = useMemo(() => products.slice(0, 4), [products]);
@@ -87,7 +85,7 @@ export function HomeScreen({
       <View className="flex-row items-center justify-between">
         <View>
           <Text className={`text-3xl font-black tracking-tight ${dark ? "text-orange-300" : "text-orange-600"}`}>LaraPee</Text>
-          <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{`${tr(locale, "welcomeBack")}, ${userName}`}</Text>
+          <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{`${tr(locale, "welcomeBack")} ${userName}`}</Text>
         </View>
         <View className={`h-11 w-11 items-center justify-center rounded-2xl border ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
           <Ionicons name="notifications-outline" size={18} color={dark ? "#e2e8f0" : "#334155"} />
@@ -125,9 +123,6 @@ export function HomeScreen({
                     <Pressable onPress={() => onOpenProduct(item)} className="rounded-2xl bg-white px-4 py-2">
                       <Text className="text-xs font-black text-slate-900">Shop Now</Text>
                     </Pressable>
-                    <Pressable onPress={onOpenSupport} className="rounded-2xl border border-white/70 bg-white/10 px-4 py-2">
-                      <Text className="text-xs font-bold text-white">Support Chat</Text>
-                    </Pressable>
                   </View>
                 </View>
               </View>
@@ -135,7 +130,7 @@ export function HomeScreen({
           ) : (
             <View style={{ width: heroWidth || undefined }} className={`px-5 py-6 ${slideBackgrounds[0]}`}>
               <Text className="text-[11px] font-extrabold uppercase tracking-widest text-white/80">{tr(locale, "featuredProducts")}</Text>
-              <Text className="mt-3 text-2xl font-black leading-tight text-white">{`${tr(locale, "welcomeBack")}, ${userName}`}</Text>
+              <Text className="mt-3 text-2xl font-black leading-tight text-white">{`${tr(locale, "welcomeBack")} ${userName}`}</Text>
               <Text className="mt-2 text-xs leading-5 text-white/85">{tr(locale, "pullToRefresh")}</Text>
             </View>
           )}
