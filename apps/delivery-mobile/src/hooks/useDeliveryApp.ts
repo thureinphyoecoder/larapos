@@ -19,6 +19,9 @@ type InAppNotification = {
   title: string;
   body: string;
   createdAt: string;
+  orderId: number | null;
+  kind: "new_order" | "status_changed";
+  isRead: boolean;
 };
 
 export function useDeliveryApp() {
@@ -42,9 +45,10 @@ export function useDeliveryApp() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [notifications, setNotifications] = useState<InAppNotification[]>([]);
   const [notificationsUnreadCount, setNotificationsUnreadCount] = useState(0);
+  const [bannerNotification, setBannerNotification] = useState<InAppNotification | null>(null);
 
   const lastBackPressedAtRef = useRef(0);
-  const pushWarningShownRef = useRef(false);
+  const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const orderSnapshotRef = useRef<Map<number, string>>(new Map());
 
   useEffect(() => {
@@ -61,9 +65,17 @@ export function useDeliveryApp() {
     }
 
     void registerPushToken();
-    const timer = setInterval(() => void loadOrders(), 20000);
+    const timer = setInterval(() => void loadOrders(), 8000);
     return () => clearInterval(timer);
   }, [token, user]);
+
+  useEffect(() => {
+    return () => {
+      if (bannerTimerRef.current) {
+        clearTimeout(bannerTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handler = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -174,6 +186,7 @@ export function useDeliveryApp() {
     setSelectedOrder(null);
     setNotifications([]);
     setNotificationsUnreadCount(0);
+    setBannerNotification(null);
     orderSnapshotRef.current.clear();
   }
 
@@ -326,10 +339,8 @@ export function useDeliveryApp() {
 
   async function registerPushToken() {
     const result = await registerForRemotePushAsync();
-    if (result.error && !pushWarningShownRef.current) {
-      pushWarningShownRef.current = true;
-      Alert.alert(tr(locale, "pushSetupTitle"), result.error);
-      return;
+    if (result.error) {
+      console.log("Push registration warning:", result.error);
     }
 
     if (result.token) {
@@ -350,28 +361,24 @@ export function useDeliveryApp() {
         addInAppNotification(
           tr(locale, "notifNewOrderTitle"),
           tr(locale, "notifNewOrderBody", { id: order.id }),
+          order.id,
+          "new_order",
         );
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: tr(locale, "notifNewOrderTitle"),
-            body: tr(locale, "notifNewOrderBody", { id: order.id }),
-            sound: true,
-          },
-          trigger: null,
-        });
+        await pushLocalNotification(
+          tr(locale, "notifNewOrderTitle"),
+          tr(locale, "notifNewOrderBody", { id: order.id }),
+        );
       } else if (prevStatus !== order.status) {
         addInAppNotification(
           tr(locale, "notifStatusChangedTitle"),
           tr(locale, "notifStatusChangedBody", { id: order.id, status: order.status }),
+          order.id,
+          "status_changed",
         );
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: tr(locale, "notifStatusChangedTitle"),
-            body: tr(locale, "notifStatusChangedBody", { id: order.id, status: order.status }),
-            sound: true,
-          },
-          trigger: null,
-        });
+        await pushLocalNotification(
+          tr(locale, "notifStatusChangedTitle"),
+          tr(locale, "notifStatusChangedBody", { id: order.id, status: order.status }),
+        );
       }
 
       snapshot.set(order.id, order.status);
@@ -384,13 +391,75 @@ export function useDeliveryApp() {
     await setStoredTheme(next);
   }
 
-  function addInAppNotification(title: string, body: string) {
-    setNotifications((prev) => [{ id: `${Date.now()}-${Math.random()}`, title, body, createdAt: new Date().toISOString() }, ...prev].slice(0, 50));
+  async function pushLocalNotification(title: string, body: string) {
+    try {
+      const permission = await Notifications.getPermissionsAsync();
+      if (permission.status !== "granted") {
+        return;
+      }
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          sound: true,
+        },
+        trigger: null,
+      });
+    } catch {
+      // keep polling alive even when local notification fails
+    }
+  }
+
+  function addInAppNotification(
+    title: string,
+    body: string,
+    orderId: number | null,
+    kind: "new_order" | "status_changed",
+  ) {
+    const createdAt = new Date().toISOString();
+    const next: InAppNotification = {
+      id: `${Date.now()}-${Math.random()}`,
+      title,
+      body,
+      createdAt,
+      orderId,
+      kind,
+      isRead: false,
+    };
+
+    setNotifications((prev) => [next, ...prev].slice(0, 60));
     setNotificationsUnreadCount((prev) => prev + 1);
+
+    setBannerNotification(next);
+    if (bannerTimerRef.current) {
+      clearTimeout(bannerTimerRef.current);
+    }
+    bannerTimerRef.current = setTimeout(() => {
+      setBannerNotification(null);
+    }, 4500);
   }
 
   function markNotificationsRead() {
+    setNotifications((prev) => prev.map((item) => (item.isRead ? item : { ...item, isRead: true })));
     setNotificationsUnreadCount(0);
+    setBannerNotification(null);
+  }
+
+  async function openNotificationOrder(notification: InAppNotification) {
+    if (!notification.isRead) {
+      setNotifications((prev) => prev.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item)));
+      setNotificationsUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+
+    if (!notification.orderId || !token) {
+      return;
+    }
+
+    const fallbackOrder = orders.find((item) => item.id === notification.orderId) || null;
+    if (fallbackOrder) {
+      await openOrder(fallbackOrder);
+    }
   }
 
   async function setLanguage(next: Locale) {
@@ -437,7 +506,10 @@ export function useDeliveryApp() {
     notifications: {
       list: notifications,
       unreadCount: notificationsUnreadCount,
+      banner: bannerNotification,
       markRead: markNotificationsRead,
+      openOrder: openNotificationOrder,
+      closeBanner: () => setBannerNotification(null),
     },
   };
 }

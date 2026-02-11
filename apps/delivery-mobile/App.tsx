@@ -104,6 +104,10 @@ export default function App() {
           theme={app.theme}
           notifications={app.notifications.list}
           onMarkAllRead={app.notifications.markRead}
+          onOpenNotification={(notification) => {
+            void app.notifications.openOrder(notification);
+            setActiveTab("home");
+          }}
         />
       ) : null}
 
@@ -134,6 +138,24 @@ export default function App() {
         />
         <TabButton label={tr(app.locale, "tabProfile")} active={activeTab === "profile"} onPress={() => setActiveTab("profile")} dark={dark} />
       </View>
+
+      {app.notifications.banner ? (
+        <Pressable
+          onPress={() => {
+            setActiveTab("notifications");
+            app.notifications.closeBanner();
+          }}
+          className={`absolute left-4 right-4 top-12 rounded-2xl border px-4 py-3 shadow-lg ${
+            dark ? "border-cyan-500/60 bg-slate-900" : "border-cyan-300 bg-white"
+          }`}
+        >
+          <Text className={`text-xs font-bold uppercase ${dark ? "text-cyan-300" : "text-cyan-700"}`}>
+            {tr(app.locale, "notificationsTitle")}
+          </Text>
+          <Text className={`mt-1 text-sm font-bold ${dark ? "text-white" : "text-slate-900"}`}>{app.notifications.banner.title}</Text>
+          <Text className={`mt-0.5 text-sm ${dark ? "text-slate-200" : "text-slate-700"}`}>{app.notifications.banner.body}</Text>
+        </Pressable>
+      ) : null}
     </SafeAreaView>
   );
 }
