@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AppState, type AppStateStatus } from "react-native";
 import { API_BASE_URL } from "../config/server";
 import { tr } from "../i18n/strings";
 import { ApiError } from "../lib/http";
@@ -88,6 +89,7 @@ export function useCustomerApp() {
   const [profilePostalCode, setProfilePostalCode] = useState("");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [profilePhotoBusy, setProfilePhotoBusy] = useState(false);
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
 
   const dark = theme === "dark";
 
@@ -109,6 +111,11 @@ export function useCustomerApp() {
 
     setOrders(nextOrders);
     setCartItems(nextCart);
+    setDetailOrder((current) => {
+      if (!current) return current;
+      const matched = nextOrders.find((item) => item.id === current.id);
+      return matched ? { ...current, ...matched } : current;
+    });
   }, []);
 
   const loadSupport = useCallback(
@@ -224,6 +231,26 @@ export function useCustomerApp() {
 
     return () => clearInterval(timer);
   }, [activeTab, loadSupport, session?.token]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      setAppState(nextState);
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!session?.token || appState !== "active") {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      void hydratePrivateData(session.token);
+    }, 2500);
+
+    return () => clearInterval(timer);
+  }, [appState, hydratePrivateData, session?.token]);
 
   useEffect(() => {
     if (!session?.token) {
