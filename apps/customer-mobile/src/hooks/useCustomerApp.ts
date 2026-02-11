@@ -324,8 +324,15 @@ export function useCustomerApp() {
       await hydratePrivateData(session.token);
       setCheckoutSlipUri(null);
       setCheckoutQrData("");
+      setCheckoutError("");
       setDetailView("none");
       setActiveTab("orders");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setCheckoutError(error.message || tr(locale, "unknownError"));
+      } else {
+        setCheckoutError(tr(locale, "unknownError"));
+      }
     } finally {
       setCheckoutBusy(false);
     }

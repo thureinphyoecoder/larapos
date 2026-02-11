@@ -36,10 +36,12 @@ export async function placeOrderFromCart(baseUrl: string, token: string, payload
 
   if (payload.paymentSlipUri) {
     const fileName = payload.paymentSlipUri.split("/").pop() || `slip-${Date.now()}.jpg`;
+    const ext = (fileName.split(".").pop() || "jpg").toLowerCase();
+    const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
     formData.append("payment_slip", {
       uri: payload.paymentSlipUri,
       name: fileName,
-      type: "image/jpeg",
+      type: mimeType,
     } as any);
   }
 
