@@ -64,7 +64,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Checkout & Orders
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-    Route::match(['get', 'post'], '/checkout/confirm', [OrderController::class, 'confirm'])->name('checkout.confirm');
+    Route::post('/checkout/confirm', [OrderController::class, 'confirm'])->name('checkout.confirm');
+    Route::get('/checkout/confirm', [OrderController::class, 'confirmPage'])->name('checkout.confirm.page');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
     Route::post('/products/{product}/reviews', [ProductReviewController::class, 'store'])
         ->middleware('throttle:20,1')

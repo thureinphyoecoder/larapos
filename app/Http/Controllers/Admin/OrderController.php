@@ -140,17 +140,29 @@ class OrderController extends Controller
         // ပုံသိမ်းခြင်း
         $path = $request->file('payment_slip')->store('slips', 'public');
 
+        $request->session()->put('checkout_confirm', [
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'payment_slip' => $path,
+            'total_amount' => $request->total_amount,
+        ]);
+
+        return redirect()->route('checkout.confirm.page');
+    }
+
+    public function confirmPage(Request $request)
+    {
+        $formData = $request->session()->get('checkout_confirm');
+        if (!is_array($formData)) {
+            return redirect()->route('checkout.index');
+        }
+
         return Inertia::render('Checkout/Confirm', [
-            'formData' => [
-                'phone' => $request->phone,
-                'address' => $request->address,
-                'payment_slip' => $path,
-                'total_amount' => $request->total_amount,
-            ],
+            'formData' => $formData,
             'cartItems' => \App\Models\CartItem::with('variant.product')
                 ->where('user_id', Auth::id())
                 ->get(),
-            'total_amount' => $request->total_amount
+            'total_amount' => $formData['total_amount'] ?? 0,
         ]);
     }
 
@@ -282,6 +294,7 @@ class OrderController extends Controller
             CartItem::where('user_id', $user->id)->delete();
 
             DB::commit();
+            $request->session()->forget('checkout_confirm');
 
             // Order save ကို မထိခိုက်စေဖို့ broadcast failure ကို swallow လုပ်မယ်
             try {
