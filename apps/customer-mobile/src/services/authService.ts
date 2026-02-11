@@ -1,5 +1,5 @@
 import { requestJson } from "../lib/http";
-import type { ApiUser, AuthSession } from "../types/domain";
+import type { ApiUser, AuthSession, MePayload } from "../types/domain";
 
 type LoginResponse = {
   token: string;
@@ -30,5 +30,35 @@ export async function logout(baseUrl: string, token: string): Promise<void> {
     path: "/auth/logout",
     method: "POST",
     token,
+  });
+}
+
+export async function fetchMe(baseUrl: string, token: string): Promise<MePayload> {
+  return requestJson<MePayload>({
+    baseUrl,
+    path: "/auth/me",
+    method: "GET",
+    token,
+  });
+}
+
+export type UpdateProfilePayload = {
+  name: string;
+  email: string;
+  phone_number?: string;
+  nrc_number?: string;
+  address_line_1?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+};
+
+export async function updateMe(baseUrl: string, token: string, payload: UpdateProfilePayload): Promise<MePayload> {
+  return requestJson<MePayload>({
+    baseUrl,
+    path: "/auth/me",
+    method: "PATCH",
+    token,
+    body: payload,
   });
 }
