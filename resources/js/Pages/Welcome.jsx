@@ -63,10 +63,6 @@ export default function Welcome({
         "/images/heroes/hero-store.svg",
     ];
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-    };
-
     const filterByCategory = (id) => {
         const nextCategory = id ? String(id) : "";
         setActiveCategory(nextCategory);
@@ -161,7 +157,7 @@ export default function Welcome({
                             LaraPee
                         </Link>
 
-                        <form onSubmit={handleSearch} className="flex-1 min-w-[220px]">
+                        <div className="flex-1 min-w-[220px]">
                             <div className="flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <input
                                     type="text"
@@ -171,7 +167,7 @@ export default function Welcome({
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
                                 <button
-                                    type="submit"
+                                    type="button"
                                     className="bg-orange-600 px-5 text-white transition hover:bg-orange-700"
                                     aria-label="Search"
                                 >
@@ -191,7 +187,7 @@ export default function Welcome({
                                     </svg>
                                 </button>
                             </div>
-                        </form>
+                        </div>
 
                         <div className="ml-auto flex items-center gap-4 text-sm font-semibold text-slate-600">
                             {auth?.user ? (
