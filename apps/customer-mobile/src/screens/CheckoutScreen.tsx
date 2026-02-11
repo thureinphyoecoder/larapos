@@ -1,9 +1,11 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Image, Linking, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { API_BASE_URL } from "../config/server";
 import { tr } from "../i18n/strings";
+import { fetchAddressSuggestions, type AddressSuggestion } from "../services/addressService";
 import type { CartItem, Locale } from "../types/domain";
 import { formatMoney } from "../utils/format";
 
@@ -46,6 +48,9 @@ export function CheckoutScreen({
   const [scannerVisible, setScannerVisible] = useState(false);
   const [scannerLocked, setScannerLocked] = useState(false);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [addressFocused, setAddressFocused] = useState(false);
+  const [addressSuggestBusy, setAddressSuggestBusy] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
 
   const qrPayload = useMemo(
     () => `LARAPEE_PAY|WAVEPAY|09123456789|U_THUREIN_PHYO|MMK|AMOUNT=${Math.round(totalPrice)}|ORDER_ITEMS=${cartItems.length}`,
@@ -56,6 +61,28 @@ export function CheckoutScreen({
     [qrPayload],
   );
   const scannedAmount = useMemo(() => extractAmountFromQr(qrData), [qrData]);
+
+  useEffect(() => {
+    const query = address.trim();
+    if (query.length < 2) {
+      setAddressSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setAddressSuggestBusy(true);
+      try {
+        const items = await fetchAddressSuggestions(API_BASE_URL, query, 8);
+        setAddressSuggestions(items);
+      } catch {
+        setAddressSuggestions([]);
+      } finally {
+        setAddressSuggestBusy(false);
+      }
+    }, 280);
+
+    return () => clearTimeout(timer);
+  }, [address]);
 
   const openScanner = async () => {
     if (!cameraPermission?.granted) {
@@ -167,12 +194,35 @@ export function CheckoutScreen({
               <TextInput
                 value={address}
                 onChangeText={onAddressChange}
+                onFocus={() => setAddressFocused(true)}
+                onBlur={() => setTimeout(() => setAddressFocused(false), 120)}
                 multiline
                 numberOfLines={4}
                 className={`rounded-xl border px-4 py-3 text-sm ${dark ? "border-slate-700 bg-slate-800 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
                 placeholder="No, Street, Township, City"
                 placeholderTextColor={dark ? "#64748b" : "#94a3b8"}
               />
+              {addressFocused && (addressSuggestBusy || addressSuggestions.length > 0) ? (
+                <View className={`mt-2 overflow-hidden rounded-xl border ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
+                  {addressSuggestBusy ? (
+                    <Text className={`px-3 py-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Loading suggestions...</Text>
+                  ) : (
+                    addressSuggestions.map((item) => (
+                      <Pressable
+                        key={`${item.label}-${item.township || ""}-${item.state || ""}`}
+                        onPress={() => {
+                          onAddressChange(item.label);
+                          setAddressSuggestions([]);
+                          setAddressFocused(false);
+                        }}
+                        className={`border-b px-3 py-2 ${dark ? "border-slate-700" : "border-slate-100"}`}
+                      >
+                        <Text className={`text-xs font-semibold ${dark ? "text-slate-100" : "text-slate-700"}`}>{item.label}</Text>
+                      </Pressable>
+                    ))
+                  )}
+                </View>
+              ) : null}
             </View>
           </View>
         </View>

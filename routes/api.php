@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\ApprovalRequestController;
+use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CustomerController;
@@ -26,6 +27,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('/catalog/products', [CatalogController::class, 'products'])->name('catalog.products');
     Route::get('/catalog/products/{product}', [CatalogController::class, 'product'])->name('catalog.product');
     Route::get('/catalog/meta', [CatalogController::class, 'meta'])->name('catalog.meta');
+    Route::get('/addresses/suggest', [AddressController::class, 'suggest'])->name('addresses.suggest');
 
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::prefix('auth')->name('auth.')->group(function () {
