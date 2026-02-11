@@ -60,30 +60,41 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
             return;
         }
 
-        const redirectTo = type === "buy_now" ? route("checkout.index") : null;
-
         router.post(
             route("cart.add"),
             {
                 product_id: product.id,
                 variant_id: selectedVariant?.id,
                 quantity,
-                redirect_to: redirectTo,
             },
             {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
                 onSuccess: () => {
-                    if (type !== "buy_now") {
+                    if (type === "buy_now") {
+                        router.visit(route("checkout.index"));
+                        return;
+                    }
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "ခြင်းတောင်းထဲ ထည့်ပြီးပါပြီ",
+                        toast: true,
+                        position: "top-end",
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                    });
+                },
+                onError: (formErrors) => {
+                    const firstError = Object.values(formErrors || {}).find((value) => typeof value === "string");
+                    if (firstError) {
                         Swal.fire({
-                            icon: "success",
-                            title: "ခြင်းတောင်းထဲ ထည့်ပြီးပါပြီ",
-                            toast: true,
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 2000,
-                            timerProgressBar: true,
+                            title: "လုပ်ဆောင်မှု မအောင်မြင်ပါ",
+                            text: firstError,
+                            icon: "error",
+                            confirmButtonColor: "#f97316",
                         });
                     }
                 },
@@ -193,6 +204,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                             <div className="flex flex-wrap gap-2">
                                 {(product.variants || []).map((v) => (
                                     <button
+                                        type="button"
                                         key={v.id}
                                         onClick={() => setSelectedVariant(v)}
                                         className={`px-4 py-2 rounded-xl border text-sm font-semibold transition ${
@@ -211,6 +223,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                             <span className="text-sm font-semibold text-slate-700">Qty</span>
                             <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden">
                                 <button
+                                    type="button"
                                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                                     className="px-3 py-2 bg-slate-100 border-r border-slate-300 hover:bg-slate-200"
                                 >
@@ -218,6 +231,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                                 </button>
                                 <span className="px-6 py-2 font-semibold text-slate-700">{quantity}</span>
                                 <button
+                                    type="button"
                                     onClick={() => setQuantity((q) => q + 1)}
                                     className="px-3 py-2 bg-slate-100 border-l border-slate-300 hover:bg-slate-200"
                                 >
@@ -228,6 +242,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                             <button
+                                type="button"
                                 onClick={(e) => handleAction(e, "add_to_cart")}
                                 disabled={processing || !inStock}
                                 className={`py-3 rounded-2xl font-bold flex items-center justify-center gap-2 transition ${
@@ -254,6 +269,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                             </button>
 
                             <button
+                                type="button"
                                 onClick={(e) => handleAction(e, "buy_now")}
                                 disabled={processing || !inStock}
                                 className={`py-3 rounded-2xl font-bold shadow-md transition ${

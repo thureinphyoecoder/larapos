@@ -1,5 +1,5 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { CategoryPills } from "../components/CategoryPills";
 import { ProductCard } from "../components/ProductCard";
 import { SearchBar } from "../components/SearchBar";
@@ -39,6 +39,8 @@ export function HomeScreen({
   onOpenProduct,
   onRefresh,
 }: Props) {
+  const featuredProduct = products[0] ?? null;
+
   return (
     <ScrollView
       className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`}
@@ -55,27 +57,48 @@ export function HomeScreen({
         </View>
       </View>
 
-      <View className="relative mt-4 overflow-hidden rounded-3xl bg-orange-600 px-5 py-6">
+      <View className="relative mt-4 overflow-hidden rounded-3xl bg-indigo-700 px-5 py-6">
         <View className="absolute -right-10 -top-8 h-28 w-28 rounded-full bg-white/20" />
-        <View className="absolute -left-6 -bottom-8 h-24 w-24 rounded-full bg-amber-300/40" />
+        <View className="absolute -left-6 -bottom-8 h-24 w-24 rounded-full bg-violet-300/40" />
+        <View className="absolute inset-0 bg-fuchsia-500/25" />
 
-        <Text className="text-[11px] font-extrabold uppercase tracking-widest text-orange-100">{tr(locale, "featuredProducts")}</Text>
-        <Text className="mt-3 text-2xl font-black leading-tight text-white">
-          {tr(locale, "welcomeBack")}, {userName}
-        </Text>
-        <Text className="mt-2 text-xs leading-5 text-orange-100">{tr(locale, "pullToRefresh")}</Text>
+        <View className="relative">
+          <Text className="text-[11px] font-extrabold uppercase tracking-widest text-white/80">{tr(locale, "featuredProducts")}</Text>
+          <Text className="mt-3 text-2xl font-black leading-tight text-white">
+            {featuredProduct?.name || `${tr(locale, "welcomeBack")}, ${userName}`}
+          </Text>
+          <Text className="mt-2 text-xs leading-5 text-white/85">
+            {featuredProduct ? `${featuredProduct.shop?.name || "LaraPee"} collection with fast checkout updates.` : tr(locale, "pullToRefresh")}
+          </Text>
 
-        <View className="mt-5 flex-row gap-3">
-          <StatPill label={tr(locale, "discoverProducts")} value={String(products.length)} />
-          <StatPill label={tr(locale, "categories")} value={String(categories.length)} />
+          <View className="mt-5 flex-row gap-3">
+            <Pressable
+              onPress={() => featuredProduct && onOpenProduct(featuredProduct)}
+              className={`rounded-2xl px-4 py-2 ${featuredProduct ? "bg-white" : "bg-white/30"}`}
+              disabled={!featuredProduct}
+            >
+              <Text className="text-xs font-black text-slate-900">Explore Product</Text>
+            </Pressable>
+            <View className="rounded-2xl border border-white/50 px-4 py-2">
+              <Text className="text-xs font-black text-white">Open Dashboard</Text>
+            </View>
+          </View>
+
+          <View className="mt-4 rounded-2xl border border-white/35 bg-white/15 px-4 py-3">
+            <Text className="text-[11px] font-extrabold uppercase tracking-wider text-white/80">Live Snapshot</Text>
+            <View className="mt-2 flex-row gap-6">
+              <StatPill label={tr(locale, "discoverProducts")} value={String(products.length)} />
+              <StatPill label={tr(locale, "categories")} value={String(categories.length)} />
+            </View>
+          </View>
         </View>
       </View>
 
-      <View className="mt-4">
+      <View className="mt-5">
         <SearchBar value={query} onChange={onQueryChange} placeholder={tr(locale, "searchPlaceholder")} dark={dark} />
       </View>
 
-      <View className="mt-4">
+      <View className={`mt-4 rounded-3xl border p-3 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
         <Text className={`mb-2 text-sm font-black ${dark ? "text-slate-200" : "text-slate-700"}`}>{tr(locale, "categories")}</Text>
         <CategoryPills
           categories={categories}
@@ -129,7 +152,7 @@ export function HomeScreen({
 function StatPill({ label, value }: { label: string; value: string }) {
   return (
     <View className="rounded-2xl border border-white/40 bg-white/20 px-3 py-2">
-      <Text className="text-[10px] font-bold uppercase tracking-wide text-orange-100">{label}</Text>
+      <Text className="text-[10px] font-bold uppercase tracking-wide text-white/75">{label}</Text>
       <Text className="text-lg font-black text-white">{value}</Text>
     </View>
   );
