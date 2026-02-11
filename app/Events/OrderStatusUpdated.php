@@ -28,6 +28,10 @@ class OrderStatusUpdated implements ShouldBroadcastNow
             new Channel('order.' . $this->order->id),
         ];
 
+        if ($this->order->shop_id) {
+            $channels[] = new PrivateChannel('shop.' . (int) $this->order->shop_id . '.notifications');
+        }
+
         if ($this->order->user_id) {
             $channels[] = new PrivateChannel('user.' . $this->order->user_id);
         }
@@ -45,6 +49,7 @@ class OrderStatusUpdated implements ShouldBroadcastNow
         return [
             'id' => $this->order->id,
             'status' => $this->order->status,
+            'shop_id' => $this->order->shop_id,
             'delivery_proof_path' => $this->order->delivery_proof_path,
             'delivery_lat' => $this->order->delivery_lat,
             'delivery_lng' => $this->order->delivery_lng,

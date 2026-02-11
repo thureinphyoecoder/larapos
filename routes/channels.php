@@ -15,6 +15,6 @@ Broadcast::channel('shop.{shopId}.notifications', function ($user, $shopId) {
         return true;
     }
 
-    return $user->hasRole('manager')
+    return $user->hasAnyRole(['manager', 'delivery', 'sales'])
         && (int) $user->shop_id === (int) $shopId;
 });

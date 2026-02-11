@@ -225,6 +225,23 @@ export function useCustomerApp() {
     return () => clearInterval(timer);
   }, [activeTab, loadSupport, session?.token]);
 
+  useEffect(() => {
+    if (!session?.token) {
+      return;
+    }
+
+    const shouldPollOrders = activeTab === "orders" || detailView === "order";
+    if (!shouldPollOrders) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      void hydratePrivateData(session.token);
+    }, 8000);
+
+    return () => clearInterval(timer);
+  }, [activeTab, detailView, hydratePrivateData, session?.token]);
+
   const refreshAll = useCallback(async () => {
     setRefreshing(true);
 

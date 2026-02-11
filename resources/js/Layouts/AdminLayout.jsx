@@ -199,7 +199,8 @@ export default function AdminLayout({ children, header }) {
             return () => {};
         }
 
-        const channelName = role === "manager" && user?.shop_id
+        const useShopScopedChannel = ["manager", "delivery", "sales"].includes(role) && user?.shop_id;
+        const channelName = useShopScopedChannel
             ? `shop.${user.shop_id}.notifications`
             : "admin-notifications";
         const channel = channelName === "admin-notifications"
@@ -212,6 +213,18 @@ export default function AdminLayout({ children, header }) {
                 type: "order",
                 message: e.message,
                 createdAt: e.created_at || new Date().toISOString(),
+                isRead: false,
+                url: route("admin.orders.show", e.id),
+            };
+            setNotifications((prev) => [next, ...prev].slice(0, 80));
+        });
+
+        channel.listen(".OrderStatusUpdated", (e) => {
+            const next = {
+                id: `order-status-${e.id}-${Date.now()}`,
+                type: "order",
+                message: e.message || `Order #${e.id} updated: ${String(e.status || "").toUpperCase()}`,
+                createdAt: new Date().toISOString(),
                 isRead: false,
                 url: route("admin.orders.show", e.id),
             };
