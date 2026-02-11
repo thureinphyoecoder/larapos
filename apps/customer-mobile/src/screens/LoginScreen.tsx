@@ -1,6 +1,6 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
-import { useState } from "react";
-import { Pressable, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Easing, Pressable, Text, TextInput, useWindowDimensions, View } from "react-native";
 import type { Locale } from "../types/domain";
 import { tr } from "../i18n/strings";
 
@@ -39,6 +39,37 @@ export function LoginScreen({
   const [remember, setRemember] = useState(true);
   const { width } = useWindowDimensions();
   const wide = width >= 860;
+  const cartTravel = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(cartTravel, {
+          toValue: 1,
+          duration: 1400,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(cartTravel, {
+          toValue: 0,
+          duration: 1400,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [cartTravel]);
+
+  const cartTranslateX = cartTravel.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-10, 10],
+  });
+  const cartRotate = cartTravel.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ["-3deg", "0deg", "3deg"],
+  });
 
   return (
     <View className="flex-1 items-center justify-center bg-orange-500 px-4 py-8">
@@ -46,7 +77,21 @@ export function LoginScreen({
         <View className={`${wide ? "w-[45%]" : "w-full"} items-center justify-center bg-orange-600 px-6 py-10`}>
           <Text className="text-5xl font-black italic tracking-tight text-white">{tr(locale, "appName")}</Text>
           <Text className="mt-3 text-center text-xl text-orange-100">{tr(locale, "appTagline")}</Text>
-          <Ionicons name="cart-outline" size={88} color="#93c5fd" style={{ marginTop: 22 }} />
+          <Animated.View
+            style={{
+              marginTop: 22,
+              transform: [{ translateX: cartTranslateX }, { rotate: cartRotate }],
+            }}
+          >
+            <Ionicons
+              name="cart-outline"
+              size={88}
+              color="#93c5fd"
+              style={{
+                transform: [{ scaleX: -1 }],
+              }}
+            />
+          </Animated.View>
         </View>
 
         <View className={`${wide ? "w-[55%]" : "w-full"} bg-slate-50 p-7`}>
