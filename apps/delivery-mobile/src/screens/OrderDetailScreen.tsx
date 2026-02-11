@@ -1,6 +1,7 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
+import * as Clipboard from "expo-clipboard";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Image, Linking, Modal, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Linking, Modal, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { type Locale, tr } from "../i18n/strings";
@@ -50,6 +51,9 @@ export function OrderDetailScreen({
 
     return order.delivery_proof_url ? [order.delivery_proof_url] : [];
   }, [order.delivery_proof_url, order.delivery_proof_urls]);
+  const customerName = order.customer?.name || order.user?.name || "-";
+  const customerPhone = order.phone || order.customer?.phone || "-";
+  const customerAddress = order.address || order.customer?.address || "-";
 
   const coordinates = useMemo(() => {
     if (order.delivery_lat === null || order.delivery_lng === null) {
@@ -66,6 +70,31 @@ export function OrderDetailScreen({
     if (!coordinates) return;
     const osmUrl = `https://www.openstreetmap.org/?mlat=${coordinates.latitude}&mlon=${coordinates.longitude}#map=16/${coordinates.latitude}/${coordinates.longitude}`;
     await Linking.openURL(osmUrl);
+  }
+
+  async function copyPhoneNumber() {
+    if (!customerPhone || customerPhone === "-") {
+      return;
+    }
+
+    await Clipboard.setStringAsync(customerPhone);
+    Alert.alert(tr(locale, "locationUpdatedTitle"), tr(locale, "phoneCopied"));
+  }
+
+  async function callCustomer() {
+    if (!customerPhone || customerPhone === "-") {
+      return;
+    }
+
+    const sanitized = customerPhone.replace(/[^\d+]/g, "");
+    if (!sanitized) return;
+    const callUrl = `tel:${sanitized}`;
+    const supported = await Linking.canOpenURL(callUrl);
+    if (supported) {
+      await Linking.openURL(callUrl);
+    } else {
+      Alert.alert(tr(locale, "uploadFailedTitle"), "Phone call is not available on this device.");
+    }
   }
 
   return (
@@ -90,8 +119,25 @@ export function OrderDetailScreen({
           <Text className={`mt-1 text-sm ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "invoice")}: {order.invoice_no ?? "-"}</Text>
           <Text className={`mt-1 text-lg font-black ${dark ? "text-cyan-300" : "text-cyan-700"}`}>{formatMMK(order.total_amount)}</Text>
           <View className={`mt-3 rounded-xl px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
-            <Text className={`text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "phone")}: {order.phone ?? "-"}</Text>
-            <Text className={`mt-1 text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>{order.address ?? "-"}</Text>
+            <Text className={`text-xs font-bold ${dark ? "text-slate-200" : "text-slate-700"}`}>{tr(locale, "customerName")}: {customerName}</Text>
+            <Text className={`mt-1 text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "phone")}: {customerPhone}</Text>
+            <Text className={`mt-1 text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>{customerAddress}</Text>
+            <View className="mt-3 flex-row gap-2">
+              <Pressable
+                className={`flex-1 flex-row items-center justify-center rounded-lg px-3 py-2 ${dark ? "bg-slate-700" : "bg-white"}`}
+                onPress={() => void copyPhoneNumber()}
+              >
+                <Ionicons name="copy-outline" size={14} color={dark ? "#e2e8f0" : "#0f172a"} />
+                <Text className={`ml-1 text-xs font-bold ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "copyPhone")}</Text>
+              </Pressable>
+              <Pressable
+                className="flex-1 flex-row items-center justify-center rounded-lg bg-emerald-500 px-3 py-2"
+                onPress={() => void callCustomer()}
+              >
+                <Ionicons name="call-outline" size={14} color="#fff" />
+                <Text className="ml-1 text-xs font-bold text-white">{tr(locale, "callNow")}</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
 

@@ -46,6 +46,17 @@ export type Order = {
   delivery_lat: number | null;
   delivery_lng: number | null;
   delivery_updated_at: string | null;
+  customer?: {
+    id?: number;
+    name?: string | null;
+    phone?: string | null;
+    address?: string | null;
+  } | null;
+  user?: {
+    id?: number;
+    name?: string | null;
+    email?: string | null;
+  } | null;
   items?: OrderItem[];
 };
 

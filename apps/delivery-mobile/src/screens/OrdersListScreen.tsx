@@ -163,6 +163,11 @@ export function OrdersListScreen({
             onPress={() => onOpenOrder(item)}
             className={`rounded-2xl border px-4 py-4 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}
           >
+            {item.customer?.name ? (
+              <Text className={`mb-2 text-xs font-bold uppercase tracking-wider ${dark ? "text-cyan-300" : "text-cyan-700"}`}>
+                {tr(locale, "customerName")}: {item.customer.name}
+              </Text>
+            ) : null}
             <View className="flex-row items-start justify-between">
               <View className="pr-3">
                 <Text className={`text-base font-black ${dark ? "text-white" : "text-slate-900"}`}>
