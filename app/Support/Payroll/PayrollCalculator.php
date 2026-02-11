@@ -156,11 +156,26 @@ class PayrollCalculator
 
     public function normalizeMonth(string $month): string
     {
-        if (preg_match('/^\d{4}-\d{2}$/', $month) === 1) {
-            return $month;
+        $month = trim($month);
+        if ($month === '') {
+            return now()->format('Y-m');
         }
 
-        return now()->format('Y-m');
+        if (preg_match('/^\d{4}-\d{1,2}$/', $month) === 1 || preg_match('/^\d{4}\/\d{1,2}$/', $month) === 1) {
+            [$year, $numericMonth] = preg_split('/[-\/]/', $month);
+            $year = (int) $year;
+            $numericMonth = (int) $numericMonth;
+
+            if ($year > 0 && $numericMonth >= 1 && $numericMonth <= 12) {
+                return sprintf('%04d-%02d', $year, $numericMonth);
+            }
+        }
+
+        try {
+            return Carbon::parse($month)->format('Y-m');
+        } catch (\Throwable) {
+            return now()->format('Y-m');
+        }
     }
 
     public function expectedWorkingDays(Carbon $from, Carbon $to): int
