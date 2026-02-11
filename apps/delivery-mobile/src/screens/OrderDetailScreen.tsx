@@ -1,12 +1,15 @@
+import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Image, Linking, Modal, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { type Locale, tr } from "../i18n/strings";
 import type { Order } from "../types/domain";
 import { formatDateTime, formatMMK } from "../utils/formatters";
 
 type OrderDetailScreenProps = {
+  locale: Locale;
   order: Order;
   busyAction: boolean;
   refreshing: boolean;
@@ -19,6 +22,7 @@ type OrderDetailScreenProps = {
 };
 
 export function OrderDetailScreen({
+  locale,
   order,
   busyAction,
   refreshing,
@@ -71,40 +75,40 @@ export function OrderDetailScreen({
 
   return (
     <View className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`}>
-      <View className="absolute -left-20 top-8 h-52 w-52 rounded-full bg-cyan-400/15" />
-      <View className="absolute -right-16 top-40 h-48 w-48 rounded-full bg-emerald-400/15" />
-
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 10, paddingBottom: Math.max(24, insets.bottom + 20), gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 12, paddingBottom: Math.max(24, insets.bottom + 20), gap: 12 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={dark ? "#e2e8f0" : "#0f172a"} />}
       >
-        <Pressable
-          onPress={onBack}
-          className={`self-start rounded-full px-4 py-2 ${dark ? "bg-slate-800/80" : "bg-slate-900"}`}
-        >
-          <Text className="text-sm font-bold text-slate-100">← Order List</Text>
-        </Pressable>
-
-        <View className={`rounded-3xl border p-5 ${dark ? "border-slate-800 bg-slate-900/95" : "border-white bg-white"}`}>
-          <View className="flex-row items-start justify-between">
-            <Text className={`text-2xl font-black ${dark ? "text-white" : "text-slate-900"}`}>Order #{order.id}</Text>
-            <StatusChip status={order.status} />
-          </View>
-          <Text className={`mt-2 text-sm ${dark ? "text-slate-200" : "text-slate-700"}`}>Invoice: {order.invoice_no ?? "-"}</Text>
-          <Text className={`text-sm ${dark ? "text-slate-200" : "text-slate-700"}`}>Amount: {formatMMK(order.total_amount)}</Text>
-          <Text className={`text-sm ${dark ? "text-slate-200" : "text-slate-700"}`}>Phone: {order.phone ?? "-"}</Text>
-          <Text className={`text-sm ${dark ? "text-slate-200" : "text-slate-700"}`}>Address: {order.address ?? "-"}</Text>
+        <View className="flex-row items-center justify-between">
+          <Pressable onPress={onBack} className={`flex-row items-center rounded-full px-3 py-2 ${dark ? "bg-slate-900" : "bg-white"}`}>
+            <Ionicons name="arrow-back" size={16} color={dark ? "#e2e8f0" : "#0f172a"} />
+            <Text className={`ml-2 text-xs font-bold ${dark ? "text-slate-200" : "text-slate-800"}`}>{tr(locale, "orderListBack")}</Text>
+          </Pressable>
+          <StatusChip status={order.status} />
         </View>
 
-        <View className={`rounded-3xl border p-4 ${dark ? "border-slate-800 bg-slate-900/95" : "border-white bg-white"}`}>
+        <View className={`rounded-2xl border px-4 py-4 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
+          <View className="flex-row items-start justify-between">
+            <Text className={`text-xl font-black ${dark ? "text-white" : "text-slate-900"}`}>#{order.id}</Text>
+            <StatusChip status={order.status} />
+          </View>
+          <Text className={`mt-1 text-sm ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "invoice")}: {order.invoice_no ?? "-"}</Text>
+          <Text className={`mt-1 text-lg font-black ${dark ? "text-cyan-300" : "text-cyan-700"}`}>{formatMMK(order.total_amount)}</Text>
+          <View className={`mt-3 rounded-xl px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
+            <Text className={`text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "phone")}: {order.phone ?? "-"}</Text>
+            <Text className={`mt-1 text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>{order.address ?? "-"}</Text>
+          </View>
+        </View>
+
+        <View className={`rounded-2xl border p-4 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
           <View className="flex-row items-center justify-between">
-            <Text className={`text-sm font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>Live Location</Text>
+            <Text className={`text-xs font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "liveLocation")}</Text>
             <Pressable
-              className={`rounded-full px-3 py-1 ${coordinates ? "bg-cyan-500" : "bg-slate-500"}`}
+              className={`rounded-full px-3 py-1 ${coordinates ? (dark ? "bg-cyan-500/20" : "bg-cyan-100") : dark ? "bg-slate-700" : "bg-slate-200"}`}
               onPress={() => void openInMaps()}
               disabled={!coordinates}
             >
-              <Text className="text-xs font-bold text-white">Open Map</Text>
+              <Text className={`text-xs font-bold ${coordinates ? (dark ? "text-cyan-200" : "text-cyan-800") : dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "openMap")}</Text>
             </Pressable>
           </View>
 
@@ -123,44 +127,44 @@ export function OrderDetailScreen({
               </MapView>
             </View>
           ) : (
-            <Text className={`mt-2 text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>Location မတင်ရသေးပါ။</Text>
+            <Text className={`mt-2 text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "locationMissing")}</Text>
           )}
 
-          <Text className={`mt-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Updated: {formatDateTime(order.delivery_updated_at)}</Text>
+          <Text className={`mt-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "updatedAt")}: {formatDateTime(order.delivery_updated_at)}</Text>
         </View>
 
-        <View className={`rounded-3xl border p-4 ${dark ? "border-slate-800 bg-slate-900/95" : "border-white bg-white"}`}>
-          <Text className={`text-sm font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>Actions</Text>
+        <View className={`rounded-2xl border p-4 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
+          <Text className={`text-xs font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "actions")}</Text>
 
           <Pressable
-            className={`mt-3 items-center rounded-2xl px-4 py-3 ${busyAction ? "bg-slate-700" : dark ? "bg-slate-200" : "bg-slate-900"}`}
+            className={`mt-3 items-center rounded-xl px-4 py-3 ${busyAction ? "bg-slate-700" : dark ? "bg-slate-800" : "bg-slate-900"}`}
             disabled={busyAction}
             onPress={onUpdateLocation}
           >
-            <Text className={`text-sm font-bold ${dark ? "text-slate-900" : "text-white"}`}>လက်ရှိတည်နေရာ Update</Text>
+            <Text className="text-sm font-bold text-white">{tr(locale, "updateLocation")}</Text>
           </Pressable>
 
           <Pressable
-            className={`mt-2 items-center rounded-2xl px-4 py-3 ${busyAction ? "bg-slate-700" : "bg-cyan-500"}`}
+            className={`mt-2 items-center rounded-xl px-4 py-3 ${busyAction ? "bg-slate-700" : "bg-cyan-500"}`}
             disabled={busyAction}
             onPress={onUploadProof}
           >
-            <Text className="text-sm font-bold text-white">ပို့ဆောင်ပုံ Upload + Shipped</Text>
+            <Text className="text-sm font-bold text-white">{tr(locale, "uploadProofShipped")}</Text>
           </Pressable>
 
           <Pressable
-            className={`mt-2 items-center rounded-2xl px-4 py-3 ${order.status === "shipped" && !busyAction ? "bg-emerald-500" : "bg-slate-700"}`}
+            className={`mt-2 items-center rounded-xl px-4 py-3 ${order.status === "shipped" && !busyAction ? "bg-emerald-500" : "bg-slate-700"}`}
             disabled={order.status !== "shipped" || busyAction}
             onPress={onMarkDelivered}
           >
-            <Text className="text-sm font-bold text-white">Delivered အဖြစ်သတ်မှတ်မည်</Text>
+            <Text className="text-sm font-bold text-white">{tr(locale, "markDelivered")}</Text>
           </Pressable>
         </View>
 
-        <View className={`rounded-3xl border p-4 ${dark ? "border-slate-800 bg-slate-900/95" : "border-white bg-white"}`}>
+        <View className={`rounded-2xl border p-4 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
           <Pressable onPress={() => setShowItems((prev) => !prev)}>
-            <Text className={`text-sm font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>
-              ကုန်ပစ္စည်းအသေးစိတ် {showItems ? "(ဝှက်မည်)" : "(ပြမည်)"}
+            <Text className={`text-xs font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>
+              {tr(locale, "itemDetails")} {showItems ? `(${tr(locale, "hide")})` : `(${tr(locale, "show")})`}
             </Text>
           </Pressable>
 
@@ -169,21 +173,21 @@ export function OrderDetailScreen({
               order.items?.map((item) => (
                 <View key={item.id} className={`mt-3 rounded-xl p-3 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
                   <Text className={`text-sm font-semibold ${dark ? "text-white" : "text-slate-800"}`}>{item.product?.name ?? "Item"}</Text>
-                  <Text className={`text-sm ${dark ? "text-slate-300" : "text-slate-600"}`}>Qty: {item.quantity} • {formatMMK(item.line_total)}</Text>
+                  <Text className={`text-sm ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "qty")}: {item.quantity} • {formatMMK(item.line_total)}</Text>
                 </View>
               ))
             ) : (
-              <Text className={`mt-2 text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>Item data မရရှိပါ။</Text>
+              <Text className={`mt-2 text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "itemDataMissing")}</Text>
             )
           ) : (
-            <Text className={`mt-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>လိုအပ်မှသာ ဖွင့်ကြည့်နိုင်ပါတယ်။</Text>
+            <Text className={`mt-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "openWhenNeeded")}</Text>
           )}
         </View>
 
-        <View className={`rounded-3xl border p-4 ${dark ? "border-slate-800 bg-slate-900/95" : "border-white bg-white"}`}>
-          <Text className={`text-sm font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>Delivery Proof</Text>
+        <View className={`rounded-2xl border p-4 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
+          <Text className={`text-xs font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "deliveryProof")}</Text>
           {proofUrls.length ? (
-            <View className={`mt-3 overflow-hidden rounded-2xl border p-2 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-slate-100"}`}>
+            <View className={`mt-3 overflow-hidden rounded-2xl border p-2 ${dark ? "border-slate-700 bg-slate-800/80" : "border-slate-200 bg-slate-50"}`}>
               <Image
                 source={{ uri: proofUrls[Math.min(viewerIndex, proofUrls.length - 1)] }}
                 className="h-64 w-full rounded-xl"
@@ -223,26 +227,26 @@ export function OrderDetailScreen({
                   </Pressable>
                 ))}
               </ScrollView>
-              <Text className={`mt-2 text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>{proofUrls.length} image(s)</Text>
+              <Text className={`mt-2 text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>{proofUrls.length} files</Text>
             </View>
           ) : (
-            <Text className={`mt-2 text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>ပို့ဆောင်ပုံ မတင်ရသေးပါ။</Text>
+            <Text className={`mt-2 text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "proofMissing")}</Text>
           )}
         </View>
       </ScrollView>
 
       <Modal visible={viewerOpen} animationType="fade" transparent onRequestClose={() => setViewerOpen(false)}>
-        <View className="flex-1 bg-black/95">
+        <View className="flex-1 bg-black/90">
           <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 12 }} className="flex-row items-center justify-between">
             <Text className="text-sm font-bold text-white">
               Proof {Math.min(viewerIndex + 1, proofUrls.length)} / {proofUrls.length}
             </Text>
-            <Pressable onPress={() => setViewerOpen(false)} className="rounded-full bg-white/20 px-3 py-1">
+            <Pressable onPress={() => setViewerOpen(false)} className="rounded-full bg-white/15 px-3 py-1.5">
               <Text className="text-sm font-bold text-white">Close</Text>
             </Pressable>
           </View>
 
-          <View className="mt-4 flex-1 items-center justify-center px-3">
+          <View className="mt-3 flex-1 items-center justify-center px-3">
             {proofUrls[viewerIndex] ? <Image source={{ uri: proofUrls[viewerIndex] }} className="h-full w-full" resizeMode="contain" /> : null}
           </View>
 
@@ -254,10 +258,10 @@ export function OrderDetailScreen({
             {proofUrls.map((uri, index) => (
               <Pressable
                 key={`${uri}-viewer-${index}`}
-                className={`overflow-hidden rounded-lg border ${index === viewerIndex ? "border-cyan-400" : "border-white/30"}`}
+                className={`h-16 w-16 overflow-hidden rounded-lg border ${index === viewerIndex ? "border-cyan-400" : "border-white/30"}`}
                 onPress={() => setViewerIndex(index)}
               >
-                <Image source={{ uri }} className="h-16 w-16" resizeMode="cover" />
+                <Image source={{ uri }} className="h-full w-full" resizeMode="cover" />
               </Pressable>
             ))}
           </ScrollView>
@@ -270,24 +274,24 @@ export function OrderDetailScreen({
 function StatusChip({ status }: { status: string }) {
   if (status === "confirmed") {
     return (
-      <View className="rounded-full bg-amber-100 px-3 py-1">
-        <Text className="text-[11px] font-bold uppercase text-amber-700">confirmed</Text>
+      <View className="rounded-full border border-amber-500/30 bg-amber-100 px-3 py-1">
+        <Text className="text-[10px] font-bold uppercase text-amber-700">confirmed</Text>
       </View>
     );
   }
 
   if (status === "shipped") {
     return (
-      <View className="rounded-full bg-sky-100 px-3 py-1">
-        <Text className="text-[11px] font-bold uppercase text-sky-700">shipped</Text>
+      <View className="rounded-full border border-sky-500/30 bg-sky-100 px-3 py-1">
+        <Text className="text-[10px] font-bold uppercase text-sky-700">shipped</Text>
       </View>
     );
   }
 
   if (status === "delivered") {
     return (
-      <View className="rounded-full bg-emerald-100 px-3 py-1">
-        <Text className="text-[11px] font-bold uppercase text-emerald-700">delivered</Text>
+      <View className="rounded-full border border-emerald-500/30 bg-emerald-100 px-3 py-1">
+        <Text className="text-[10px] font-bold uppercase text-emerald-700">delivered</Text>
       </View>
     );
   }

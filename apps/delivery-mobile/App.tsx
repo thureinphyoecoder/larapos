@@ -71,6 +71,7 @@ function DeliveryAppShell() {
       <SafeAreaView edges={["top", "bottom"]} className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`}>
         <StatusBar style={dark ? "light" : "dark"} />
         <OrderDetailScreen
+          locale={app.locale}
           order={app.orders.selected}
           busyAction={app.orders.actionBusy}
           refreshing={app.orders.refreshing}
