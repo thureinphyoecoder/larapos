@@ -1,3 +1,4 @@
+import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { TextInput, View } from "react-native";
 
 type Props = {
@@ -9,13 +10,19 @@ type Props = {
 
 export function SearchBar({ value, onChange, placeholder, dark }: Props) {
   return (
-    <View className={`rounded-2xl border px-4 py-2 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
+    <View
+      className={`flex-row items-center rounded-2xl border px-3 py-2 ${
+        dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"
+      }`}
+    >
+      <Ionicons name="search-outline" size={16} color={dark ? "#94a3b8" : "#64748b"} />
       <TextInput
         placeholder={placeholder}
         placeholderTextColor={dark ? "#94a3b8" : "#9ca3af"}
         value={value}
         onChangeText={onChange}
-        className={`${dark ? "text-slate-100" : "text-slate-900"}`}
+        className={`ml-2 flex-1 text-sm ${dark ? "text-slate-100" : "text-slate-900"}`}
+        returnKeyType="search"
       />
     </View>
   );

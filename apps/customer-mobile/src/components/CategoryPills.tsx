@@ -6,12 +6,13 @@ type Props = {
   activeCategoryId: number | null;
   onSelect: (id: number | null) => void;
   dark: boolean;
+  allLabel: string;
 };
 
-export function CategoryPills({ categories, activeCategoryId, onSelect, dark }: Props) {
+export function CategoryPills({ categories, activeCategoryId, onSelect, dark, allLabel }: Props) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1" contentContainerStyle={{ paddingHorizontal: 4 }}>
-      <Pill label="All" active={activeCategoryId === null} onPress={() => onSelect(null)} dark={dark} />
+      <Pill label={allLabel} active={activeCategoryId === null} onPress={() => onSelect(null)} dark={dark} />
       {categories.map((category) => (
         <Pill
           key={category.id}
@@ -30,10 +31,10 @@ function Pill({ label, active, onPress, dark }: { label: string; active: boolean
     <Pressable
       onPress={onPress}
       className={`mr-2 rounded-full px-4 py-2 ${
-        active ? "bg-orange-600" : dark ? "bg-slate-800 border border-slate-700" : "bg-white border border-slate-200"
+        active ? "bg-orange-600" : dark ? "border border-slate-700 bg-slate-900" : "border border-slate-200 bg-white"
       }`}
     >
-      <Text className={`text-xs font-bold ${active ? "text-white" : dark ? "text-slate-200" : "text-slate-600"}`}>{label}</Text>
+      <Text className={`text-xs font-extrabold ${active ? "text-white" : dark ? "text-slate-300" : "text-slate-700"}`}>{label}</Text>
     </Pressable>
   );
 }

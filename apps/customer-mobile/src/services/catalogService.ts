@@ -46,3 +46,13 @@ export async function fetchCategories(baseUrl: string): Promise<Category[]> {
     return fallbackCategories;
   }
 }
+
+export async function fetchProductDetail(baseUrl: string, productId: number): Promise<Product> {
+  const payload = await requestJson<{ data: Product }>({
+    baseUrl,
+    path: `/catalog/products/${productId}`,
+    method: "GET",
+  });
+
+  return payload.data;
+}
