@@ -1,10 +1,20 @@
 import { requestFormData, requestJson } from "../lib/http";
 import type { SupportMessagesPayload } from "../types/domain";
 
-export async function fetchSupportMessages(baseUrl: string, token: string, page = 1): Promise<SupportMessagesPayload> {
+export async function fetchSupportMessages(
+  baseUrl: string,
+  token: string,
+  page = 1,
+  markSeen = false,
+): Promise<SupportMessagesPayload> {
+  const params = new URLSearchParams({ message_page: String(page) });
+  if (markSeen) {
+    params.set("mark_seen", "1");
+  }
+
   const payload = await requestJson<SupportMessagesPayload>({
     baseUrl,
-    path: `/support/messages?message_page=${page}`,
+    path: `/support/messages?${params.toString()}`,
     method: "GET",
     token,
   });

@@ -3,6 +3,7 @@ import { Alert, AppState, type AppStateStatus } from "react-native";
 import { API_BASE_URL } from "../config/server";
 import { tr } from "../i18n/strings";
 import { ApiError } from "../lib/http";
+import { ensureNotificationPermission, showLocalNotification } from "../lib/notifications";
 import { clearSession, loadLocale, loadSession, loadTheme, saveLocale, saveSession, saveTheme } from "../lib/storage";
 import { addCartItem, fetchCart, removeCartItem } from "../services/cartService";
 import { fetchCategories, fetchProductDetail, fetchProducts, submitProductReview } from "../services/catalogService";
@@ -95,8 +96,10 @@ export function useCustomerApp() {
   const [profilePhotoBusy, setProfilePhotoBusy] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const [notificationsUnreadCount, setNotificationsUnreadCount] = useState(0);
+  const [supportUnreadCount, setSupportUnreadCount] = useState(0);
   const orderSnapshotRef = useRef<Map<number, string>>(new Map());
   const flashSaleSnapshotRef = useRef("");
+  const supportLatestIdRef = useRef(0);
 
   const dark = theme === "dark";
 
@@ -176,9 +179,10 @@ export function useCustomerApp() {
   }, [locale]);
 
   const loadSupport = useCallback(
-    async (token: string, options?: { page?: number; mode?: "replace" | "append" | "merge_latest" }) => {
+    async (token: string, options?: { page?: number; mode?: "replace" | "append" | "merge_latest"; markSeen?: boolean }) => {
       const page = options?.page ?? 1;
       const mode = options?.mode ?? "replace";
+      const markSeen = options?.markSeen ?? false;
 
       if (mode === "append") {
         setSupportLoadingMore(true);
@@ -188,9 +192,32 @@ export function useCustomerApp() {
       setSupportError("");
 
       try {
-        const payload = await fetchSupportMessages(API_BASE_URL, token, page);
+        const payload = await fetchSupportMessages(API_BASE_URL, token, page, markSeen);
         const nextMessages = payload.messages || [];
         const pageMeta = payload.messagePagination;
+        const latestId = nextMessages.reduce((max, item) => Math.max(max, Number(item.id || 0)), 0);
+        const previousLatestId = supportLatestIdRef.current;
+
+        if (latestId > previousLatestId) {
+          if (previousLatestId > 0 && mode !== "append") {
+            const incoming = nextMessages.filter(
+              (item) => Number(item.id) > previousLatestId && Number(item.sender_id) !== Number(session?.user?.id || 0),
+            );
+
+            if (incoming.length > 0 && activeTab !== "support") {
+              setSupportUnreadCount((current) => current + incoming.length);
+              const latestIncoming = incoming[incoming.length - 1];
+              const senderName = latestIncoming.sender?.name || tr(locale, "supportAgent");
+              const preview = String(latestIncoming.message || "").trim() || "Sent an image";
+
+              Alert.alert(tr(locale, "supportTitle"), `${senderName}: ${preview}`);
+              void showLocalNotification(`${senderName} • ${tr(locale, "supportTitle")}`, preview);
+            }
+          }
+
+          supportLatestIdRef.current = latestId;
+        }
+
         setSupportAssignedStaffName(payload.assigned_staff?.name || null);
         setSupportCurrentPage(pageMeta?.current_page ?? page);
         setSupportHasMore(Boolean(pageMeta?.has_more_pages ?? ((pageMeta?.current_page ?? page) < (pageMeta?.last_page ?? page))));
@@ -232,7 +259,7 @@ export function useCustomerApp() {
         }
       }
     },
-    [locale],
+    [activeTab, locale, session?.user?.id],
   );
 
   const applyMePayload = useCallback(async (token: string, payload: MePayload) => {
@@ -290,6 +317,9 @@ export function useCustomerApp() {
       });
 
       if (savedSession?.token) {
+        void ensureNotificationPermission().catch(() => {
+          // Ignore permission setup errors.
+        });
         void Promise.all([hydratePrivateData(savedSession.token), syncMe(savedSession.token), loadSupport(savedSession.token)]).catch(() => {
           // Keep app usable even when private bootstrap calls fail/time out.
         });
@@ -316,17 +346,17 @@ export function useCustomerApp() {
   }, [session?.token, query, activeCategoryId, hydratePublicCatalog]);
 
   useEffect(() => {
-    if (!session?.token || activeTab !== "support") {
+    if (!session?.token || appState !== "active") {
       return;
     }
 
-    void loadSupport(session.token, { page: 1, mode: "merge_latest" });
+    void loadSupport(session.token, { page: 1, mode: "merge_latest", markSeen: activeTab === "support" });
     const timer = setInterval(() => {
-      void loadSupport(session.token, { page: 1, mode: "merge_latest" });
-    }, 4000);
+      void loadSupport(session.token, { page: 1, mode: "merge_latest", markSeen: activeTab === "support" });
+    }, 5000);
 
     return () => clearInterval(timer);
-  }, [activeTab, loadSupport, session?.token]);
+  }, [activeTab, appState, loadSupport, session?.token]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextState) => {
@@ -371,6 +401,12 @@ export function useCustomerApp() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === "support") {
+      setSupportUnreadCount(0);
+    }
+  }, [activeTab]);
+
   const refreshAll = useCallback(async () => {
     setRefreshing(true);
 
@@ -378,12 +414,16 @@ export function useCustomerApp() {
       await hydratePublicCatalog(query, activeCategoryId);
 
       if (session?.token) {
-        await Promise.all([hydratePrivateData(session.token), syncMe(session.token), loadSupport(session.token)]);
+        await Promise.all([
+          hydratePrivateData(session.token),
+          syncMe(session.token),
+          loadSupport(session.token, { page: 1, mode: "merge_latest", markSeen: activeTab === "support" }),
+        ]);
       }
     } finally {
       setRefreshing(false);
     }
-  }, [activeCategoryId, hydratePrivateData, hydratePublicCatalog, loadSupport, query, session?.token, syncMe]);
+  }, [activeCategoryId, activeTab, hydratePrivateData, hydratePublicCatalog, loadSupport, query, session?.token, syncMe]);
 
   const handleSignIn = useCallback(async () => {
     if (!email.trim() || !password.trim()) {
@@ -402,7 +442,14 @@ export function useCustomerApp() {
       setProfileName(nextSession.user.name || "");
       setProfileEmail(nextSession.user.email || "");
       setActiveTab("home");
-      await Promise.all([hydratePrivateData(nextSession.token), syncMe(nextSession.token), loadSupport(nextSession.token)]);
+      void ensureNotificationPermission().catch(() => {
+        // Ignore permission setup errors.
+      });
+      await Promise.all([
+        hydratePrivateData(nextSession.token),
+        syncMe(nextSession.token),
+        loadSupport(nextSession.token, { page: 1, mode: "merge_latest", markSeen: false }),
+      ]);
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 0) {
@@ -452,7 +499,11 @@ export function useCustomerApp() {
       setProfileName(nextSession.user.name || "");
       setProfileEmail(nextSession.user.email || "");
       setActiveTab("home");
-      await Promise.all([hydratePrivateData(nextSession.token), syncMe(nextSession.token), loadSupport(nextSession.token)]);
+      await Promise.all([
+        hydratePrivateData(nextSession.token),
+        syncMe(nextSession.token),
+        loadSupport(nextSession.token, { page: 1, mode: "merge_latest", markSeen: false }),
+      ]);
       setAuthMessage("Account created. Verification email has been sent.");
     } catch (error) {
       if (error instanceof ApiError) {
@@ -873,7 +924,7 @@ export function useCustomerApp() {
       setSupportDraft("");
       setSupportImageUri(null);
       setSupportEditingMessageId(null);
-      await loadSupport(session.token, { page: 1, mode: "merge_latest" });
+      await loadSupport(session.token, { page: 1, mode: "merge_latest", markSeen: true });
     } catch (error) {
       if (error instanceof ApiError) {
         setSupportError(error.message || tr(locale, "unknownError"));
@@ -890,8 +941,8 @@ export function useCustomerApp() {
       return;
     }
 
-    await loadSupport(session.token, { page: supportCurrentPage + 1, mode: "append" });
-  }, [loadSupport, session?.token, supportCurrentPage, supportHasMore, supportLoadingMore]);
+    await loadSupport(session.token, { page: supportCurrentPage + 1, mode: "append", markSeen: activeTab === "support" });
+  }, [activeTab, loadSupport, session?.token, supportCurrentPage, supportHasMore, supportLoadingMore]);
 
   const handleStartEditSupport = useCallback((messageId: number) => {
     const target = supportMessages.find((item) => item.id === messageId);
@@ -1043,8 +1094,10 @@ export function useCustomerApp() {
     setCheckoutSlipUri(null);
     setCheckoutQrData("");
     setNotificationsUnreadCount(0);
+    setSupportUnreadCount(0);
     orderSnapshotRef.current.clear();
     flashSaleSnapshotRef.current = "";
+    supportLatestIdRef.current = 0;
   }, [session?.token]);
 
   const toggleLocale = useCallback(async () => {
@@ -1074,6 +1127,7 @@ export function useCustomerApp() {
     () => cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
     [cartItems],
   );
+  const totalNotificationCount = notificationsUnreadCount + supportUnreadCount;
 
   return {
     booting,
@@ -1085,6 +1139,8 @@ export function useCustomerApp() {
     tabItems,
     cartCount,
     notificationsUnreadCount,
+    supportUnreadCount,
+    allNotificationsCount: totalNotificationCount,
     setActiveTab,
     login: {
       registerName,
@@ -1195,7 +1251,7 @@ export function useCustomerApp() {
       setDraft: setSupportDraft,
       setImageUri: setSupportImageUri,
       send: handleSendSupport,
-      refresh: () => (session?.token ? loadSupport(session.token, { page: 1, mode: "replace" }) : Promise.resolve()),
+      refresh: () => (session?.token ? loadSupport(session.token, { page: 1, mode: "replace", markSeen: true }) : Promise.resolve()),
       loadMore: handleLoadMoreSupport,
       startEdit: handleStartEditSupport,
       cancelEdit: handleCancelEditSupport,

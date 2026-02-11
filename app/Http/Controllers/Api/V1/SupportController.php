@@ -30,7 +30,9 @@ class SupportController extends Controller
         $messagePaginator = $this->chatQueryService->customerMessages($user);
         $messages = collect($messagePaginator->items());
 
-        $this->markSupportMessagesSeenAction->execute($user->id, $messages);
+        if ($request->boolean('mark_seen', false)) {
+            $this->markSupportMessagesSeenAction->execute($user->id, $messages);
+        }
         $payload = $this->chatQueryService->messagePayload($messagePaginator);
 
         return response()->json([
