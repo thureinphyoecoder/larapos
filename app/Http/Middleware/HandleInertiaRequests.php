@@ -63,6 +63,9 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+            'locale' => app()->getLocale(),
+            'available_locales' => ['en', 'mm'],
+            'i18n' => fn () => trans('ui'),
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->id,

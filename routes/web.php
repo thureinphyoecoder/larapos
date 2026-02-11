@@ -31,6 +31,17 @@ use Inertia\Inertia;
 */
 
 Route::get('/', [ProductController::class, 'index'])->name('home');
+Route::get('/locale/{locale}', function (string $locale) {
+    $locale = strtolower($locale);
+    if (! in_array($locale, ['en', 'mm'], true)) {
+        $locale = 'en';
+    }
+
+    session()->put('locale', $locale);
+
+    return redirect()->back();
+})->name('locale.switch');
+
 Route::get('/product/{slug}', [ProductController::class, 'show'])->name('product.show');
 
 Broadcast::routes(['middleware' => ['auth']]);
@@ -142,6 +153,7 @@ Route::middleware(['auth', 'verified', 'role:admin|manager|sales|delivery|accoun
 
     Route::middleware(['role:admin|accountant'])->group(function () {
         Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
+        Route::get('/payroll/users/{user}/slip', [PayrollController::class, 'slip'])->name('payroll.slip');
         Route::post('/payroll/users/{user}/profile', [PayrollController::class, 'upsertProfile'])->name('payroll.profile');
         Route::post('/payroll/users/{user}/adjustments', [PayrollController::class, 'storeAdjustment'])->name('payroll.adjustments.store');
         Route::post('/payroll/users/{user}/payout', [PayrollController::class, 'payout'])->name('payroll.payout');
