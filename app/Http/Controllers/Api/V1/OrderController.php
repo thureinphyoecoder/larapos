@@ -14,6 +14,7 @@ use App\Models\Order;
 use App\Services\Governance\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class OrderController extends Controller
 {
@@ -31,7 +32,7 @@ class OrderController extends Controller
         $isStaff = $user->hasAnyRole(['admin', 'manager', 'sales', 'delivery', 'cashier', 'accountant', 'technician']);
 
         $orders = Order::query()
-            ->with(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])
+            ->with($this->orderRelations())
             ->when(! $isStaff, fn ($q) => $q->where('user_id', $user->id))
             ->latest('id')
             ->paginate((int) request('per_page', 20))
@@ -58,7 +59,7 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
+            'data' => new OrderResource($order->load($this->orderRelations())),
         ]);
     }
 
@@ -84,7 +85,7 @@ class OrderController extends Controller
             if ($existingOrder) {
                 return response()->json([
                     'message' => 'Order already processed for this idempotency key.',
-                    'data' => new OrderResource($existingOrder->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
+                    'data' => new OrderResource($existingOrder->load($this->orderRelations())),
                 ]);
             }
         }
@@ -151,7 +152,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Order cancelled.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
+            'data' => new OrderResource($order->load($this->orderRelations())),
         ]);
     }
 
@@ -185,7 +186,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Refund requested.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
+            'data' => new OrderResource($order->load($this->orderRelations())),
         ]);
     }
 
@@ -224,7 +225,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Return requested.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
+            'data' => new OrderResource($order->load($this->orderRelations())),
         ]);
     }
 
@@ -316,7 +317,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Order status updated.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
+            'data' => new OrderResource($order->load($this->orderRelations())),
         ]);
     }
 
@@ -341,7 +342,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Delivery location updated.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
+            'data' => new OrderResource($order->load($this->orderRelations())),
         ]);
     }
 
@@ -381,19 +382,21 @@ class OrderController extends Controller
         }
 
         $primaryPath = $paths[0] ?? null;
-        $existingCount = (int) $order->deliveryProofs()->count();
-        $proofRows = [];
-        foreach ($paths as $index => $path) {
-            $proofRows[] = [
-                'path' => $path,
-                'sort_order' => $existingCount + $index,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
+        if ($this->hasDeliveryProofsTable()) {
+            $existingCount = (int) $order->deliveryProofs()->count();
+            $proofRows = [];
+            foreach ($paths as $index => $path) {
+                $proofRows[] = [
+                    'path' => $path,
+                    'sort_order' => $existingCount + $index,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
 
-        if (!empty($proofRows)) {
-            $order->deliveryProofs()->insert($proofRows);
+            if (!empty($proofRows)) {
+                $order->deliveryProofs()->insert($proofRows);
+            }
         }
 
         $order->update([
@@ -406,8 +409,35 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Delivery proof uploaded. Order marked as shipped.',
-            'data' => new OrderResource($order->load(['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments', 'deliveryProofs'])),
+            'data' => new OrderResource($order->load($this->orderRelations())),
         ]);
+    }
+
+    private function orderRelations(): array
+    {
+        $relations = ['user.roles', 'customer', 'shop', 'items.product', 'items.variant', 'discounts', 'taxes', 'payments'];
+
+        if ($this->hasDeliveryProofsTable()) {
+            $relations[] = 'deliveryProofs';
+        }
+
+        return $relations;
+    }
+
+    private function hasDeliveryProofsTable(): bool
+    {
+        static $hasTable = null;
+        if ($hasTable !== null) {
+            return $hasTable;
+        }
+
+        try {
+            $hasTable = Schema::hasTable('order_delivery_proofs');
+        } catch (\Throwable) {
+            $hasTable = false;
+        }
+
+        return $hasTable;
     }
 
     private function authorizeStaffOrderAccess($user, Order $order): void
