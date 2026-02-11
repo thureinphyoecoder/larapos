@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Requests\Api\V1\Auth\RegisterRequest;
+use App\Http\Requests\Api\V1\Auth\UpdateMeRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
 use App\Support\Payroll\PayrollCalculator;
@@ -64,6 +65,44 @@ class AuthController extends Controller
     public function me(): JsonResponse
     {
         $user = request()->user()?->load(['roles', 'profile', 'shop', 'payrollProfile']);
+
+        return response()->json($this->buildMePayload($user));
+    }
+
+    public function updateMe(UpdateMeRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        $validated = $request->validated();
+
+        $user->forceFill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ])->save();
+
+        $user->profile()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'phone_number' => $validated['phone_number'] ?? null,
+                'nrc_number' => $validated['nrc_number'] ?? null,
+                'address_line_1' => $validated['address_line_1'] ?? null,
+                'city' => $validated['city'] ?? null,
+                'state' => $validated['state'] ?? null,
+                'postal_code' => $validated['postal_code'] ?? null,
+            ],
+        );
+
+        $user->load(['roles', 'profile', 'shop', 'payrollProfile']);
+
+        return response()->json([
+            'message' => 'Profile updated successfully.',
+            ...$this->buildMePayload($user),
+        ]);
+    }
+
+    private function buildMePayload(?User $user): array
+    {
         $month = now()->format('Y-m');
         $salaryPreview = null;
 
@@ -73,12 +112,17 @@ class AuthController extends Controller
                 ->first();
         }
 
-        return response()->json([
+        return [
             'user' => new UserResource($user),
             'profile' => [
                 'shop_name' => $user?->shop?->name,
                 'phone_number' => $user?->profile?->phone_number,
                 'address' => $user?->profile?->address_line_1,
+                'address_line_1' => $user?->profile?->address_line_1,
+                'city' => $user?->profile?->city,
+                'state' => $user?->profile?->state,
+                'postal_code' => $user?->profile?->postal_code,
+                'nrc_number' => $user?->profile?->nrc_number,
             ],
             'salary_preview' => $salaryPreview ? [
                 'month' => $month,
@@ -88,7 +132,7 @@ class AuthController extends Controller
                 'worked_days' => (int) ($salaryPreview['attendance']['days'] ?? 0),
                 'expected_days' => (int) ($salaryPreview['attendance']['expected_days'] ?? 0),
             ] : null,
-        ]);
+        ];
     }
 
     public function logout(): JsonResponse
