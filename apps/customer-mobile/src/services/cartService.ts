@@ -41,3 +41,12 @@ export async function clearCart(baseUrl: string, token: string): Promise<void> {
     token,
   });
 }
+
+export async function removeCartItem(baseUrl: string, token: string, cartItemId: number): Promise<void> {
+  await requestJson({
+    baseUrl,
+    path: `/cart/items/${cartItemId}`,
+    method: "DELETE",
+    token,
+  });
+}

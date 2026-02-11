@@ -3,11 +3,13 @@ import { API_BASE_URL } from "../config/server";
 import { tr } from "../i18n/strings";
 import { ApiError } from "../lib/http";
 import { clearSession, loadLocale, loadSession, loadTheme, saveLocale, saveSession, saveTheme } from "../lib/storage";
-import { addCartItem, fetchCart } from "../services/cartService";
-import { fetchCategories, fetchProducts } from "../services/catalogService";
-import { logout as logoutService, signIn } from "../services/authService";
-import { fetchOrders, placeOrderFromCart } from "../services/orderService";
-import type { CartItem, Category, CustomerOrder, CustomerTab, Locale, Product, ThemeMode } from "../types/domain";
+import { addCartItem, fetchCart, removeCartItem } from "../services/cartService";
+import { fetchCategories, fetchProductDetail, fetchProducts } from "../services/catalogService";
+import { fetchMe, logout as logoutService, signIn, updateMe } from "../services/authService";
+import { cancelOrder, fetchOrderDetail, fetchOrders, placeOrderFromCart, requestRefund, requestReturn } from "../services/orderService";
+import type { CartItem, Category, CustomerOrder, CustomerTab, Locale, MePayload, Product, ThemeMode } from "../types/domain";
+
+type DetailView = "none" | "product" | "order";
 
 export function useCustomerApp() {
   const [booting, setBooting] = useState(true);
@@ -32,29 +34,81 @@ export function useCustomerApp() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [addingProductId, setAddingProductId] = useState<number | null>(null);
+  const [removingCartItemId, setRemovingCartItemId] = useState<number | null>(null);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+
+  const [detailView, setDetailView] = useState<DetailView>("none");
+  const [detailBusy, setDetailBusy] = useState(false);
+  const [detailError, setDetailError] = useState("");
+  const [detailActionBusy, setDetailActionBusy] = useState(false);
+  const [detailActionMessage, setDetailActionMessage] = useState("");
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+  const [detailOrder, setDetailOrder] = useState<CustomerOrder | null>(null);
+
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [profileMessage, setProfileMessage] = useState("");
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  const [profileNrc, setProfileNrc] = useState("");
+  const [profileAddress, setProfileAddress] = useState("");
+  const [profileCity, setProfileCity] = useState("");
+  const [profileState, setProfileState] = useState("");
+  const [profilePostalCode, setProfilePostalCode] = useState("");
 
   const dark = theme === "dark";
 
-  const hydratePublicCatalog = useCallback(async (search = query, categoryId = activeCategoryId) => {
-    const [nextCategories, nextProducts] = await Promise.all([
-      fetchCategories(API_BASE_URL),
-      fetchProducts(API_BASE_URL, search, categoryId),
-    ]);
+  const hydratePublicCatalog = useCallback(
+    async (search = query, categoryId = activeCategoryId) => {
+      const [nextCategories, nextProducts] = await Promise.all([
+        fetchCategories(API_BASE_URL),
+        fetchProducts(API_BASE_URL, search, categoryId),
+      ]);
 
-    setCategories(nextCategories);
-    setProducts(nextProducts);
-  }, [query, activeCategoryId]);
+      setCategories(nextCategories);
+      setProducts(nextProducts);
+    },
+    [query, activeCategoryId],
+  );
 
   const hydratePrivateData = useCallback(async (token: string) => {
-    const [nextOrders, nextCart] = await Promise.all([
-      fetchOrders(API_BASE_URL, token),
-      fetchCart(API_BASE_URL, token),
-    ]);
+    const [nextOrders, nextCart] = await Promise.all([fetchOrders(API_BASE_URL, token), fetchCart(API_BASE_URL, token)]);
 
     setOrders(nextOrders);
     setCartItems(nextCart);
   }, []);
+
+  const applyMePayload = useCallback(async (token: string, payload: MePayload) => {
+    const nextSession = {
+      token,
+      user: payload.user,
+    };
+
+    setSession(nextSession);
+    await saveSession(nextSession);
+
+    setProfileName(payload.user.name || "");
+    setProfileEmail(payload.user.email || "");
+    setProfilePhone(payload.profile?.phone_number || "");
+    setProfileNrc(payload.profile?.nrc_number || "");
+    setProfileAddress(payload.profile?.address_line_1 || payload.profile?.address || "");
+    setProfileCity(payload.profile?.city || "");
+    setProfileState(payload.profile?.state || "");
+    setProfilePostalCode(payload.profile?.postal_code || "");
+  }, []);
+
+  const syncMe = useCallback(
+    async (token: string) => {
+      try {
+        const payload = await fetchMe(API_BASE_URL, token);
+        await applyMePayload(token, payload);
+      } catch {
+        // Keep existing session data when profile sync fails.
+      }
+    },
+    [applyMePayload],
+  );
 
   const bootstrap = useCallback(async () => {
     setBooting(true);
@@ -65,16 +119,18 @@ export function useCustomerApp() {
       setLocale(savedLocale);
       setTheme(savedTheme);
       setSession(savedSession);
+      setProfileName(savedSession?.user?.name || "");
+      setProfileEmail(savedSession?.user?.email || "");
 
       await hydratePublicCatalog("", null);
 
       if (savedSession?.token) {
-        await hydratePrivateData(savedSession.token);
+        await Promise.all([hydratePrivateData(savedSession.token), syncMe(savedSession.token)]);
       }
     } finally {
       setBooting(false);
     }
-  }, [hydratePrivateData, hydratePublicCatalog]);
+  }, [hydratePrivateData, hydratePublicCatalog, syncMe]);
 
   useEffect(() => {
     void bootstrap();
@@ -87,7 +143,7 @@ export function useCustomerApp() {
 
     const timer = setTimeout(() => {
       void hydratePublicCatalog(query, activeCategoryId);
-    }, 300);
+    }, 280);
 
     return () => clearTimeout(timer);
   }, [session?.token, query, activeCategoryId, hydratePublicCatalog]);
@@ -99,12 +155,12 @@ export function useCustomerApp() {
       await hydratePublicCatalog(query, activeCategoryId);
 
       if (session?.token) {
-        await hydratePrivateData(session.token);
+        await Promise.all([hydratePrivateData(session.token), syncMe(session.token)]);
       }
     } finally {
       setRefreshing(false);
     }
-  }, [activeCategoryId, hydratePrivateData, hydratePublicCatalog, query, session?.token]);
+  }, [activeCategoryId, hydratePrivateData, hydratePublicCatalog, query, session?.token, syncMe]);
 
   const handleSignIn = useCallback(async () => {
     if (!email.trim() || !password.trim()) {
@@ -119,8 +175,10 @@ export function useCustomerApp() {
       const nextSession = await signIn(API_BASE_URL, email.trim(), password);
       await saveSession(nextSession);
       setSession(nextSession);
+      setProfileName(nextSession.user.name || "");
+      setProfileEmail(nextSession.user.email || "");
       setActiveTab("home");
-      await hydratePrivateData(nextSession.token);
+      await Promise.all([hydratePrivateData(nextSession.token), syncMe(nextSession.token)]);
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 0) {
@@ -136,31 +194,34 @@ export function useCustomerApp() {
     } finally {
       setAuthBusy(false);
     }
-  }, [email, password, locale, hydratePrivateData]);
+  }, [email, password, locale, hydratePrivateData, syncMe]);
 
-  const handleAddToCart = useCallback(async (product: Product) => {
-    if (!session?.token) {
-      return;
-    }
+  const handleAddToCart = useCallback(
+    async (product: Product, variantId?: number, quantity = 1) => {
+      if (!session?.token) {
+        return;
+      }
 
-    const variantId = product.active_variants?.[0]?.id;
-    if (!variantId) {
-      return;
-    }
+      const resolvedVariantId = variantId ?? product.active_variants?.[0]?.id;
+      if (!resolvedVariantId) {
+        return;
+      }
 
-    setAddingProductId(product.id);
+      setAddingProductId(product.id);
 
-    try {
-      await addCartItem(API_BASE_URL, session.token, variantId, 1);
-      const nextCart = await fetchCart(API_BASE_URL, session.token);
-      setCartItems(nextCart);
-      setActiveTab("cart");
-    } catch {
-      // Keep the UX stable; auth/network errors are surfaced on next refresh/login.
-    } finally {
-      setAddingProductId(null);
-    }
-  }, [session?.token]);
+      try {
+        await addCartItem(API_BASE_URL, session.token, resolvedVariantId, Math.max(1, quantity));
+        const nextCart = await fetchCart(API_BASE_URL, session.token);
+        setCartItems(nextCart);
+        setActiveTab("cart");
+      } catch {
+        // Keep UX stable and let pull-to-refresh recover.
+      } finally {
+        setAddingProductId(null);
+      }
+    },
+    [session?.token],
+  );
 
   const handleCheckout = useCallback(async () => {
     if (!session?.token) {
@@ -178,6 +239,217 @@ export function useCustomerApp() {
     }
   }, [session?.token, hydratePrivateData]);
 
+  const handleRemoveCartItem = useCallback(
+    async (cartItemId: number) => {
+      if (!session?.token) {
+        return;
+      }
+
+      setRemovingCartItemId(cartItemId);
+
+      try {
+        await removeCartItem(API_BASE_URL, session.token, cartItemId);
+        const nextCart = await fetchCart(API_BASE_URL, session.token);
+        setCartItems(nextCart);
+      } finally {
+        setRemovingCartItemId(null);
+      }
+    },
+    [session?.token],
+  );
+
+  const openProductDetail = useCallback(
+    async (product: Product) => {
+      setDetailView("product");
+      setDetailProduct(product);
+      setDetailError("");
+      setDetailBusy(true);
+
+      try {
+        const fullProduct = await fetchProductDetail(API_BASE_URL, product.id);
+        setDetailProduct(fullProduct);
+      } catch (error) {
+        if (error instanceof ApiError) {
+          setDetailError(error.message || tr(locale, "unknownError"));
+        } else {
+          setDetailError(tr(locale, "unknownError"));
+        }
+      } finally {
+        setDetailBusy(false);
+      }
+    },
+    [locale],
+  );
+
+  const openOrderDetail = useCallback(
+    async (orderId: number) => {
+      if (!session?.token) {
+        return;
+      }
+
+      const snapshot = orders.find((order) => order.id === orderId) || null;
+      setDetailView("order");
+      setDetailOrder(snapshot);
+      setDetailError("");
+      setDetailBusy(true);
+
+      try {
+        const fullOrder = await fetchOrderDetail(API_BASE_URL, session.token, orderId);
+        setDetailOrder(fullOrder);
+      } catch (error) {
+        if (error instanceof ApiError) {
+          setDetailError(error.message || tr(locale, "unknownError"));
+        } else {
+          setDetailError(tr(locale, "unknownError"));
+        }
+      } finally {
+        setDetailBusy(false);
+      }
+    },
+    [locale, orders, session?.token],
+  );
+
+  const closeDetail = useCallback(() => {
+    setDetailView("none");
+    setDetailBusy(false);
+    setDetailError("");
+    setDetailActionBusy(false);
+    setDetailActionMessage("");
+  }, []);
+
+  const handleCancelOrder = useCallback(
+    async (reason: string) => {
+      if (!session?.token || !detailOrder) {
+        return;
+      }
+
+      setDetailActionBusy(true);
+      setDetailError("");
+      setDetailActionMessage("");
+
+      try {
+        const updated = await cancelOrder(API_BASE_URL, session.token, detailOrder.id, reason);
+        setDetailOrder(updated);
+        setOrders((prev) => prev.map((order) => (order.id === updated.id ? updated : order)));
+        setDetailActionMessage(tr(locale, "orderCancelledSuccess"));
+      } catch (error) {
+        if (error instanceof ApiError) {
+          setDetailError(error.message || tr(locale, "unknownError"));
+        } else {
+          setDetailError(tr(locale, "unknownError"));
+        }
+      } finally {
+        setDetailActionBusy(false);
+      }
+    },
+    [detailOrder, locale, session?.token],
+  );
+
+  const handleRequestRefund = useCallback(async () => {
+    if (!session?.token || !detailOrder) {
+      return;
+    }
+
+    setDetailActionBusy(true);
+    setDetailError("");
+    setDetailActionMessage("");
+
+    try {
+      const updated = await requestRefund(API_BASE_URL, session.token, detailOrder.id);
+      setDetailOrder(updated);
+      setOrders((prev) => prev.map((order) => (order.id === updated.id ? updated : order)));
+      setDetailActionMessage(tr(locale, "refundRequestedSuccess"));
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setDetailError(error.message || tr(locale, "unknownError"));
+      } else {
+        setDetailError(tr(locale, "unknownError"));
+      }
+    } finally {
+      setDetailActionBusy(false);
+    }
+  }, [detailOrder, locale, session?.token]);
+
+  const handleRequestReturn = useCallback(
+    async (reason: string) => {
+      if (!session?.token || !detailOrder) {
+        return;
+      }
+
+      setDetailActionBusy(true);
+      setDetailError("");
+      setDetailActionMessage("");
+
+      try {
+        const updated = await requestReturn(API_BASE_URL, session.token, detailOrder.id, reason);
+        setDetailOrder(updated);
+        setOrders((prev) => prev.map((order) => (order.id === updated.id ? updated : order)));
+        setDetailActionMessage(tr(locale, "returnRequestedSuccess"));
+      } catch (error) {
+        if (error instanceof ApiError) {
+          setDetailError(error.message || tr(locale, "unknownError"));
+        } else {
+          setDetailError(tr(locale, "unknownError"));
+        }
+      } finally {
+        setDetailActionBusy(false);
+      }
+    },
+    [detailOrder, locale, session?.token],
+  );
+
+  const handleSaveProfile = useCallback(async () => {
+    if (!session?.token) {
+      return;
+    }
+
+    if (!profileName.trim() || !profileEmail.trim()) {
+      setProfileError(tr(locale, "nameEmailRequired"));
+      setProfileMessage("");
+      return;
+    }
+
+    setProfileBusy(true);
+    setProfileError("");
+    setProfileMessage("");
+
+    try {
+      const payload = await updateMe(API_BASE_URL, session.token, {
+        name: profileName.trim(),
+        email: profileEmail.trim(),
+        phone_number: profilePhone.trim(),
+        nrc_number: profileNrc.trim(),
+        address_line_1: profileAddress.trim(),
+        city: profileCity.trim(),
+        state: profileState.trim(),
+        postal_code: profilePostalCode.trim(),
+      });
+
+      await applyMePayload(session.token, payload);
+      setProfileMessage(payload.message || tr(locale, "profileUpdated"));
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setProfileError(error.message || tr(locale, "profileUpdateFailed"));
+      } else {
+        setProfileError(tr(locale, "profileUpdateFailed"));
+      }
+    } finally {
+      setProfileBusy(false);
+    }
+  }, [
+    session?.token,
+    profileName,
+    profileEmail,
+    profilePhone,
+    profileNrc,
+    profileAddress,
+    profileCity,
+    profileState,
+    profilePostalCode,
+    applyMePayload,
+    locale,
+  ]);
+
   const handleLogout = useCallback(async () => {
     if (session?.token) {
       try {
@@ -191,6 +463,19 @@ export function useCustomerApp() {
     setSession(null);
     setOrders([]);
     setCartItems([]);
+    setDetailView("none");
+    setDetailProduct(null);
+    setDetailOrder(null);
+    setProfileName("");
+    setProfileEmail("");
+    setProfilePhone("");
+    setProfileNrc("");
+    setProfileAddress("");
+    setProfileCity("");
+    setProfileState("");
+    setProfilePostalCode("");
+    setProfileError("");
+    setProfileMessage("");
   }, [session?.token]);
 
   const toggleLocale = useCallback(async () => {
@@ -242,12 +527,29 @@ export function useCustomerApp() {
       setQuery,
       setActiveCategoryId,
       addToCart: handleAddToCart,
+      openProductDetail,
     },
     orders,
     cart: {
       items: cartItems,
+      removingItemId: removingCartItemId,
       checkoutBusy,
       checkout: handleCheckout,
+      removeItem: handleRemoveCartItem,
+    },
+    detail: {
+      view: detailView,
+      busy: detailBusy,
+      error: detailError,
+      actionBusy: detailActionBusy,
+      actionMessage: detailActionMessage,
+      product: detailProduct,
+      order: detailOrder,
+      close: closeDetail,
+      openOrderDetail,
+      cancelOrder: handleCancelOrder,
+      requestRefund: handleRequestRefund,
+      requestReturn: handleRequestReturn,
     },
     refreshing,
     refreshAll,
@@ -255,6 +557,26 @@ export function useCustomerApp() {
       toggleLocale,
       toggleTheme,
       logout: handleLogout,
+      saveProfile: handleSaveProfile,
+      profileBusy,
+      profileError,
+      profileMessage,
+      profileName,
+      profileEmail,
+      profilePhone,
+      profileNrc,
+      profileAddress,
+      profileCity,
+      profileState,
+      profilePostalCode,
+      setProfileName,
+      setProfileEmail,
+      setProfilePhone,
+      setProfileNrc,
+      setProfileAddress,
+      setProfileCity,
+      setProfileState,
+      setProfilePostalCode,
     },
   };
 }
