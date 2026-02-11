@@ -168,11 +168,16 @@ export function useCustomerApp() {
       setProfileEmail(savedSession?.user?.email || "");
       setCheckoutPhone("");
       setCheckoutAddress("");
+      setBooting(false);
 
-      await hydratePublicCatalog("", null);
+      void hydratePublicCatalog("", null).catch(() => {
+        // Ignore bootstrap catalog failures; fallback data is handled in service layer.
+      });
 
       if (savedSession?.token) {
-        await Promise.all([hydratePrivateData(savedSession.token), syncMe(savedSession.token), loadSupport(savedSession.token)]);
+        void Promise.all([hydratePrivateData(savedSession.token), syncMe(savedSession.token), loadSupport(savedSession.token)]).catch(() => {
+          // Keep app usable even when private bootstrap calls fail/time out.
+        });
       }
     } finally {
       setBooting(false);
