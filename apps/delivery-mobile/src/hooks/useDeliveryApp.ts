@@ -541,9 +541,26 @@ function toAbsolutePublicUrl(baseUrl: string, path: string | null): string | nul
   }
 
   if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
+    return rehostLoopbackAbsoluteUrl(baseUrl, path);
   }
 
   const host = baseUrl.replace(/\/api\/v1$/, "").replace(/\/$/, "");
   return `${host}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
+function rehostLoopbackAbsoluteUrl(baseUrl: string, absoluteUrl: string): string {
+  try {
+    const input = new URL(absoluteUrl);
+    if (!["localhost", "127.0.0.1", "::1"].includes(input.hostname)) {
+      return absoluteUrl;
+    }
+
+    const apiHost = baseUrl.replace(/\/api\/v1$/, "").replace(/\/$/, "");
+    const parsedApiHost = new URL(apiHost);
+    input.protocol = parsedApiHost.protocol;
+    input.host = parsedApiHost.host;
+    return input.toString();
+  } catch {
+    return absoluteUrl;
+  }
 }

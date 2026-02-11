@@ -1,8 +1,9 @@
 import "./global.css";
 
 import { StatusBar } from "expo-status-bar";
-import { Platform, Pressable, SafeAreaView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useEffect, useState } from "react";
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LoadingView } from "./src/components/LoadingView";
 import { useDeliveryApp } from "./src/hooks/useDeliveryApp";
@@ -19,9 +20,18 @@ const APP_RELEASE = "v0.5.1";
 type TabKey = "home" | "notifications" | "profile";
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <DeliveryAppShell />
+    </SafeAreaProvider>
+  );
+}
+
+function DeliveryAppShell() {
   const app = useDeliveryApp();
   const dark = app.theme === "dark";
   const [activeTab, setActiveTab] = useState<TabKey>("home");
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     configureNotificationHandler();
@@ -39,7 +49,7 @@ export default function App() {
 
   if (!app.session.token || !app.session.user) {
     return (
-      <SafeAreaView className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`}>
+      <SafeAreaView edges={["top", "bottom"]} className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`}>
         <StatusBar style={dark ? "light" : "dark"} />
         <LoginScreen
           locale={app.locale}
@@ -58,7 +68,7 @@ export default function App() {
 
   if (app.orders.selected) {
     return (
-      <SafeAreaView className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`}>
+      <SafeAreaView edges={["top", "bottom"]} className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`}>
         <StatusBar style={dark ? "light" : "dark"} />
         <OrderDetailScreen
           order={app.orders.selected}
@@ -76,7 +86,7 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`}>
+    <SafeAreaView edges={["top", "bottom"]} className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`}>
       <StatusBar style={dark ? "light" : "dark"} />
 
       {activeTab === "home" ? (
@@ -121,7 +131,7 @@ export default function App() {
 
       <View
         className={`absolute left-4 right-4 flex-row rounded-2xl p-2 ${dark ? "bg-slate-900/95" : "bg-white"}`}
-        style={{ bottom: Platform.OS === "android" ? 30 : 20 }}
+        style={{ bottom: Math.max(insets.bottom + 10, 16) }}
       >
         <TabButton label={tr(app.locale, "tabHome")} active={activeTab === "home"} onPress={() => setActiveTab("home")} dark={dark} />
         <TabButton
@@ -143,6 +153,7 @@ export default function App() {
           className={`absolute left-4 right-4 top-12 rounded-2xl border px-4 py-3 shadow-lg ${
             dark ? "border-cyan-500/60 bg-slate-900" : "border-cyan-300 bg-white"
           }`}
+          style={{ top: Math.max(insets.top + 8, 12) }}
         >
           <Text className={`text-xs font-bold uppercase ${dark ? "text-cyan-300" : "text-cyan-700"}`}>
             {tr(app.locale, "notificationsTitle")}
