@@ -262,7 +262,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
             {/* Main Content Area */}
             <div className={`flex-1 flex flex-col ${isUser ? "" : "md:ms-64"}`}>
-                <nav className="bg-white border-b border-gray-100 h-16 flex items-center px-6 sm:px-8 sticky top-0 z-10 gap-4">
+                <nav className="sticky top-0 z-10 flex min-h-16 flex-wrap items-center gap-3 border-b border-gray-100 bg-white px-4 py-2 sm:px-8">
                     <div className="flex-1 flex items-center gap-3">
                         {isUser && (
                             <Link href="/">
@@ -271,12 +271,12 @@ export default function AuthenticatedLayout({ header, children }) {
                         )}
 
                         {isUser && (
-                            <div className="flex items-center gap-2 ms-2 overflow-x-auto whitespace-nowrap">
+                            <div className="ms-1 flex items-center gap-2 overflow-x-auto whitespace-nowrap">
                                 {links.map((link, index) => (
                                     <Link
                                         key={index}
                                         href={route(link.route)}
-                                        className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
+                                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${
                                             route().current(link.route)
                                                 ? "bg-orange-600 text-white border-orange-600"
                                                 : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"

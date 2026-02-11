@@ -16,22 +16,22 @@ export default function Edit({ mustVerifyEmail, status, profile }) {
             <Head title="Profile" />
 
             <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
                             profile={profile}
-                            className="max-w-xl"
+                            className="w-full max-w-3xl"
                         />
                     </div>
 
                     <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdatePasswordForm className="max-w-xl" />
+                        <UpdatePasswordForm className="w-full max-w-3xl" />
                     </div>
 
                     <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <DeleteUserForm className="max-w-xl" />
+                        <DeleteUserForm className="w-full max-w-3xl" />
                     </div>
                 </div>
             </div>

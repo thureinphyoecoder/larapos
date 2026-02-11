@@ -4,6 +4,7 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import TextInput from "@/Components/TextInput";
 import { Transition } from "@headlessui/react";
 import { Link, useForm, usePage } from "@inertiajs/react";
+import { useState } from "react";
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -12,6 +13,9 @@ export default function UpdateProfileInformation({
     className = "",
 }) {
     const { auth } = usePage().props;
+    const [locating, setLocating] = useState(false);
+    const [locationMessage, setLocationMessage] = useState("");
+    const [locationError, setLocationError] = useState("");
 
     const user = auth?.user || {};
     const userProfile = profile || {};
@@ -33,6 +37,53 @@ export default function UpdateProfileInformation({
         e.preventDefault();
 
         patch(route("profile.update"), { forceFormData: true });
+    };
+
+    const handleUseCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            setLocationError("ဒီ browser မှာ location feature မရပါ။");
+            setLocationMessage("");
+            return;
+        }
+
+        setLocating(true);
+        setLocationError("");
+        setLocationMessage("");
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+                    );
+                    const payload = await response.json();
+                    const addr = payload?.address || {};
+                    const display = payload?.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+                    setData("address_line_1", display);
+                    setData("city", addr.city || addr.town || addr.village || "");
+                    setData("state", addr.state || addr.region || "");
+                    if (addr.postcode) {
+                        setData("postal_code", addr.postcode);
+                    }
+
+                    setLocationMessage("လက်ရှိတည်နေရာနဲ့ လိပ်စာဖြည့်ပြီးပါပြီ။");
+                } catch {
+                    setData("address_line_1", `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+                    setLocationMessage("Coordinates ဖြင့် လိပ်စာဖြည့်ပြီးပါပြီ။");
+                } finally {
+                    setLocating(false);
+                }
+            },
+            () => {
+                setLocating(false);
+                setLocationError("Location permission မရပါ (သို့) တည်နေရာ မရရှိပါ။");
+            },
+            { enableHighAccuracy: true, timeout: 12000, maximumAge: 10000 },
+        );
     };
 
     return (
@@ -142,6 +193,24 @@ export default function UpdateProfileInformation({
                         required
                     />
 
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={handleUseCurrentLocation}
+                            disabled={locating}
+                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white ${locating ? "bg-slate-400" : "bg-sky-600 hover:bg-sky-700"}`}
+                        >
+                            {locating ? "Locating..." : "Use Current Location"}
+                        </button>
+                        {locationMessage ? (
+                            <span className="text-xs font-medium text-emerald-700">
+                                {locationMessage}
+                            </span>
+                        ) : null}
+                    </div>
+                    {locationError ? (
+                        <p className="mt-1 text-xs text-red-500">{locationError}</p>
+                    ) : null}
                     <InputError className="mt-2" message={errors.address_line_1} />
                 </div>
 
