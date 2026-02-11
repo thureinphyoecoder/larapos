@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, usePage, router } from "@inertiajs/react";
+import LocaleSwitcher from "@/Components/LocaleSwitcher";
 import Swal from "sweetalert2";
 
 export default function AdminLayout({ children, header }) {
@@ -454,6 +455,8 @@ export default function AdminLayout({ children, header }) {
                                 Support Inbox
                             </Link>
                         )}
+
+                        <LocaleSwitcher compact />
 
                         {/* 🔔 Notification Icon Section */}
                         <div className="relative">

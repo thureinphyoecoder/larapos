@@ -1,5 +1,6 @@
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
+import LocaleSwitcher from "@/Components/LocaleSwitcher";
 import NavLink from "@/Components/NavLink";
 import { Link, router, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
@@ -365,6 +366,8 @@ export default function AuthenticatedLayout({ header, children }) {
                             </>
                         )}
                     </div>
+
+                    <LocaleSwitcher compact />
 
                     <div className="relative">
                         <Dropdown>
