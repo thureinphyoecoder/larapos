@@ -9,6 +9,9 @@ services:
       - "5173:5173"
     volumes:
       - .:/var/www
+    depends_on:
+      - db
+      - rabbitmq
     networks:
       - larapee-network
 
@@ -24,6 +27,7 @@ services:
       - .:/var/www
     depends_on:
       - app
+      - rabbitmq
     networks:
       - larapee-network
 
@@ -38,6 +42,7 @@ services:
       - ./docker-config/nginx:/etc/nginx/conf.d:ro
     depends_on:
       - app
+      - rabbitmq
     networks:
       - larapee-network
 
@@ -51,6 +56,21 @@ services:
     volumes:
       - ./analytics:/app
     depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - larapee-network
+
+  queue-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: larapee-queue-worker
+    command: php artisan queue:work rabbitmq --queue=default --tries=3 --timeout=90
+    volumes:
+      - .:/var/www
+    depends_on:
+      - app
       - db
       - rabbitmq
     networks:
