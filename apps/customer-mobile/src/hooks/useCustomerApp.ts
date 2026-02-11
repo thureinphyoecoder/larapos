@@ -4,7 +4,7 @@ import { tr } from "../i18n/strings";
 import { ApiError } from "../lib/http";
 import { clearSession, loadLocale, loadSession, loadTheme, saveLocale, saveSession, saveTheme } from "../lib/storage";
 import { addCartItem, fetchCart, removeCartItem } from "../services/cartService";
-import { fetchCategories, fetchProductDetail, fetchProducts } from "../services/catalogService";
+import { fetchCategories, fetchProductDetail, fetchProducts, submitProductReview } from "../services/catalogService";
 import { fetchMe, logout as logoutService, signIn, updateMe } from "../services/authService";
 import { cancelOrder, fetchOrderDetail, fetchOrders, placeOrderFromCart, requestRefund, requestReturn } from "../services/orderService";
 import { fetchSupportMessages, sendSupportMessage } from "../services/supportService";
@@ -58,6 +58,9 @@ export function useCustomerApp() {
   const [detailActionMessage, setDetailActionMessage] = useState("");
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
   const [detailOrder, setDetailOrder] = useState<CustomerOrder | null>(null);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [reviewMessage, setReviewMessage] = useState("");
 
   const [profileBusy, setProfileBusy] = useState(false);
   const [profileError, setProfileError] = useState("");
@@ -255,7 +258,7 @@ export function useCustomerApp() {
         return;
       }
 
-      const resolvedVariantId = variantId ?? product.active_variants?.[0]?.id;
+      const resolvedVariantId = variantId ?? product.active_variants?.[0]?.id ?? product.variants?.[0]?.id;
       if (!resolvedVariantId) {
         return;
       }
@@ -350,6 +353,8 @@ export function useCustomerApp() {
       setDetailView("product");
       setDetailProduct(product);
       setDetailError("");
+      setReviewError("");
+      setReviewMessage("");
       setDetailBusy(true);
 
       try {
@@ -366,6 +371,34 @@ export function useCustomerApp() {
       }
     },
     [locale],
+  );
+
+  const handleSubmitReview = useCallback(
+    async (rating: number | null, comment: string) => {
+      if (!session?.token || !detailProduct?.id) {
+        return;
+      }
+
+      setReviewBusy(true);
+      setReviewError("");
+      setReviewMessage("");
+
+      try {
+        await submitProductReview(API_BASE_URL, session.token, detailProduct.id, { rating, comment });
+        const fullProduct = await fetchProductDetail(API_BASE_URL, detailProduct.id);
+        setDetailProduct(fullProduct);
+        setReviewMessage(tr(locale, "reviewSubmitted"));
+      } catch (error) {
+        if (error instanceof ApiError) {
+          setReviewError(error.message || tr(locale, "unknownError"));
+        } else {
+          setReviewError(tr(locale, "unknownError"));
+        }
+      } finally {
+        setReviewBusy(false);
+      }
+    },
+    [detailProduct?.id, locale, session?.token],
   );
 
   const openOrderDetail = useCallback(
@@ -404,6 +437,9 @@ export function useCustomerApp() {
     setDetailActionMessage("");
     setCheckoutError("");
     setCheckoutQrData("");
+    setReviewBusy(false);
+    setReviewError("");
+    setReviewMessage("");
   }, []);
 
   const handleCancelOrder = useCallback(
@@ -684,8 +720,12 @@ export function useCustomerApp() {
       actionMessage: detailActionMessage,
       product: detailProduct,
       order: detailOrder,
+      reviewBusy,
+      reviewError,
+      reviewMessage,
       close: closeDetail,
       openOrderDetail,
+      submitReview: handleSubmitReview,
       cancelOrder: handleCancelOrder,
       requestRefund: handleRequestRefund,
       requestReturn: handleRequestReturn,

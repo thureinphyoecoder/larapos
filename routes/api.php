@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\FinancialAdjustmentController;
 use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\ProductReviewController;
 use App\Http\Controllers\Api\V1\SupportController;
 use Illuminate\Support\Facades\Route;
 
@@ -56,6 +57,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::patch('/approval-requests/{approvalRequest}/reject', [ApprovalRequestController::class, 'reject'])->name('approvals.reject');
 
         Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+        Route::post('/catalog/products/{product}/reviews', [ProductReviewController::class, 'store'])->name('catalog.reviews.store');
 
         Route::prefix('support')->name('support.')->group(function () {
             Route::get('/messages', [SupportController::class, 'index'])->name('messages.index');

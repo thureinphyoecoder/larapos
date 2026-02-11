@@ -41,6 +41,9 @@ type I18nKey =
   | "description"
   | "customerReviews"
   | "noReviews"
+  | "writeReview"
+  | "reviewPlaceholder"
+  | "reviewSubmitted"
   | "orderItems"
   | "noOrderItems"
   | "customerPhone"
@@ -165,6 +168,9 @@ const en: Dictionary = {
   description: "Description",
   customerReviews: "Customer Reviews",
   noReviews: "No reviews yet.",
+  writeReview: "Write a Review",
+  reviewPlaceholder: "Share your experience...",
+  reviewSubmitted: "Thanks for your review.",
   orderItems: "Order Items",
   noOrderItems: "No order items found.",
   customerPhone: "Phone",
@@ -288,6 +294,9 @@ const mm: Dictionary = {
   description: "ဖော်ပြချက်",
   customerReviews: "Customer Review များ",
   noReviews: "Review မရှိသေးပါ။",
+  writeReview: "Review ရေးမည်",
+  reviewPlaceholder: "သင့်အတွေ့အကြုံကို မျှဝေပါ...",
+  reviewSubmitted: "Review ပေးသွားတဲ့အတွက် ကျေးဇူးတင်ပါတယ်။",
   orderItems: "အော်ဒါပစ္စည်းများ",
   noOrderItems: "အော်ဒါပစ္စည်း မတွေ့ပါ။",
   customerPhone: "ဖုန်းနံပါတ်",

@@ -45,10 +45,7 @@ export function ProductCard({
   const promotionLabel = promotionType === "flash_sale" ? flashSaleLabel : saleLabel;
 
   return (
-    <Pressable
-      onPress={() => onOpen(product)}
-      className={`w-[48%] overflow-hidden rounded-3xl border ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
-    >
+    <View className={`w-[48%] overflow-hidden rounded-3xl border ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
       <View className={`relative aspect-square overflow-hidden ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
         {product.image_url ? (
           <Image source={{ uri: product.image_url }} className="h-full w-full" resizeMode="cover" />
@@ -92,12 +89,14 @@ export function ProductCard({
         </View>
 
         <View className="mt-2 flex-row items-center justify-between">
-          <Text className={`text-[11px] font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>{viewDetailsLabel}</Text>
+          <Pressable onPress={() => onOpen(product)}>
+            <Text className={`text-[11px] font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>{viewDetailsLabel}</Text>
+          </Pressable>
           <Pressable onPress={() => onAdd(product)} disabled={adding || !inStock} className={`rounded-xl px-3 py-2 ${adding || !inStock ? "bg-slate-300" : "bg-orange-600"}`}>
             <Text className="text-[11px] font-black text-white">{adding ? addingLabel : addLabel}</Text>
           </Pressable>
         </View>
       </View>
-    </Pressable>
+    </View>
   );
 }

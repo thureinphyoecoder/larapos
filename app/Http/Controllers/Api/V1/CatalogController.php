@@ -60,6 +60,7 @@ class CatalogController extends Controller
             'brand:id,name',
             'category:id,name,slug',
             'variants' => fn ($q) => $q->orderBy('id'),
+            'activeVariants' => fn ($q) => $q->orderBy('id'),
             'reviews' => fn ($q) => $q->with('user:id,name')->latest('id')->limit(20),
         ]);
 

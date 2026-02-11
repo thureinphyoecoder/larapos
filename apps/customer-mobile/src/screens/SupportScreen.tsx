@@ -41,7 +41,7 @@ export function SupportScreen({
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      allowsEditing: false,
       quality: 0.85,
     });
 
@@ -76,7 +76,9 @@ export function SupportScreen({
                     <Text className={`text-[11px] font-bold ${mine ? "text-orange-100" : dark ? "text-slate-400" : "text-slate-500"}`}>
                       {mine ? tr(locale, "you") : message.sender?.name || tr(locale, "supportAgent")}
                     </Text>
-                    <Text className={`mt-1 text-sm ${mine ? "text-white" : dark ? "text-slate-100" : "text-slate-800"}`}>{message.message || "-"}</Text>
+                    {message.message ? (
+                      <Text className={`mt-1 text-sm ${mine ? "text-white" : dark ? "text-slate-100" : "text-slate-800"}`}>{message.message}</Text>
+                    ) : null}
                     {message.attachment_url ? (
                       <Image source={{ uri: message.attachment_url }} className="mt-2 h-28 w-40 rounded-lg" resizeMode="cover" />
                     ) : null}

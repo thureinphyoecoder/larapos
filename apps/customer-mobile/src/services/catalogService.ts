@@ -27,9 +27,9 @@ export async function fetchProducts(baseUrl: string, query = "", categoryId?: nu
       method: "GET",
     });
 
-    return payload.data ?? [];
+    return (payload.data ?? []).map((product) => normalizeProduct(baseUrl, product));
   } catch {
-    return fallbackProducts;
+    return fallbackProducts.map((product) => normalizeProduct(baseUrl, product));
   }
 }
 
@@ -54,5 +54,56 @@ export async function fetchProductDetail(baseUrl: string, productId: number): Pr
     method: "GET",
   });
 
-  return payload.data;
+  return normalizeProduct(baseUrl, payload.data);
+}
+
+export async function submitProductReview(
+  baseUrl: string,
+  token: string,
+  productId: number,
+  payload: { rating?: number | null; comment?: string },
+): Promise<void> {
+  await requestJson({
+    baseUrl,
+    path: `/catalog/products/${productId}/reviews`,
+    method: "POST",
+    token,
+    body: {
+      rating: payload.rating ?? null,
+      comment: payload.comment?.trim() || null,
+    },
+  });
+}
+
+function normalizeProduct(baseUrl: string, product: Product): Product {
+  const imageUrl = toAbsoluteUrl(baseUrl, product.image_url);
+
+  return {
+    ...product,
+    image_url: imageUrl,
+  };
+}
+
+function toAbsoluteUrl(baseUrl: string, value?: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  const origin = stripApiPath(baseUrl);
+  const normalizedPath = value.startsWith("/") ? value : `/${value}`;
+  return `${origin}${normalizedPath}`;
+}
+
+function stripApiPath(baseUrl: string): string {
+  const normalized = baseUrl.replace(/\/+$/, "");
+  const index = normalized.indexOf("/api/");
+  if (index >= 0) {
+    return normalized.slice(0, index);
+  }
+
+  return normalized;
 }

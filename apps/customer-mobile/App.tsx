@@ -74,9 +74,13 @@ export default function App() {
           product={app.detail.product}
           busy={app.detail.busy}
           error={app.detail.error}
+          reviewBusy={app.detail.reviewBusy}
+          reviewError={app.detail.reviewError}
+          reviewMessage={app.detail.reviewMessage}
           adding={app.catalog.addingProductId === app.detail.product?.id}
           onBack={app.detail.close}
           onAddToCart={(product, variantId, quantity) => void app.catalog.addToCart(product, variantId, quantity)}
+          onSubmitReview={(rating, comment) => void app.detail.submitReview(rating, comment)}
         />
       </SafeAreaView>
     );
