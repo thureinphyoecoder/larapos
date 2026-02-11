@@ -123,7 +123,10 @@ type I18nKey =
   | "loading"
   | "phoneRequired"
   | "addressRequired"
-  | "paymentSlipRequired";
+  | "paymentSlipRequired"
+  | "receiptTitle"
+  | "printReceipt"
+  | "backToOrder";
 
 type Dictionary = Record<I18nKey, string>;
 
@@ -251,6 +254,9 @@ const en: Dictionary = {
   phoneRequired: "Please enter a valid phone number.",
   addressRequired: "Please enter delivery address.",
   paymentSlipRequired: "Please upload payment slip.",
+  receiptTitle: "Receipt",
+  printReceipt: "Print Receipt",
+  backToOrder: "Back to Order",
 };
 
 const mm: Dictionary = {
@@ -377,6 +383,9 @@ const mm: Dictionary = {
   phoneRequired: "ဖုန်းနံပါတ် မှန်မှန် ဖြည့်ပေးပါ။",
   addressRequired: "ပို့မည့်လိပ်စာ ဖြည့်ပေးပါ။",
   paymentSlipRequired: "ငွေလွှဲပြေစာ တင်ပေးပါ။",
+  receiptTitle: "ပြေစာ (Receipt)",
+  printReceipt: "ပြေစာထုတ်မည်",
+  backToOrder: "Order သို့ပြန်မည်",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { en, mm };

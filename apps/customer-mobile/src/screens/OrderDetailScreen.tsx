@@ -1,6 +1,6 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
 import { StatusBadge } from "../components/StatusBadge";
 import { tr } from "../i18n/strings";
 import type { CustomerOrder, Locale } from "../types/domain";
@@ -63,6 +63,40 @@ export function OrderDetailScreen({
     }
   };
 
+  const receiptText = useMemo(() => {
+    const header = [
+      "LaraPee Receipt",
+      `Invoice: ${order?.invoice_no || "-"}`,
+      `Receipt: ${order?.receipt_no || `#${order?.id || "-"}`}`,
+      `Date: ${formatDate(order?.created_at || null)}`,
+      `Status: ${String(order?.status || "-").toUpperCase()}`,
+      "",
+      `Phone: ${order?.phone || "-"}`,
+      `Address: ${order?.address || "-"}`,
+      "",
+      "Items:",
+    ];
+
+    const lines =
+      order?.items?.map(
+        (item) =>
+          `- ${item.product?.name || `Item #${item.product_id}`} (${item.quantity} x ${formatMoney(item.price)}) = ${formatMoney(item.line_total)}`,
+      ) || [];
+
+    return [...header, ...lines, "", `Total: ${formatMoney(order?.total_amount || 0)}`].join("\n");
+  }, [order]);
+
+  const onPrintReceipt = async () => {
+    try {
+      await Share.share({
+        title: "LaraPee Receipt",
+        message: receiptText,
+      });
+    } catch {
+      // ignore share cancel/action errors
+    }
+  };
+
   return (
     <ScrollView className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`} contentContainerStyle={{ padding: 16, paddingBottom: 30 }}>
       <View className="flex-row items-center justify-between">
@@ -74,34 +108,68 @@ export function OrderDetailScreen({
       </View>
 
       <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
-        <View className={`mb-4 rounded-2xl border p-4 ${dark ? "border-slate-600 bg-slate-800" : "border-slate-200 bg-slate-50"}`}>
-          <Text className={`text-[11px] font-black uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>Receipt</Text>
-          <Text className={`mt-1 text-lg font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{order?.receipt_no || order?.invoice_no || `#${order?.id || "-"}`}</Text>
-          <View className="mt-2 gap-1">
-            <InfoRow dark={dark} label="Order ID" value={`#${order?.id || "-"}`} />
-            <InfoRow dark={dark} label="Invoice" value={order?.invoice_no || "-"} />
-            <InfoRow dark={dark} label="Job No" value={order?.job_no || "-"} />
-            <InfoRow dark={dark} label="Date" value={formatDate(order?.created_at || null)} />
-          </View>
-        </View>
-
         <View className="flex-row items-start justify-between">
-          <View>
-            <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{order?.invoice_no || `Order #${order?.id || "-"}`}</Text>
+          <View className="flex-1 pr-3">
+            <Text className={`text-4xl font-black tracking-tight ${dark ? "text-orange-300" : "text-orange-600"}`}>LaraPee</Text>
+            <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "homeWelcomeSubtitle")}</Text>
+          </View>
+          <View className="items-end">
+            <Text className={`text-xl font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "receiptTitle")}</Text>
+            <Text className={`mt-1 text-xs font-semibold ${dark ? "text-slate-300" : "text-slate-600"}`}>#{order?.id || "-"}</Text>
+            <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Invoice: {order?.invoice_no || "-"}</Text>
             <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{formatDate(order?.created_at || null)}</Text>
           </View>
-          <StatusBadge status={order?.status || "pending"} locale={locale} dark={dark} />
         </View>
 
-        <View className="mt-4 gap-3">
-          <InfoRow dark={dark} label={tr(locale, "statusLabel")} value={order?.status || "-"} />
-          <InfoRow dark={dark} label={tr(locale, "customerPhone")} value={order?.phone || "-"} />
-          <InfoRow dark={dark} label={tr(locale, "deliveryAddress")} value={order?.address || "-"} />
+        <View className={`mt-4 border-t pt-4 ${dark ? "border-slate-700" : "border-slate-200"}`}>
+          <View className="flex-row items-start justify-between gap-3">
+            <View className="flex-1">
+              <Text className={`text-xs font-black uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "customerPhone")}</Text>
+              <Text className={`mt-1 text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{order?.phone || "-"}</Text>
+              <Text className={`mt-1 text-xs leading-5 ${dark ? "text-slate-300" : "text-slate-600"}`}>{order?.address || "-"}</Text>
+            </View>
+            <StatusBadge status={order?.status || "pending"} locale={locale} dark={dark} />
+          </View>
         </View>
 
-        <View className={`mt-4 rounded-xl px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-50"}`}>
-          <Text className={`text-[11px] uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>Total</Text>
-          <Text className={`text-xl font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{formatMoney(order?.total_amount || 0)}</Text>
+        <View className={`mt-4 border-t pt-4 ${dark ? "border-slate-700" : "border-slate-200"}`}>
+          <View className="mb-2 flex-row items-center">
+            <Text className={`flex-1 text-xs font-bold uppercase tracking-wide ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "description")}</Text>
+            <Text className={`w-16 text-center text-xs font-bold uppercase tracking-wide ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "quantity")}</Text>
+            <Text className={`w-28 text-right text-xs font-bold uppercase tracking-wide ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "total")}</Text>
+          </View>
+          <View className="gap-3">
+            {order?.items?.length ? (
+              order.items.map((item) => (
+                <View key={`receipt-${item.id}`} className={`rounded-2xl border px-3 py-3 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}>
+                  <View className="flex-row items-center">
+                    <View className="flex-1 pr-2">
+                      <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{item.product?.name || `Item #${item.product_id}`}</Text>
+                      <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>
+                        {tr(locale, "variant")}: {item.variant?.sku || "-"}
+                      </Text>
+                    </View>
+                    <Text className={`w-16 text-center text-base font-bold ${dark ? "text-slate-100" : "text-slate-900"}`}>{item.quantity}</Text>
+                    <Text className={`w-28 text-right text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{formatMoney(item.line_total)}</Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <Text className={`text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "noOrderItems")}</Text>
+            )}
+          </View>
+        </View>
+
+        <View className={`mt-4 border-t pt-4 ${dark ? "border-slate-700" : "border-slate-200"}`}>
+          <InfoRow dark={dark} label={tr(locale, "total")} value={formatMoney(order?.total_amount || 0)} />
+          <View className="mt-3 flex-row gap-3">
+            <Pressable onPress={() => void onPrintReceipt()} className={`flex-1 items-center rounded-2xl px-4 py-3 ${dark ? "bg-slate-800" : "bg-slate-900"}`}>
+              <Text className="text-sm font-black text-white">{tr(locale, "printReceipt")}</Text>
+            </Pressable>
+            <Pressable onPress={onBack} className="flex-1 items-center rounded-2xl bg-orange-600 px-4 py-3">
+              <Text className="text-sm font-black text-white">{tr(locale, "backToOrder")}</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 
