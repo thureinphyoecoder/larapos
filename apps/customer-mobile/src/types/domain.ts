@@ -1,6 +1,6 @@
 export type Locale = "en" | "mm";
 export type ThemeMode = "light" | "dark";
-export type CustomerTab = "home" | "orders" | "cart" | "account";
+export type CustomerTab = "home" | "orders" | "cart" | "support" | "account";
 
 export type ApiUser = {
   id: number;
@@ -143,4 +143,33 @@ export type ApiListResponse<T> = {
     per_page: number;
     total: number;
   };
+};
+
+export type SupportMessage = {
+  id: number;
+  customer_id: number;
+  staff_id?: number | null;
+  sender_id: number;
+  message: string;
+  seen_at?: string | null;
+  created_at: string | null;
+  sender?: {
+    id: number;
+    name: string;
+  } | null;
+};
+
+export type SupportMessagesPayload = {
+  messages: SupportMessage[];
+  messagePagination?: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    has_more_pages: boolean;
+  };
+  assigned_staff?: {
+    id: number;
+    name: string;
+  } | null;
 };

@@ -114,6 +114,27 @@ export function OrderDetailScreen({
         </View>
       </View>
 
+      {status === "cancelled" && order?.cancel_reason ? (
+        <View className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+          <Text className="text-xs font-black uppercase tracking-wider text-rose-700">{tr(locale, "cancelOrder")}</Text>
+          <Text className="mt-2 text-xs font-semibold text-rose-800">{order.cancel_reason}</Text>
+        </View>
+      ) : null}
+
+      {(status === "shipped" || status === "delivered") ? (
+        <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+          <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>Delivery</Text>
+          <View className="mt-3 gap-2">
+            <InfoRow dark={dark} label={tr(locale, "statusLabel")} value={status === "shipped" ? "On the way" : "Delivered"} />
+            <InfoRow
+              dark={dark}
+              label="Location"
+              value={order?.delivery_lat && order?.delivery_lng ? `${order.delivery_lat}, ${order.delivery_lng}` : "-"}
+            />
+          </View>
+        </View>
+      ) : null}
+
       {(canCancel || canRefund || canReturn) ? (
         <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
           <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "orderActions")}</Text>

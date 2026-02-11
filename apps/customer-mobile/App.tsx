@@ -8,11 +8,13 @@ import { LoadingView } from "./src/components/LoadingView";
 import { useCustomerApp } from "./src/hooks/useCustomerApp";
 import { AccountScreen } from "./src/screens/AccountScreen";
 import { CartScreen } from "./src/screens/CartScreen";
+import { CheckoutScreen } from "./src/screens/CheckoutScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { OrderDetailScreen } from "./src/screens/OrderDetailScreen";
 import { OrdersScreen } from "./src/screens/OrdersScreen";
 import { ProductDetailScreen } from "./src/screens/ProductDetailScreen";
+import { SupportScreen } from "./src/screens/SupportScreen";
 
 export default function App() {
   const app = useCustomerApp();
@@ -78,6 +80,31 @@ export default function App() {
     );
   }
 
+  if (app.detail.view === "checkout") {
+    return (
+      <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`}>
+        <StatusBar style={app.dark ? "light" : "dark"} />
+        <CheckoutScreen
+          locale={app.locale}
+          dark={app.dark}
+          cartItems={app.cart.items}
+          phone={app.cart.checkoutPhone}
+          address={app.cart.checkoutAddress}
+          paymentSlipUri={app.cart.checkoutSlipUri}
+          qrData={app.cart.checkoutQrData}
+          busy={app.cart.checkoutBusy}
+          error={app.cart.checkoutError}
+          onPhoneChange={app.cart.setCheckoutPhone}
+          onAddressChange={app.cart.setCheckoutAddress}
+          onSlipUriChange={app.cart.setCheckoutSlipUri}
+          onQrDataChange={app.cart.setCheckoutQrData}
+          onBack={app.detail.close}
+          onConfirm={() => void app.cart.confirmCheckout()}
+        />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className={`flex-1 ${app.dark ? "bg-slate-950" : "bg-slate-100"}`}>
       <StatusBar style={app.dark ? "light" : "dark"} />
@@ -119,8 +146,25 @@ export default function App() {
           cartItems={app.cart.items}
           removingItemId={app.cart.removingItemId}
           busyCheckout={app.cart.checkoutBusy}
-          onCheckout={() => void app.cart.checkout()}
+          onCheckout={() => void app.cart.openCheckout()}
           onRemoveItem={(cartItemId) => void app.cart.removeItem(cartItemId)}
+        />
+      ) : null}
+
+      {app.activeTab === "support" ? (
+        <SupportScreen
+          locale={app.locale}
+          dark={app.dark}
+          userId={app.session.user.id}
+          assignedStaffName={app.support.assignedStaffName}
+          messages={app.support.messages}
+          draft={app.support.draft}
+          busy={app.support.busy}
+          sending={app.support.sending}
+          error={app.support.error}
+          onDraftChange={app.support.setDraft}
+          onSend={() => void app.support.send()}
+          onRefresh={() => void app.support.refresh()}
         />
       ) : null}
 

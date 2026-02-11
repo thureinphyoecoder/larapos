@@ -7,9 +7,10 @@ import { addCartItem, fetchCart, removeCartItem } from "../services/cartService"
 import { fetchCategories, fetchProductDetail, fetchProducts } from "../services/catalogService";
 import { fetchMe, logout as logoutService, signIn, updateMe } from "../services/authService";
 import { cancelOrder, fetchOrderDetail, fetchOrders, placeOrderFromCart, requestRefund, requestReturn } from "../services/orderService";
-import type { CartItem, Category, CustomerOrder, CustomerTab, Locale, MePayload, Product, ThemeMode } from "../types/domain";
+import { fetchSupportMessages, sendSupportMessage } from "../services/supportService";
+import type { CartItem, Category, CustomerOrder, CustomerTab, Locale, MePayload, Product, SupportMessage, ThemeMode } from "../types/domain";
 
-type DetailView = "none" | "product" | "order";
+type DetailView = "none" | "product" | "order" | "checkout";
 
 export function useCustomerApp() {
   const [booting, setBooting] = useState(true);
@@ -36,6 +37,18 @@ export function useCustomerApp() {
   const [addingProductId, setAddingProductId] = useState<number | null>(null);
   const [removingCartItemId, setRemovingCartItemId] = useState<number | null>(null);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [checkoutPhone, setCheckoutPhone] = useState("");
+  const [checkoutAddress, setCheckoutAddress] = useState("");
+  const [checkoutSlipUri, setCheckoutSlipUri] = useState<string | null>(null);
+  const [checkoutQrData, setCheckoutQrData] = useState("");
+  const [checkoutError, setCheckoutError] = useState("");
+
+  const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
+  const [supportAssignedStaffName, setSupportAssignedStaffName] = useState<string | null>(null);
+  const [supportDraft, setSupportDraft] = useState("");
+  const [supportBusy, setSupportBusy] = useState(false);
+  const [supportSending, setSupportSending] = useState(false);
+  const [supportError, setSupportError] = useState("");
 
   const [detailView, setDetailView] = useState<DetailView>("none");
   const [detailBusy, setDetailBusy] = useState(false);
@@ -79,6 +92,28 @@ export function useCustomerApp() {
     setCartItems(nextCart);
   }, []);
 
+  const loadSupport = useCallback(
+    async (token: string) => {
+      setSupportBusy(true);
+      setSupportError("");
+
+      try {
+        const payload = await fetchSupportMessages(API_BASE_URL, token, 1);
+        setSupportMessages(payload.messages || []);
+        setSupportAssignedStaffName(payload.assigned_staff?.name || null);
+      } catch (error) {
+        if (error instanceof ApiError) {
+          setSupportError(error.message || tr(locale, "unknownError"));
+        } else {
+          setSupportError(tr(locale, "unknownError"));
+        }
+      } finally {
+        setSupportBusy(false);
+      }
+    },
+    [locale],
+  );
+
   const applyMePayload = useCallback(async (token: string, payload: MePayload) => {
     const nextSession = {
       token,
@@ -92,10 +127,13 @@ export function useCustomerApp() {
     setProfileEmail(payload.user.email || "");
     setProfilePhone(payload.profile?.phone_number || "");
     setProfileNrc(payload.profile?.nrc_number || "");
-    setProfileAddress(payload.profile?.address_line_1 || payload.profile?.address || "");
+    const normalizedAddress = payload.profile?.address_line_1 || payload.profile?.address || "";
+    setProfileAddress(normalizedAddress);
     setProfileCity(payload.profile?.city || "");
     setProfileState(payload.profile?.state || "");
     setProfilePostalCode(payload.profile?.postal_code || "");
+    setCheckoutPhone(payload.profile?.phone_number || "");
+    setCheckoutAddress(normalizedAddress);
   }, []);
 
   const syncMe = useCallback(
@@ -121,16 +159,18 @@ export function useCustomerApp() {
       setSession(savedSession);
       setProfileName(savedSession?.user?.name || "");
       setProfileEmail(savedSession?.user?.email || "");
+      setCheckoutPhone("");
+      setCheckoutAddress("");
 
       await hydratePublicCatalog("", null);
 
       if (savedSession?.token) {
-        await Promise.all([hydratePrivateData(savedSession.token), syncMe(savedSession.token)]);
+        await Promise.all([hydratePrivateData(savedSession.token), syncMe(savedSession.token), loadSupport(savedSession.token)]);
       }
     } finally {
       setBooting(false);
     }
-  }, [hydratePrivateData, hydratePublicCatalog, syncMe]);
+  }, [hydratePrivateData, hydratePublicCatalog, loadSupport, syncMe]);
 
   useEffect(() => {
     void bootstrap();
@@ -148,6 +188,18 @@ export function useCustomerApp() {
     return () => clearTimeout(timer);
   }, [session?.token, query, activeCategoryId, hydratePublicCatalog]);
 
+  useEffect(() => {
+    if (!session?.token || activeTab !== "support") {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      void loadSupport(session.token);
+    }, 10000);
+
+    return () => clearInterval(timer);
+  }, [activeTab, loadSupport, session?.token]);
+
   const refreshAll = useCallback(async () => {
     setRefreshing(true);
 
@@ -155,12 +207,12 @@ export function useCustomerApp() {
       await hydratePublicCatalog(query, activeCategoryId);
 
       if (session?.token) {
-        await Promise.all([hydratePrivateData(session.token), syncMe(session.token)]);
+        await Promise.all([hydratePrivateData(session.token), syncMe(session.token), loadSupport(session.token)]);
       }
     } finally {
       setRefreshing(false);
     }
-  }, [activeCategoryId, hydratePrivateData, hydratePublicCatalog, query, session?.token, syncMe]);
+  }, [activeCategoryId, hydratePrivateData, hydratePublicCatalog, loadSupport, query, session?.token, syncMe]);
 
   const handleSignIn = useCallback(async () => {
     if (!email.trim() || !password.trim()) {
@@ -178,7 +230,7 @@ export function useCustomerApp() {
       setProfileName(nextSession.user.name || "");
       setProfileEmail(nextSession.user.email || "");
       setActiveTab("home");
-      await Promise.all([hydratePrivateData(nextSession.token), syncMe(nextSession.token)]);
+      await Promise.all([hydratePrivateData(nextSession.token), syncMe(nextSession.token), loadSupport(nextSession.token)]);
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 0) {
@@ -194,7 +246,7 @@ export function useCustomerApp() {
     } finally {
       setAuthBusy(false);
     }
-  }, [email, password, locale, hydratePrivateData, syncMe]);
+  }, [email, password, locale, hydratePrivateData, loadSupport, syncMe]);
 
   const handleAddToCart = useCallback(
     async (product: Product, variantId?: number, quantity = 1) => {
@@ -223,21 +275,55 @@ export function useCustomerApp() {
     [session?.token],
   );
 
+  const openCheckout = useCallback(() => {
+    if (!cartItems.length) {
+      return;
+    }
+
+    setCheckoutError("");
+    setCheckoutPhone((current) => current || profilePhone || "");
+    setCheckoutAddress((current) => current || profileAddress || "");
+    setDetailView("checkout");
+  }, [cartItems.length, profileAddress, profilePhone]);
+
   const handleCheckout = useCallback(async () => {
     if (!session?.token) {
       return;
     }
 
+    if (!checkoutPhone.trim() || checkoutPhone.trim().length < 7) {
+      setCheckoutError(tr(locale, "phoneRequired"));
+      return;
+    }
+
+    if (!checkoutAddress.trim() || checkoutAddress.trim().length < 5) {
+      setCheckoutError(tr(locale, "addressRequired"));
+      return;
+    }
+
+    if (!checkoutSlipUri) {
+      setCheckoutError(tr(locale, "paymentSlipRequired"));
+      return;
+    }
+
     setCheckoutBusy(true);
+    setCheckoutError("");
 
     try {
-      await placeOrderFromCart(API_BASE_URL, session.token);
+      await placeOrderFromCart(API_BASE_URL, session.token, {
+        phone: checkoutPhone.trim(),
+        address: checkoutAddress.trim(),
+        paymentSlipUri: checkoutSlipUri,
+      });
       await hydratePrivateData(session.token);
+      setCheckoutSlipUri(null);
+      setCheckoutQrData("");
+      setDetailView("none");
       setActiveTab("orders");
     } finally {
       setCheckoutBusy(false);
     }
-  }, [session?.token, hydratePrivateData]);
+  }, [checkoutAddress, checkoutPhone, checkoutSlipUri, hydratePrivateData, locale, session?.token]);
 
   const handleRemoveCartItem = useCallback(
     async (cartItemId: number) => {
@@ -315,6 +401,8 @@ export function useCustomerApp() {
     setDetailError("");
     setDetailActionBusy(false);
     setDetailActionMessage("");
+    setCheckoutError("");
+    setCheckoutQrData("");
   }, []);
 
   const handleCancelOrder = useCallback(
@@ -398,6 +486,34 @@ export function useCustomerApp() {
     [detailOrder, locale, session?.token],
   );
 
+  const handleSendSupport = useCallback(async () => {
+    if (!session?.token) {
+      return;
+    }
+
+    const text = supportDraft.trim();
+    if (!text) {
+      return;
+    }
+
+    setSupportSending(true);
+    setSupportError("");
+
+    try {
+      await sendSupportMessage(API_BASE_URL, session.token, text);
+      setSupportDraft("");
+      await loadSupport(session.token);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setSupportError(error.message || tr(locale, "unknownError"));
+      } else {
+        setSupportError(tr(locale, "unknownError"));
+      }
+    } finally {
+      setSupportSending(false);
+    }
+  }, [loadSupport, locale, session?.token, supportDraft]);
+
   const handleSaveProfile = useCallback(async () => {
     if (!session?.token) {
       return;
@@ -476,6 +592,15 @@ export function useCustomerApp() {
     setProfilePostalCode("");
     setProfileError("");
     setProfileMessage("");
+    setSupportMessages([]);
+    setSupportAssignedStaffName(null);
+    setSupportDraft("");
+    setSupportError("");
+    setCheckoutPhone("");
+    setCheckoutAddress("");
+    setCheckoutError("");
+    setCheckoutSlipUri(null);
+    setCheckoutQrData("");
   }, [session?.token]);
 
   const toggleLocale = useCallback(async () => {
@@ -495,6 +620,7 @@ export function useCustomerApp() {
       { key: "home" as const, label: tr(locale, "tabsHome") },
       { key: "orders" as const, label: tr(locale, "tabsOrders") },
       { key: "cart" as const, label: tr(locale, "tabsCart") },
+      { key: "support" as const, label: tr(locale, "tabsSupport") },
       { key: "account" as const, label: tr(locale, "tabsAccount") },
     ],
     [locale],
@@ -534,7 +660,17 @@ export function useCustomerApp() {
       items: cartItems,
       removingItemId: removingCartItemId,
       checkoutBusy,
-      checkout: handleCheckout,
+      openCheckout,
+      confirmCheckout: handleCheckout,
+      checkoutPhone,
+      checkoutAddress,
+      checkoutSlipUri,
+      checkoutQrData,
+      checkoutError,
+      setCheckoutPhone,
+      setCheckoutAddress,
+      setCheckoutSlipUri,
+      setCheckoutQrData,
       removeItem: handleRemoveCartItem,
     },
     detail: {
@@ -577,6 +713,17 @@ export function useCustomerApp() {
       setProfileCity,
       setProfileState,
       setProfilePostalCode,
+    },
+    support: {
+      messages: supportMessages,
+      assignedStaffName: supportAssignedStaffName,
+      draft: supportDraft,
+      busy: supportBusy,
+      sending: supportSending,
+      error: supportError,
+      setDraft: setSupportDraft,
+      send: handleSendSupport,
+      refresh: () => (session?.token ? loadSupport(session.token) : Promise.resolve()),
     },
   };
 }

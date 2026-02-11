@@ -1,4 +1,4 @@
-import { requestJson } from "../lib/http";
+import { requestFormData, requestJson } from "../lib/http";
 import { fallbackOrders } from "../mocks/data";
 import type { ApiListResponse, CustomerOrder } from "../types/domain";
 
@@ -17,13 +17,38 @@ export async function fetchOrders(baseUrl: string, token: string): Promise<Custo
   }
 }
 
-export async function placeOrderFromCart(baseUrl: string, token: string): Promise<void> {
-  await requestJson({
+export type CheckoutPayload = {
+  phone?: string;
+  address?: string;
+  paymentSlipUri?: string | null;
+};
+
+export async function placeOrderFromCart(baseUrl: string, token: string, payload: CheckoutPayload = {}): Promise<void> {
+  const formData = new FormData();
+
+  if (payload.phone?.trim()) {
+    formData.append("phone", payload.phone.trim());
+  }
+
+  if (payload.address?.trim()) {
+    formData.append("address", payload.address.trim());
+  }
+
+  if (payload.paymentSlipUri) {
+    const fileName = payload.paymentSlipUri.split("/").pop() || `slip-${Date.now()}.jpg`;
+    formData.append("payment_slip", {
+      uri: payload.paymentSlipUri,
+      name: fileName,
+      type: "image/jpeg",
+    } as any);
+  }
+
+  await requestFormData({
     baseUrl,
     path: "/orders",
     method: "POST",
     token,
-    body: {},
+    body: formData,
   });
 }
 

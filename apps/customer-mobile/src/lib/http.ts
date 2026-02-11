@@ -17,6 +17,15 @@ type RequestOptions = {
   timeoutMs?: number;
 };
 
+type FormRequestOptions = {
+  baseUrl: string;
+  path: string;
+  method: "POST" | "PATCH";
+  token?: string;
+  body: FormData;
+  timeoutMs?: number;
+};
+
 export async function requestJson<T>(options: RequestOptions): Promise<T> {
   const { baseUrl, path, method, token, body, timeoutMs = 15000 } = options;
 
@@ -32,6 +41,44 @@ export async function requestJson<T>(options: RequestOptions): Promise<T> {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const message = extractMessage(payload) || `Request failed (${response.status})`;
+      throw new ApiError(message, response.status);
+    }
+
+    return payload as T;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiError("Network timeout", 0);
+    }
+
+    throw new ApiError("Network unavailable", 0);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function requestFormData<T>(options: FormRequestOptions): Promise<T> {
+  const { baseUrl, path, method, token, body, timeoutMs = 20000 } = options;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${stripTrailingSlash(baseUrl)}${path}`, {
+      method,
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body,
       signal: controller.signal,
     });
 

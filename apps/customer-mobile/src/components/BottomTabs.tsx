@@ -46,5 +46,6 @@ function iconForTab(tab: CustomerTab): ComponentProps<typeof Ionicons>["name"] {
   if (tab === "home") return "home-outline";
   if (tab === "orders") return "receipt-outline";
   if (tab === "cart") return "bag-handle-outline";
+  if (tab === "support") return "chatbubbles-outline";
   return "person-circle-outline";
 }

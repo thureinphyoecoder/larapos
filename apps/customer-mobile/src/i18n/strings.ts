@@ -14,6 +14,7 @@ type I18nKey =
   | "tabsHome"
   | "tabsOrders"
   | "tabsCart"
+  | "tabsSupport"
   | "tabsAccount"
   | "welcomeBack"
   | "homeWelcomeSubtitle"
@@ -52,6 +53,11 @@ type I18nKey =
   | "cartEmpty"
   | "subtotal"
   | "cartSummary"
+  | "paymentMethod"
+  | "scanQrToPay"
+  | "scanQr"
+  | "uploadSlip"
+  | "qrScanned"
   | "checkout"
   | "checkingOut"
   | "remove"
@@ -101,7 +107,18 @@ type I18nKey =
   | "submitRequest"
   | "orderCancelledSuccess"
   | "refundRequestedSuccess"
-  | "returnRequestedSuccess";
+  | "returnRequestedSuccess"
+  | "supportTitle"
+  | "supportSubtitle"
+  | "supportEmpty"
+  | "supportPlaceholder"
+  | "supportAgent"
+  | "assignedTo"
+  | "you"
+  | "loading"
+  | "phoneRequired"
+  | "addressRequired"
+  | "paymentSlipRequired";
 
 type Dictionary = Record<I18nKey, string>;
 
@@ -119,6 +136,7 @@ const en: Dictionary = {
   tabsHome: "Home",
   tabsOrders: "Orders",
   tabsCart: "Cart",
+  tabsSupport: "Support",
   tabsAccount: "Account",
   welcomeBack: "Welcome back",
   homeWelcomeSubtitle: "Premium deals from verified shops, updated live.",
@@ -157,6 +175,11 @@ const en: Dictionary = {
   cartEmpty: "Your cart is empty.",
   subtotal: "Subtotal",
   cartSummary: "Order Summary",
+  paymentMethod: "Payment Method",
+  scanQrToPay: "Scan this QR with your wallet app and upload transfer slip.",
+  scanQr: "Scan QR",
+  uploadSlip: "Upload Slip",
+  qrScanned: "QR scanned",
   checkout: "Place Order",
   checkingOut: "Placing order...",
   remove: "Remove",
@@ -207,6 +230,17 @@ const en: Dictionary = {
   orderCancelledSuccess: "Order cancelled successfully.",
   refundRequestedSuccess: "Refund request sent.",
   returnRequestedSuccess: "Return request sent.",
+  supportTitle: "Support Chat",
+  supportSubtitle: "Need help? Message support team.",
+  supportEmpty: "No messages yet. Start chatting with support.",
+  supportPlaceholder: "Type your message...",
+  supportAgent: "Support",
+  assignedTo: "Assigned to",
+  you: "You",
+  loading: "Loading...",
+  phoneRequired: "Please enter a valid phone number.",
+  addressRequired: "Please enter delivery address.",
+  paymentSlipRequired: "Please upload payment slip.",
 };
 
 const mm: Dictionary = {
@@ -223,6 +257,7 @@ const mm: Dictionary = {
   tabsHome: "ပင်မ",
   tabsOrders: "အော်ဒါ",
   tabsCart: "ခြင်းတောင်း",
+  tabsSupport: "အကူအညီ",
   tabsAccount: "အကောင့်",
   welcomeBack: "ပြန်လည်ကြိုဆိုပါတယ်",
   homeWelcomeSubtitle: "ယုံကြည်ရတဲ့ဆိုင်တွေက deals အသစ်တွေကို အချိန်နှင့်တပြေးညီ ကြည့်နိုင်ပါတယ်။",
@@ -261,6 +296,11 @@ const mm: Dictionary = {
   cartEmpty: "ခြင်းတောင်းထဲမှာ ပစ္စည်းမရှိသေးပါ။",
   subtotal: "စုစုပေါင်း",
   cartSummary: "အော်ဒါအနှစ်ချုပ်",
+  paymentMethod: "ငွေပေးချေမှုနည်းလမ်း",
+  scanQrToPay: "Wallet app နဲ့ QR ကို scan လုပ်ပြီး ငွေလွှဲပြေစာတင်ပါ။",
+  scanQr: "QR စကန်ဖတ်မည်",
+  uploadSlip: "ပြေစာတင်မည်",
+  qrScanned: "QR ဖတ်ပြီး",
   checkout: "အော်ဒါတင်မည်",
   checkingOut: "အော်ဒါတင်နေပါသည်...",
   remove: "ဖယ်ရှားမည်",
@@ -311,6 +351,17 @@ const mm: Dictionary = {
   orderCancelledSuccess: "အော်ဒါကို ပယ်ဖျက်ပြီးပါပြီ။",
   refundRequestedSuccess: "Refund တောင်းဆိုပြီးပါပြီ။",
   returnRequestedSuccess: "Return တောင်းဆိုပြီးပါပြီ။",
+  supportTitle: "Support Chat",
+  supportSubtitle: "အကူအညီလိုပါက support team ကို message ပို့ပါ။",
+  supportEmpty: "Message မရှိသေးပါ။ Support နဲ့ စကားပြောစပါ။",
+  supportPlaceholder: "စာရိုက်ပါ...",
+  supportAgent: "Support",
+  assignedTo: "တာဝန်ပေးထားသူ",
+  you: "သင်",
+  loading: "တင်နေသည်...",
+  phoneRequired: "ဖုန်းနံပါတ် မှန်မှန် ဖြည့်ပေးပါ။",
+  addressRequired: "ပို့မည့်လိပ်စာ ဖြည့်ပေးပါ။",
+  paymentSlipRequired: "ငွေလွှဲပြေစာ တင်ပေးပါ။",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { en, mm };
