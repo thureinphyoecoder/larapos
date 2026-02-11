@@ -1,6 +1,6 @@
 import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
 import { StatusBadge } from "../components/StatusBadge";
 import { tr } from "../i18n/strings";
 import type { CustomerOrder, Locale } from "../types/domain";
@@ -94,14 +94,23 @@ export function OrderDetailScreen({
     return [...header, ...lines, "", `Total: ${formatMoney(order?.total_amount || 0)}`].join("\n");
   }, [order]);
 
+  const receiptSvg = useMemo(() => buildReceiptSvg(order), [order]);
+
   const onPrintReceipt = async () => {
     try {
-      await Share.share({
-        title: "LaraPee Receipt",
-        message: receiptText,
-      });
+      const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(receiptSvg)}`;
+      const canOpen = await Linking.canOpenURL(dataUrl);
+      if (canOpen) {
+        await Linking.openURL(dataUrl);
+        return;
+      }
+      await Share.share({ title: "LaraPee Receipt", message: receiptText });
     } catch {
-      // ignore share cancel/action errors
+      try {
+        await Share.share({ title: "LaraPee Receipt", message: receiptText });
+      } catch {
+        // ignore share cancel/action errors
+      }
     }
   };
 
@@ -113,6 +122,28 @@ export function OrderDetailScreen({
         </Pressable>
         <Text className={`text-lg font-black ${dark ? "text-white" : "text-slate-900"}`}>{tr(locale, "orderDetails")}</Text>
         <View className="w-10" />
+      </View>
+
+      <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+        <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "trackOrder")}</Text>
+        <View className="mt-3 flex-row items-center justify-between">
+          <Text className={`text-xs font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>Order ID: #{order?.id || "-"}</Text>
+          <Text className={`text-xs font-bold ${dark ? "text-emerald-300" : "text-emerald-600"}`}>ETA: {eta}</Text>
+        </View>
+        <View className="mt-4">
+          <TrackingTimeline dark={dark} level={trackingLevel} />
+        </View>
+        <View className="mt-3 gap-2">
+          <InfoRow dark={dark} label={tr(locale, "statusLabel")} value={status === "delivered" ? "Delivered" : status === "shipped" ? "On the way" : "Preparing"} />
+          <InfoRow
+            dark={dark}
+            label="Location"
+            value={order?.delivery_lat && order?.delivery_lng ? `${order.delivery_lat}, ${order.delivery_lng}` : "Not available yet"}
+          />
+          <InfoRow dark={dark} label="Confirmed" value={["confirmed", "shipped", "delivered"].includes(status) ? "Yes" : "No"} />
+          <InfoRow dark={dark} label="Shipped" value={["shipped", "delivered"].includes(status) ? "Yes" : "No"} />
+          <InfoRow dark={dark} label="Delivered" value={status === "delivered" ? "Yes" : "No"} />
+        </View>
       </View>
 
       <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
@@ -170,34 +201,6 @@ export function OrderDetailScreen({
 
         <View className={`mt-4 border-t pt-4 ${dark ? "border-slate-700" : "border-slate-200"}`}>
           <InfoRow dark={dark} label={tr(locale, "total")} value={formatMoney(order?.total_amount || 0)} />
-          <View className="mt-3 flex-row gap-3">
-            <Pressable onPress={() => void onPrintReceipt()} className={`flex-1 items-center rounded-2xl px-4 py-3 ${dark ? "bg-slate-800" : "bg-slate-900"}`}>
-              <Text className="text-sm font-black text-white">{tr(locale, "printReceipt")}</Text>
-            </Pressable>
-            <Pressable onPress={onBack} className="flex-1 items-center rounded-2xl bg-orange-600 px-4 py-3">
-              <Text className="text-sm font-black text-white">{tr(locale, "backToOrder")}</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-
-      <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
-        <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "orderItems")}</Text>
-
-        <View className="mt-3 gap-3">
-          {order?.items?.length ? (
-            order.items.map((item) => (
-              <View key={item.id} className={`rounded-xl border p-3 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}>
-                <Text className={`text-sm font-bold ${dark ? "text-slate-200" : "text-slate-800"}`}>{item.product?.name || `Item #${item.product_id}`}</Text>
-                <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>
-                  {item.quantity} x {formatMoney(item.price)}
-                </Text>
-                <Text className={`mt-2 text-sm font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{formatMoney(item.line_total)}</Text>
-              </View>
-            ))
-          ) : (
-            <Text className={`text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "noOrderItems")}</Text>
-          )}
         </View>
       </View>
 
@@ -207,28 +210,6 @@ export function OrderDetailScreen({
           <Text className="mt-2 text-xs font-semibold text-rose-800">{order.cancel_reason}</Text>
         </View>
       ) : null}
-
-      <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
-        <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "trackOrder")}</Text>
-        <View className="mt-3 flex-row items-center justify-between">
-          <Text className={`text-xs font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>Order ID: #{order?.id || "-"}</Text>
-          <Text className={`text-xs font-bold ${dark ? "text-emerald-300" : "text-emerald-600"}`}>ETA: {eta}</Text>
-        </View>
-        <View className="mt-4">
-          <TrackingTimeline dark={dark} level={trackingLevel} />
-        </View>
-        <View className="mt-3 gap-2">
-          <InfoRow dark={dark} label={tr(locale, "statusLabel")} value={status === "delivered" ? "Delivered" : status === "shipped" ? "On the way" : "Preparing"} />
-          <InfoRow
-            dark={dark}
-            label="Location"
-            value={order?.delivery_lat && order?.delivery_lng ? `${order.delivery_lat}, ${order.delivery_lng}` : "Not available yet"}
-          />
-          <InfoRow dark={dark} label="Confirmed" value={["confirmed", "shipped", "delivered"].includes(status) ? "Yes" : "No"} />
-          <InfoRow dark={dark} label="Shipped" value={["shipped", "delivered"].includes(status) ? "Yes" : "No"} />
-          <InfoRow dark={dark} label="Delivered" value={status === "delivered" ? "Yes" : "No"} />
-        </View>
-      </View>
 
       {(canCancel || canRefund || canReturn) ? (
         <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
@@ -290,6 +271,19 @@ export function OrderDetailScreen({
         </View>
       ) : null}
 
+      <View className={`mt-4 rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+        <Text className={`text-base font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "receiptTitle")}</Text>
+        <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Open as image and print/share from your phone.</Text>
+        <View className="mt-3 flex-row gap-3">
+          <Pressable onPress={() => void onPrintReceipt()} className={`flex-1 items-center rounded-2xl px-4 py-3 ${dark ? "bg-slate-800" : "bg-slate-900"}`}>
+            <Text className="text-sm font-black text-white">{tr(locale, "printReceipt")}</Text>
+          </Pressable>
+          <Pressable onPress={onBack} className="flex-1 items-center rounded-2xl bg-orange-600 px-4 py-3">
+            <Text className="text-sm font-black text-white">{tr(locale, "backToOrder")}</Text>
+          </Pressable>
+        </View>
+      </View>
+
       {error ? <Text className="mt-4 rounded-xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{error}</Text> : null}
       {actionMessage ? <Text className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{actionMessage}</Text> : null}
       {busy ? <Text className={`mt-4 text-center text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Loading...</Text> : null}
@@ -341,4 +335,57 @@ function InfoRow({ dark, label, value }: { dark: boolean; label: string; value: 
       <Text className={`flex-1 text-right text-xs font-semibold ${dark ? "text-slate-200" : "text-slate-700"}`}>{value}</Text>
     </View>
   );
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function buildReceiptSvg(order: CustomerOrder | null): string {
+  const id = order?.id || "-";
+  const invoice = order?.invoice_no || "-";
+  const date = formatDate(order?.created_at || null);
+  const total = formatMoney(order?.total_amount || 0);
+  const phone = order?.phone || "-";
+  const address = order?.address || "-";
+  const status = String(order?.status || "pending").toUpperCase();
+  const items = (order?.items || []).slice(0, 6);
+
+  const itemRows = items
+    .map((item, idx) => {
+      const y = 248 + idx * 26;
+      const name = escapeXml(item.product?.name || `Item #${item.product_id}`);
+      const qty = String(item.quantity || 0);
+      const line = escapeXml(formatMoney(item.line_total || 0));
+      return `<text x="30" y="${y}" font-size="12" fill="#1f2937">${name}</text>
+<text x="250" y="${y}" font-size="12" fill="#1f2937">${qty}</text>
+<text x="320" y="${y}" font-size="12" fill="#111827" font-weight="700">${line}</text>`;
+    })
+    .join("\n");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="520" viewBox="0 0 420 520">
+<rect width="420" height="520" fill="#f8fafc"/>
+<rect x="12" y="12" width="396" height="496" rx="16" fill="#ffffff" stroke="#e2e8f0"/>
+<text x="28" y="48" font-size="30" font-weight="800" fill="#ea580c">LaraPee</text>
+<text x="280" y="40" font-size="14" font-weight="700" fill="#0f172a">RECEIPT</text>
+<text x="280" y="58" font-size="12" fill="#475569">Order #${escapeXml(String(id))}</text>
+<text x="28" y="84" font-size="12" fill="#475569">Invoice: ${escapeXml(invoice)}</text>
+<text x="28" y="102" font-size="12" fill="#475569">Date: ${escapeXml(date)}</text>
+<text x="280" y="84" font-size="12" fill="#475569">Status: ${escapeXml(status)}</text>
+<text x="28" y="130" font-size="12" fill="#0f172a" font-weight="700">Phone: ${escapeXml(phone)}</text>
+<text x="28" y="148" font-size="12" fill="#475569">Address: ${escapeXml(address)}</text>
+<line x1="28" y1="178" x2="392" y2="178" stroke="#e2e8f0"/>
+<text x="30" y="202" font-size="11" font-weight="700" fill="#64748b">ITEM</text>
+<text x="250" y="202" font-size="11" font-weight="700" fill="#64748b">QTY</text>
+<text x="320" y="202" font-size="11" font-weight="700" fill="#64748b">TOTAL</text>
+${itemRows}
+<line x1="28" y1="430" x2="392" y2="430" stroke="#e2e8f0"/>
+<text x="270" y="458" font-size="13" fill="#475569">Total</text>
+<text x="320" y="458" font-size="18" font-weight="800" fill="#ea580c">${escapeXml(total)}</text>
+</svg>`;
 }

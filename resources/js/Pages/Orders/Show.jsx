@@ -154,49 +154,6 @@ export default function Show({ order }) {
                     </div>
                 </div>
 
-                {status === "cancelled" && liveOrder?.cancel_reason && (
-                    <div className="mb-8 rounded-xl border border-rose-200 bg-rose-50 p-4">
-                        <h4 className="font-bold text-rose-700 mb-2 uppercase text-xs tracking-wider">Cancel Reason</h4>
-                        <p className="text-sm text-rose-800">{liveOrder.cancel_reason}</p>
-                    </div>
-                )}
-
-                {/* Items preview */}
-                <div className="mb-8">
-                    <h4 className="font-bold text-gray-700 mb-3 uppercase text-xs tracking-wider">
-                        Items
-                    </h4>
-                    <div className="space-y-2">
-                        {order.items.map((item) => (
-                            <div
-                                key={item.id}
-                                className="flex justify-between items-center bg-white border rounded-xl p-3"
-                            >
-                                <div>
-                                    <p className="font-semibold text-gray-800">
-                                        {item.product?.name}
-                                    </p>
-                                    <p className="text-xs text-gray-400">
-                                        x {item.quantity}
-                                    </p>
-                                </div>
-                                <div className="text-sm font-bold text-gray-800">
-                                    {(item.price * item.quantity).toLocaleString()} Ks
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                    <Link
-                        href={route("orders.receipt", order.id)}
-                        className="px-4 py-2 rounded-full border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50"
-                    >
-                        View Receipt
-                    </Link>
-                </div>
-
                 {/* Delivery / Tracking UI */}
                 <div id="tracking" className="mt-8 border-t border-gray-100 pt-6">
                     <h4 className="font-bold text-gray-700 mb-3 uppercase text-xs tracking-wider">
@@ -277,6 +234,22 @@ export default function Show({ order }) {
                             </p>
                         </div>
                     </div>
+                </div>
+
+                {status === "cancelled" && liveOrder?.cancel_reason && (
+                    <div className="mb-8 rounded-xl border border-rose-200 bg-rose-50 p-4">
+                        <h4 className="font-bold text-rose-700 mb-2 uppercase text-xs tracking-wider">Cancel Reason</h4>
+                        <p className="text-sm text-rose-800">{liveOrder.cancel_reason}</p>
+                    </div>
+                )}
+
+                <div className="mt-6 flex justify-end">
+                    <Link
+                        href={route("orders.receipt", order.id)}
+                        className="px-4 py-2 rounded-full border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50"
+                    >
+                        View Receipt
+                    </Link>
                 </div>
 
                 {/* Footer Buttons */}
