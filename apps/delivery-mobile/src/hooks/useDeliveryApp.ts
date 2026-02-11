@@ -31,6 +31,8 @@ export function useDeliveryApp() {
   const [password, setPassword] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
+  const [actionError, setActionError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [theme, setTheme] = useState<ThemeMode>("dark");
@@ -203,6 +205,8 @@ export function useDeliveryApp() {
     setNotifications([]);
     setNotificationsUnreadCount(0);
     setBannerNotification(null);
+    setActionMessage("");
+    setActionError("");
     orderSnapshotRef.current.clear();
   }
 
@@ -249,9 +253,12 @@ export function useDeliveryApp() {
 
     try {
       setActionBusy(true);
+      setActionError("");
+      setActionMessage(tr(locale, "updatingLocationProgress"));
       const permission = await Location.requestForegroundPermissionsAsync();
       if (permission.status !== "granted") {
         Alert.alert(tr(locale, "permissionRequiredTitle"), tr(locale, "locationPermissionMessage"));
+        setActionMessage("");
         return;
       }
 
@@ -264,8 +271,11 @@ export function useDeliveryApp() {
       const result = await orderService.updateDeliveryLocation(apiBaseUrl, token, selectedOrder.id, payload);
       setSelectedOrder(normalizeOrderUrls(apiBaseUrl, result.data));
       await loadOrders();
+      setActionMessage(tr(locale, "locationUpdatedMessage"));
       Alert.alert(tr(locale, "locationUpdatedTitle"), tr(locale, "locationUpdatedMessage"));
     } catch (err) {
+      const reason = err instanceof Error ? err.message : "Unknown error";
+      setActionError(`${tr(locale, "actionFailedPrefix")}: ${reason}`);
       Alert.alert(tr(locale, "locationUpdateFailedTitle"), err instanceof Error ? err.message : "Unknown error");
     } finally {
       setActionBusy(false);
@@ -277,9 +287,12 @@ export function useDeliveryApp() {
 
     try {
       setActionBusy(true);
+      setActionError("");
+      setActionMessage(tr(locale, "uploadingProofProgress"));
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permission.status !== "granted") {
         Alert.alert(tr(locale, "permissionRequiredTitle"), tr(locale, "galleryPermissionMessage"));
+        setActionMessage("");
         return;
       }
 
@@ -291,6 +304,7 @@ export function useDeliveryApp() {
       });
 
       if (pickResult.canceled || !pickResult.assets.length) {
+        setActionMessage("");
         return;
       }
 
@@ -307,8 +321,12 @@ export function useDeliveryApp() {
       const result = await orderService.uploadShipmentProof(apiBaseUrl, token, selectedOrder.id, formData);
       setSelectedOrder(normalizeOrderUrls(apiBaseUrl, result.data));
       await loadOrders();
-      Alert.alert(tr(locale, "locationUpdatedTitle"), `${tr(locale, "proofUploadedMessage")} (${selectedAssets.length})`);
+      const successMessage = `${tr(locale, "proofUploadedMessage")} (${selectedAssets.length})`;
+      setActionMessage(successMessage);
+      Alert.alert(tr(locale, "locationUpdatedTitle"), successMessage);
     } catch (err) {
+      const reason = err instanceof Error ? err.message : "Unknown error";
+      setActionError(`${tr(locale, "actionFailedPrefix")}: ${reason}`);
       Alert.alert(tr(locale, "uploadFailedTitle"), err instanceof Error ? err.message : "Unknown error");
     } finally {
       setActionBusy(false);
@@ -320,11 +338,16 @@ export function useDeliveryApp() {
 
     try {
       setActionBusy(true);
+      setActionError("");
+      setActionMessage(tr(locale, "markingDeliveredProgress"));
       const result = await orderService.markDelivered(apiBaseUrl, token, selectedOrder.id);
       setSelectedOrder(normalizeOrderUrls(apiBaseUrl, result.data));
       await loadOrders();
+      setActionMessage(tr(locale, "deliveredMessage"));
       Alert.alert(tr(locale, "locationUpdatedTitle"), tr(locale, "deliveredMessage"));
     } catch (err) {
+      const reason = err instanceof Error ? err.message : "Unknown error";
+      setActionError(`${tr(locale, "actionFailedPrefix")}: ${reason}`);
       Alert.alert(tr(locale, "statusUpdateFailedTitle"), err instanceof Error ? err.message : "Unknown error");
     } finally {
       setActionBusy(false);
@@ -491,6 +514,8 @@ export function useDeliveryApp() {
       selected: selectedOrder,
       refreshing,
       actionBusy,
+      actionMessage,
+      actionError,
       refreshOrders,
       openOrder,
       closeOrder: () => setSelectedOrder(null),

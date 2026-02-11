@@ -74,6 +74,8 @@ function DeliveryAppShell() {
           locale={app.locale}
           order={app.orders.selected}
           busyAction={app.orders.actionBusy}
+          actionMessage={app.orders.actionMessage}
+          actionError={app.orders.actionError}
           refreshing={app.orders.refreshing}
           theme={app.theme}
           onBack={app.orders.closeOrder}

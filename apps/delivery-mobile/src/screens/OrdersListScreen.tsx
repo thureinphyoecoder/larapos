@@ -21,9 +21,9 @@ type OrdersListScreenProps = {
 };
 
 const STATUS_TABS: Array<{ key: StatusTab; label: string }> = [
-  { key: "all", label: "All" },
   { key: "pending", label: "Pending" },
   { key: "shipped", label: "Shipped" },
+  { key: "all", label: "All" },
   { key: "delivered", label: "Delivered" },
 ];
 const COMPANY_NAME = "LaraPee Smart";
@@ -41,7 +41,7 @@ export function OrdersListScreen({
 }: OrdersListScreenProps) {
   const dark = theme === "dark";
   const [query, setQuery] = useState("");
-  const [activeStatus, setActiveStatus] = useState<StatusTab>("all");
+  const [activeStatus, setActiveStatus] = useState<StatusTab>("pending");
 
   const summary = useMemo(() => {
     const pending = orders.filter((order) => order.status === "pending" || order.status === "confirmed").length;
@@ -52,10 +52,10 @@ export function OrdersListScreen({
 
   const filteredOrders = useMemo(() => {
     const byStatus =
-      activeStatus === "all"
-        ? orders
-        : activeStatus === "pending"
-          ? orders.filter((order) => order.status === "pending" || order.status === "confirmed")
+      activeStatus === "pending"
+        ? orders.filter((order) => order.status === "pending" || order.status === "confirmed")
+        : activeStatus === "all"
+          ? orders.filter((order) => order.status !== "delivered")
           : orders.filter((order) => order.status === activeStatus);
     const normalized = query.trim().toLowerCase();
     if (!normalized) {

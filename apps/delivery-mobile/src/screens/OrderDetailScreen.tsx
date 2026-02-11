@@ -12,6 +12,8 @@ type OrderDetailScreenProps = {
   locale: Locale;
   order: Order;
   busyAction: boolean;
+  actionMessage: string;
+  actionError: string;
   refreshing: boolean;
   theme: "dark" | "light";
   onBack: () => void;
@@ -25,6 +27,8 @@ export function OrderDetailScreen({
   locale,
   order,
   busyAction,
+  actionMessage,
+  actionError,
   refreshing,
   theme,
   onBack,
@@ -137,28 +141,47 @@ export function OrderDetailScreen({
           <Text className={`text-xs font-bold uppercase tracking-wider ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "actions")}</Text>
 
           <Pressable
-            className={`mt-3 items-center rounded-xl px-4 py-3 ${busyAction ? "bg-slate-700" : dark ? "bg-slate-800" : "bg-slate-900"}`}
+            className={`mt-3 flex-row items-center justify-between rounded-xl px-4 py-3 ${busyAction ? "bg-slate-700" : dark ? "bg-slate-800" : "bg-slate-900"}`}
             disabled={busyAction}
             onPress={onUpdateLocation}
           >
-            <Text className="text-sm font-bold text-white">{tr(locale, "updateLocation")}</Text>
+            <View className="flex-row items-center">
+              <Ionicons name="locate-outline" size={16} color="#fff" />
+              <Text className="ml-2 text-sm font-bold text-white">{tr(locale, "updateLocation")}</Text>
+            </View>
+            {busyAction ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="chevron-forward" size={16} color="#fff" />}
           </Pressable>
 
           <Pressable
-            className={`mt-2 items-center rounded-xl px-4 py-3 ${busyAction ? "bg-slate-700" : "bg-cyan-500"}`}
+            className={`mt-2 flex-row items-center justify-between rounded-xl px-4 py-3 ${busyAction ? "bg-slate-700" : "bg-cyan-500"}`}
             disabled={busyAction}
             onPress={onUploadProof}
           >
-            <Text className="text-sm font-bold text-white">{tr(locale, "uploadProofShipped")}</Text>
+            <View className="flex-row items-center">
+              <Ionicons name="cloud-upload-outline" size={16} color="#fff" />
+              <Text className="ml-2 text-sm font-bold text-white">{tr(locale, "uploadProofShipped")}</Text>
+            </View>
+            {busyAction ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="chevron-forward" size={16} color="#fff" />}
           </Pressable>
 
           <Pressable
-            className={`mt-2 items-center rounded-xl px-4 py-3 ${order.status === "shipped" && !busyAction ? "bg-emerald-500" : "bg-slate-700"}`}
+            className={`mt-2 flex-row items-center justify-between rounded-xl px-4 py-3 ${order.status === "shipped" && !busyAction ? "bg-emerald-500" : "bg-slate-700"}`}
             disabled={order.status !== "shipped" || busyAction}
             onPress={onMarkDelivered}
           >
-            <Text className="text-sm font-bold text-white">{tr(locale, "markDelivered")}</Text>
+            <View className="flex-row items-center">
+              <Ionicons name="checkmark-done-outline" size={16} color="#fff" />
+              <Text className="ml-2 text-sm font-bold text-white">{tr(locale, "markDelivered")}</Text>
+            </View>
+            {busyAction ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="chevron-forward" size={16} color="#fff" />}
           </Pressable>
+
+          <View className={`mt-3 rounded-xl px-3 py-2 ${dark ? "bg-slate-800" : "bg-slate-100"}`}>
+            <Text className={`text-xs ${dark ? "text-slate-300" : "text-slate-600"}`}>
+              {actionMessage || tr(locale, "actionIdleHint")}
+            </Text>
+            {actionError ? <Text className="mt-1 text-xs font-semibold text-rose-400">{actionError}</Text> : null}
+          </View>
         </View>
 
         <View className={`rounded-2xl border p-4 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
