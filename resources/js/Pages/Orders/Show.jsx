@@ -43,7 +43,8 @@ export default function Show({ order }) {
                 return null;
             },
             showCancelButton: true,
-            confirmButtonText: "Cancel",
+            confirmButtonText: "Yes, cancel order",
+            cancelButtonText: "Back",
         }).then((result) => {
             if (!result.isConfirmed) return;
             router.patch(route("orders.cancel", order.id), { cancel_reason: result.value || "" }, {
