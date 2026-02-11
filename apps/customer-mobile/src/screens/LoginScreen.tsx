@@ -1,28 +1,41 @@
+import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import type { Locale } from "../types/domain";
 import { tr } from "../i18n/strings";
 
 type Props = {
   locale: Locale;
+  registerName: string;
+  registerConfirmPassword: string;
   email: string;
   password: string;
   busy: boolean;
   error: string;
+  onRegisterNameChange: (value: string) => void;
+  onRegisterConfirmPasswordChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
-  onSubmit: () => void;
+  onSubmitLogin: () => void;
+  onSubmitRegister: () => void;
 };
 
 export function LoginScreen({
   locale,
+  registerName,
+  registerConfirmPassword,
   email,
   password,
   busy,
   error,
+  onRegisterNameChange,
+  onRegisterConfirmPasswordChange,
   onEmailChange,
   onPasswordChange,
-  onSubmit,
+  onSubmitLogin,
+  onSubmitRegister,
 }: Props) {
+  const [mode, setMode] = useState<"login" | "register">("login");
+
   return (
     <View className="flex-1 justify-center bg-slate-100 px-5 py-8">
       <View className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
@@ -35,11 +48,33 @@ export function LoginScreen({
 
         <View className="p-6">
           <View>
-            <Text className="text-xl font-black text-slate-900">{tr(locale, "loginTitle")}</Text>
-            <Text className="mt-1 text-sm text-slate-500">{tr(locale, "loginSubtitle")}</Text>
+            <View className="rounded-xl bg-slate-100 p-1">
+              <View className="flex-row">
+                <Pressable onPress={() => setMode("login")} className={`flex-1 rounded-lg py-2 ${mode === "login" ? "bg-orange-600" : "bg-transparent"}`}>
+                  <Text className={`text-center text-xs font-black ${mode === "login" ? "text-white" : "text-slate-600"}`}>Login</Text>
+                </Pressable>
+                <Pressable onPress={() => setMode("register")} className={`flex-1 rounded-lg py-2 ${mode === "register" ? "bg-orange-600" : "bg-transparent"}`}>
+                  <Text className={`text-center text-xs font-black ${mode === "register" ? "text-white" : "text-slate-600"}`}>Register</Text>
+                </Pressable>
+              </View>
+            </View>
+            <Text className="mt-3 text-xl font-black text-slate-900">{mode === "login" ? tr(locale, "loginTitle") : "Create Account"}</Text>
+            <Text className="mt-1 text-sm text-slate-500">{mode === "login" ? tr(locale, "loginSubtitle") : "Create a new customer account to continue."}</Text>
           </View>
 
           <View className="mt-6 gap-3">
+            {mode === "register" ? (
+              <View>
+                <Text className="mb-1 text-xs font-bold text-slate-500">{tr(locale, "name")}</Text>
+                <TextInput
+                  value={registerName}
+                  onChangeText={onRegisterNameChange}
+                  className="rounded-xl border border-slate-200 px-4 py-3 text-slate-900"
+                  placeholder="Your Name"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+            ) : null}
             <View>
               <Text className="mb-1 text-xs font-bold text-slate-500">{tr(locale, "email")}</Text>
               <TextInput
@@ -64,11 +99,24 @@ export function LoginScreen({
                 placeholderTextColor="#94a3b8"
               />
             </View>
+            {mode === "register" ? (
+              <View>
+                <Text className="mb-1 text-xs font-bold text-slate-500">Confirm Password</Text>
+                <TextInput
+                  value={registerConfirmPassword}
+                  secureTextEntry
+                  onChangeText={onRegisterConfirmPasswordChange}
+                  className="rounded-xl border border-slate-200 px-4 py-3 text-slate-900"
+                  placeholder="••••••••"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+            ) : null}
 
             {error ? <Text className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">{error}</Text> : null}
 
-            <Pressable onPress={onSubmit} disabled={busy} className="rounded-xl bg-orange-600 py-3">
-              <Text className="text-center text-sm font-black text-white">{busy ? tr(locale, "signingIn") : tr(locale, "signIn")}</Text>
+            <Pressable onPress={mode === "login" ? onSubmitLogin : onSubmitRegister} disabled={busy} className="rounded-xl bg-orange-600 py-3">
+              <Text className="text-center text-sm font-black text-white">{busy ? tr(locale, "signingIn") : mode === "login" ? tr(locale, "signIn") : "Create Account"}</Text>
             </Pressable>
           </View>
 

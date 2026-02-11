@@ -6,6 +6,13 @@ type LoginResponse = {
   user: ApiUser;
 };
 
+type RegisterPayload = {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+};
+
 export async function signIn(baseUrl: string, email: string, password: string): Promise<AuthSession> {
   const payload = await requestJson<LoginResponse>({
     baseUrl,
@@ -21,6 +28,26 @@ export async function signIn(baseUrl: string, email: string, password: string): 
   return {
     token: payload.token,
     user: payload.user,
+  };
+}
+
+export async function register(baseUrl: string, payload: RegisterPayload): Promise<AuthSession> {
+  const response = await requestJson<LoginResponse>({
+    baseUrl,
+    path: "/auth/register",
+    method: "POST",
+    body: {
+      name: payload.name,
+      email: payload.email,
+      password: payload.password,
+      password_confirmation: payload.password_confirmation,
+      device_name: "larapee-customer-mobile",
+    },
+  });
+
+  return {
+    token: response.token,
+    user: response.user,
   };
 }
 

@@ -5,7 +5,7 @@ import { ApiError } from "../lib/http";
 import { clearSession, loadLocale, loadSession, loadTheme, saveLocale, saveSession, saveTheme } from "../lib/storage";
 import { addCartItem, fetchCart, removeCartItem } from "../services/cartService";
 import { fetchCategories, fetchProductDetail, fetchProducts, submitProductReview } from "../services/catalogService";
-import { fetchMe, logout as logoutService, signIn, updateMe, updateMePhoto } from "../services/authService";
+import { fetchMe, logout as logoutService, register as registerService, signIn, updateMe, updateMePhoto } from "../services/authService";
 import { cancelOrder, fetchOrderDetail, fetchOrders, placeOrderFromCart, requestRefund, requestReturn } from "../services/orderService";
 import { fetchSupportMessages, sendSupportMessage } from "../services/supportService";
 import type { CartItem, Category, CustomerOrder, CustomerTab, Locale, MePayload, Product, SupportMessage, ThemeMode } from "../types/domain";
@@ -22,6 +22,8 @@ export function useCustomerApp() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [registerName, setRegisterName] = useState("");
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
 
@@ -259,6 +261,62 @@ export function useCustomerApp() {
       setAuthBusy(false);
     }
   }, [email, password, locale, hydratePrivateData, loadSupport, syncMe]);
+
+  const handleRegister = useCallback(async () => {
+    if (!registerName.trim() || !email.trim() || !password.trim() || !registerConfirmPassword.trim()) {
+      setAuthError(tr(locale, "nameEmailRequired"));
+      return;
+    }
+
+    if (password.length < 8) {
+      setAuthError("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (password !== registerConfirmPassword) {
+      setAuthError("Password confirmation does not match.");
+      return;
+    }
+
+    setAuthBusy(true);
+    setAuthError("");
+
+    try {
+      const nextSession = await registerService(API_BASE_URL, {
+        name: registerName.trim(),
+        email: email.trim(),
+        password,
+        password_confirmation: registerConfirmPassword,
+      });
+      await saveSession(nextSession);
+      setSession(nextSession);
+      setProfileName(nextSession.user.name || "");
+      setProfileEmail(nextSession.user.email || "");
+      setActiveTab("home");
+      await Promise.all([hydratePrivateData(nextSession.token), syncMe(nextSession.token), loadSupport(nextSession.token)]);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 0) {
+          setAuthError(tr(locale, "networkError"));
+        } else {
+          setAuthError(error.message || tr(locale, "unknownError"));
+        }
+      } else {
+        setAuthError(tr(locale, "unknownError"));
+      }
+    } finally {
+      setAuthBusy(false);
+    }
+  }, [
+    email,
+    hydratePrivateData,
+    loadSupport,
+    locale,
+    password,
+    registerConfirmPassword,
+    registerName,
+    syncMe,
+  ]);
 
   const handleAddToCart = useCallback(
     async (product: Product, variantId?: number, quantity = 1) => {
@@ -750,13 +808,18 @@ export function useCustomerApp() {
     cartCount,
     setActiveTab,
     login: {
+      registerName,
+      registerConfirmPassword,
       email,
       password,
       busy: authBusy,
       error: authError,
+      setRegisterName,
+      setRegisterConfirmPassword,
       setEmail,
       setPassword,
       submit: handleSignIn,
+      submitRegister: handleRegister,
     },
     catalog: {
       query,

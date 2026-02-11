@@ -62,13 +62,18 @@ export default function App() {
           <StatusBar style="dark" />
           <LoginScreen
             locale={app.locale}
+            registerName={app.login.registerName}
+            registerConfirmPassword={app.login.registerConfirmPassword}
             email={app.login.email}
             password={app.login.password}
             busy={app.login.busy}
             error={app.login.error}
+            onRegisterNameChange={app.login.setRegisterName}
+            onRegisterConfirmPasswordChange={app.login.setRegisterConfirmPassword}
             onEmailChange={app.login.setEmail}
             onPasswordChange={app.login.setPassword}
-            onSubmit={() => void app.login.submit()}
+            onSubmitLogin={() => void app.login.submit()}
+            onSubmitRegister={() => void app.login.submitRegister()}
           />
         </SafeAreaView>
       </SafeAreaProvider>
