@@ -92,7 +92,7 @@ export function ProductDetailScreen({
           <Ionicons name="bag-handle-outline" size={16} color={dark ? "#e2e8f0" : "#334155"} />
           {cartCount > 0 ? (
             <View className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5">
-              <Text className="text-[9px] font-black text-white">{cartCount > 99 ? "99+" : cartCount}</Text>
+              <Text className="text-[9px] font-black text-white">{cartCount}</Text>
             </View>
           ) : null}
         </Pressable>

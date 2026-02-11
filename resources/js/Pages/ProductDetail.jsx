@@ -123,7 +123,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                     >
                         <span>Cart</span>
                         <span className="rounded-full bg-orange-600 px-2 py-0.5 text-xs font-black text-white">
-                            {localCartCount > 99 ? "99+" : localCartCount}
+                            {localCartCount}
                         </span>
                     </Link>
                 </div>

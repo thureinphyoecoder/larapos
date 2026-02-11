@@ -10,6 +10,8 @@ use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
 use App\Support\Payroll\PayrollCalculator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
@@ -101,6 +103,32 @@ class AuthController extends Controller
         ]);
     }
 
+    public function updateMePhoto(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        $validated = $request->validate([
+            'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:3072'],
+        ]);
+
+        $profile = $user->profile()->firstOrCreate(['user_id' => $user->id]);
+        if (! empty($profile->photo_path)) {
+            Storage::disk('public')->delete($profile->photo_path);
+        }
+
+        $profile->update([
+            'photo_path' => $validated['photo']->store('profiles', 'public'),
+        ]);
+
+        $user->load(['roles', 'profile', 'shop', 'payrollProfile']);
+
+        return response()->json([
+            'message' => 'Profile photo updated successfully.',
+            ...$this->buildMePayload($user),
+        ]);
+    }
+
     private function buildMePayload(?User $user): array
     {
         $month = now()->format('Y-m');
@@ -123,6 +151,9 @@ class AuthController extends Controller
                 'state' => $user?->profile?->state,
                 'postal_code' => $user?->profile?->postal_code,
                 'nrc_number' => $user?->profile?->nrc_number,
+                'photo_url' => $user?->profile?->photo_path
+                    ? Storage::disk('public')->url($user->profile->photo_path)
+                    : null,
             ],
             'salary_preview' => $salaryPreview ? [
                 'month' => $month,

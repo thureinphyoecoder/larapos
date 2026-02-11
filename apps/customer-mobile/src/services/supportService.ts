@@ -13,7 +13,7 @@ export async function fetchSupportMessages(baseUrl: string, token: string, page 
     ...payload,
     messages: (payload.messages || []).map((message) => ({
       ...message,
-      attachment_url: toAbsoluteUrl(baseUrl, message.attachment_url),
+      attachment_url: toAbsoluteUrl(baseUrl, (message as any).attachment_url || (message as any).attachment_path),
     })),
   };
 }
@@ -27,10 +27,12 @@ export async function sendSupportMessage(baseUrl: string, token: string, message
 
   if (imageUri) {
     const fileName = imageUri.split("/").pop() || `support-${Date.now()}.jpg`;
+    const ext = (fileName.split(".").pop() || "jpg").toLowerCase();
+    const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
     formData.append("image", {
       uri: imageUri,
       name: fileName,
-      type: "image/jpeg",
+      type: mimeType,
     } as any);
   }
 
@@ -49,12 +51,25 @@ function toAbsoluteUrl(baseUrl: string, value?: string | null): string | null {
   }
 
   if (/^https?:\/\//i.test(value)) {
-    return value;
+    try {
+      const parsed = new URL(value);
+      if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") {
+        const origin = stripApiPath(baseUrl);
+        return `${origin}${parsed.pathname}`;
+      }
+      return value;
+    } catch {
+      return value;
+    }
   }
 
-  const normalized = baseUrl.replace(/\/+$/, "");
-  const index = normalized.indexOf("/api/");
-  const origin = index >= 0 ? normalized.slice(0, index) : normalized;
+  const origin = stripApiPath(baseUrl);
   const path = value.startsWith("/") ? value : `/${value}`;
   return `${origin}${path}`;
+}
+
+function stripApiPath(baseUrl: string): string {
+  const normalized = baseUrl.replace(/\/+$/, "");
+  const index = normalized.indexOf("/api/");
+  return index >= 0 ? normalized.slice(0, index) : normalized;
 }

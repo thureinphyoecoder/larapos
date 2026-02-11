@@ -1,4 +1,4 @@
-import { requestJson } from "../lib/http";
+import { requestFormData, requestJson } from "../lib/http";
 import type { ApiUser, AuthSession, MePayload } from "../types/domain";
 
 type LoginResponse = {
@@ -60,5 +60,25 @@ export async function updateMe(baseUrl: string, token: string, payload: UpdatePr
     method: "PATCH",
     token,
     body: payload,
+  });
+}
+
+export async function updateMePhoto(baseUrl: string, token: string, photoUri: string): Promise<MePayload> {
+  const fileName = photoUri.split("/").pop() || `profile-${Date.now()}.jpg`;
+  const ext = (fileName.split(".").pop() || "jpg").toLowerCase();
+  const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+  const formData = new FormData();
+  formData.append("photo", {
+    uri: photoUri,
+    name: fileName,
+    type: mimeType,
+  } as any);
+
+  return requestFormData<MePayload>({
+    baseUrl,
+    path: "/auth/me/photo",
+    method: "POST",
+    token,
+    body: formData,
   });
 }

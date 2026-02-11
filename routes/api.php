@@ -31,6 +31,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::prefix('auth')->name('auth.')->group(function () {
             Route::get('/me', [AuthController::class, 'me'])->name('me');
             Route::patch('/me', [AuthController::class, 'updateMe'])->name('me.update');
+            Route::post('/me/photo', [AuthController::class, 'updateMePhoto'])->name('me.photo.update');
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
 

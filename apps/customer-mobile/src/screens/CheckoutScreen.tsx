@@ -2,7 +2,7 @@ import Ionicons from "expo/node_modules/@expo/vector-icons/Ionicons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useMemo, useState } from "react";
-import { Image, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Image, Linking, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { tr } from "../i18n/strings";
 import type { CartItem, Locale } from "../types/domain";
 import { formatMoney } from "../utils/format";
@@ -47,11 +47,15 @@ export function CheckoutScreen({
   const [scannerLocked, setScannerLocked] = useState(false);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
-  const qrPayload = "LARAPEE_PAY|WAVEPAY|09123456789|U_THUREIN_PHYO";
+  const qrPayload = useMemo(
+    () => `LARAPEE_PAY|WAVEPAY|09123456789|U_THUREIN_PHYO|MMK|AMOUNT=${Math.round(totalPrice)}|ORDER_ITEMS=${cartItems.length}`,
+    [cartItems.length, totalPrice],
+  );
   const qrImageUrl = useMemo(
     () => `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(qrPayload)}`,
     [qrPayload],
   );
+  const scannedAmount = useMemo(() => extractAmountFromQr(qrData), [qrData]);
 
   const openScanner = async () => {
     if (!cameraPermission?.granted) {
@@ -63,6 +67,10 @@ export function CheckoutScreen({
 
     setScannerLocked(false);
     setScannerVisible(true);
+  };
+
+  const downloadQr = async () => {
+    await Linking.openURL(qrImageUrl);
   };
 
   const pickSlipImage = async () => {
@@ -98,6 +106,7 @@ export function CheckoutScreen({
             <Image source={{ uri: qrImageUrl }} className="h-48 w-48 rounded-xl" resizeMode="contain" />
             <Text className={`mt-2 text-[11px] font-bold ${dark ? "text-slate-300" : "text-slate-700"}`}>Wave/KPay: 09 123 456 789</Text>
             <Text className={`text-[11px] ${dark ? "text-slate-400" : "text-slate-500"}`}>U Thurein Phyo</Text>
+            <Text className={`mt-1 text-xs font-black ${dark ? "text-emerald-300" : "text-emerald-700"}`}>Amount: {formatMoney(totalPrice)}</Text>
           </View>
 
           <View className="mt-3 flex-row gap-2">
@@ -108,11 +117,21 @@ export function CheckoutScreen({
               <Text className="text-center text-xs font-black text-white">{tr(locale, "uploadSlip")}</Text>
             </Pressable>
           </View>
+          <Pressable onPress={downloadQr} className="mt-2 rounded-xl border border-slate-300 bg-white py-2">
+            <Text className="text-center text-xs font-black text-slate-700">Download QR Image</Text>
+          </Pressable>
 
           {qrData ? (
-            <Text className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
-              {tr(locale, "qrScanned")}: {qrData}
-            </Text>
+            <View className="mt-2 rounded-lg bg-emerald-50 px-3 py-2">
+              <Text className="text-xs font-semibold text-emerald-700">
+                {tr(locale, "qrScanned")}: {qrData}
+              </Text>
+              {scannedAmount !== null ? (
+                <Text className={`mt-1 text-xs font-bold ${Math.round(scannedAmount) === Math.round(totalPrice) ? "text-emerald-700" : "text-amber-700"}`}>
+                  Scanned Amount: {formatMoney(scannedAmount)} / Expected: {formatMoney(totalPrice)}
+                </Text>
+              ) : null}
+            </View>
           ) : null}
 
           {paymentSlipUri ? (
@@ -199,7 +218,8 @@ export function CheckoutScreen({
                 ? undefined
                 : ({ data }) => {
                     setScannerLocked(true);
-                    onQrDataChange(data);
+                    const parsedAmount = extractAmountFromQr(data);
+                    onQrDataChange(parsedAmount !== null ? `${data} | amount=${Math.round(parsedAmount)}` : data);
                     setScannerVisible(false);
                   }
             }
@@ -216,4 +236,20 @@ export function CheckoutScreen({
       </Modal>
     </>
   );
+}
+
+function extractAmountFromQr(value: string): number | null {
+  if (!value) return null;
+  const amountMatch = value.match(/amount\s*[:=]\s*(\d+(?:\.\d+)?)/i);
+  if (amountMatch?.[1]) {
+    return Number(amountMatch[1]);
+  }
+
+  const lastNumber = value.match(/(\d+(?:\.\d+)?)\s*$/);
+  if (lastNumber?.[1]) {
+    const parsed = Number(lastNumber[1]);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
 }

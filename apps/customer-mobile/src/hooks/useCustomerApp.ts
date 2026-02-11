@@ -5,7 +5,7 @@ import { ApiError } from "../lib/http";
 import { clearSession, loadLocale, loadSession, loadTheme, saveLocale, saveSession, saveTheme } from "../lib/storage";
 import { addCartItem, fetchCart, removeCartItem } from "../services/cartService";
 import { fetchCategories, fetchProductDetail, fetchProducts, submitProductReview } from "../services/catalogService";
-import { fetchMe, logout as logoutService, signIn, updateMe } from "../services/authService";
+import { fetchMe, logout as logoutService, signIn, updateMe, updateMePhoto } from "../services/authService";
 import { cancelOrder, fetchOrderDetail, fetchOrders, placeOrderFromCart, requestRefund, requestReturn } from "../services/orderService";
 import { fetchSupportMessages, sendSupportMessage } from "../services/supportService";
 import type { CartItem, Category, CustomerOrder, CustomerTab, Locale, MePayload, Product, SupportMessage, ThemeMode } from "../types/domain";
@@ -73,6 +73,8 @@ export function useCustomerApp() {
   const [profileCity, setProfileCity] = useState("");
   const [profileState, setProfileState] = useState("");
   const [profilePostalCode, setProfilePostalCode] = useState("");
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const [profilePhotoBusy, setProfilePhotoBusy] = useState(false);
 
   const dark = theme === "dark";
 
@@ -136,6 +138,7 @@ export function useCustomerApp() {
     setProfileCity(payload.profile?.city || "");
     setProfileState(payload.profile?.state || "");
     setProfilePostalCode(payload.profile?.postal_code || "");
+    setProfilePhotoUrl(normalizeMediaUrl(API_BASE_URL, payload.profile?.photo_url || null));
     setCheckoutPhone(payload.profile?.phone_number || "");
     setCheckoutAddress(normalizedAddress);
   }, []);
@@ -372,6 +375,36 @@ export function useCustomerApp() {
     [locale],
   );
 
+  const openProductDetailById = useCallback(
+    async (productId: number) => {
+      const snapshot =
+        products.find((item) => item.id === productId) ||
+        cartItems.find((item) => Number(item.product_id) === Number(productId))?.product ||
+        null;
+
+      setDetailView("product");
+      setDetailProduct(snapshot as Product | null);
+      setDetailError("");
+      setReviewError("");
+      setReviewMessage("");
+      setDetailBusy(true);
+
+      try {
+        const fullProduct = await fetchProductDetail(API_BASE_URL, productId);
+        setDetailProduct(fullProduct);
+      } catch (error) {
+        if (error instanceof ApiError) {
+          setDetailError(error.message || tr(locale, "unknownError"));
+        } else {
+          setDetailError(tr(locale, "unknownError"));
+        }
+      } finally {
+        setDetailBusy(false);
+      }
+    },
+    [cartItems, locale, products],
+  );
+
   const handleSubmitReview = useCallback(
     async (rating: number | null, comment: string) => {
       if (!session?.token || !detailProduct?.id) {
@@ -603,6 +636,30 @@ export function useCustomerApp() {
     locale,
   ]);
 
+  const handleUploadProfilePhoto = useCallback(async (photoUri: string) => {
+    if (!session?.token || !photoUri) {
+      return;
+    }
+
+    setProfilePhotoBusy(true);
+    setProfileError("");
+    setProfileMessage("");
+
+    try {
+      const payload = await updateMePhoto(API_BASE_URL, session.token, photoUri);
+      await applyMePayload(session.token, payload);
+      setProfileMessage(payload.message || tr(locale, "profileUpdated"));
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setProfileError(error.message || tr(locale, "profileUpdateFailed"));
+      } else {
+        setProfileError(tr(locale, "profileUpdateFailed"));
+      }
+    } finally {
+      setProfilePhotoBusy(false);
+    }
+  }, [applyMePayload, locale, session?.token]);
+
   const handleLogout = useCallback(async () => {
     if (session?.token) {
       try {
@@ -627,6 +684,7 @@ export function useCustomerApp() {
     setProfileCity("");
     setProfileState("");
     setProfilePostalCode("");
+    setProfilePhotoUrl(null);
     setProfileError("");
     setProfileMessage("");
     setSupportMessages([]);
@@ -698,6 +756,7 @@ export function useCustomerApp() {
       setActiveCategoryId,
       addToCart: handleAddToCart,
       openProductDetail,
+      openProductDetailById,
     },
     orders,
     cart: {
@@ -753,6 +812,8 @@ export function useCustomerApp() {
       profileCity,
       profileState,
       profilePostalCode,
+      profilePhotoUrl,
+      profilePhotoBusy,
       setProfileName,
       setProfileEmail,
       setProfilePhone,
@@ -761,6 +822,7 @@ export function useCustomerApp() {
       setProfileCity,
       setProfileState,
       setProfilePostalCode,
+      uploadProfilePhoto: handleUploadProfilePhoto,
     },
     support: {
       messages: supportMessages,
@@ -776,4 +838,28 @@ export function useCustomerApp() {
       refresh: () => (session?.token ? loadSupport(session.token) : Promise.resolve()),
     },
   };
+}
+
+function normalizeMediaUrl(baseUrl: string, value?: string | null): string | null {
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      const parsed = new URL(value);
+      if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") {
+        const origin = stripApiPath(baseUrl);
+        return `${origin}${parsed.pathname}`;
+      }
+      return value;
+    } catch {
+      return value;
+    }
+  }
+  const origin = stripApiPath(baseUrl);
+  return `${origin}${value.startsWith("/") ? value : `/${value}`}`;
+}
+
+function stripApiPath(baseUrl: string): string {
+  const normalized = baseUrl.replace(/\/+$/, "");
+  const index = normalized.indexOf("/api/");
+  return index >= 0 ? normalized.slice(0, index) : normalized;
 }

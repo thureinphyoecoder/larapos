@@ -181,6 +181,7 @@ export default function App() {
           busyCheckout={app.cart.checkoutBusy}
           onCheckout={() => void app.cart.openCheckout()}
           onRemoveItem={(cartItemId) => void app.cart.removeItem(cartItemId)}
+          onOpenProduct={(productId) => void app.catalog.openProductDetailById(productId)}
         />
       ) : null}
 
@@ -221,6 +222,8 @@ export default function App() {
           profileCity={app.account.profileCity}
           profileState={app.account.profileState}
           profilePostalCode={app.account.profilePostalCode}
+          profilePhotoUrl={app.account.profilePhotoUrl}
+          profilePhotoBusy={app.account.profilePhotoBusy}
           onProfileNameChange={app.account.setProfileName}
           onProfileEmailChange={app.account.setProfileEmail}
           onProfilePhoneChange={app.account.setProfilePhone}
@@ -229,6 +232,7 @@ export default function App() {
           onProfileCityChange={app.account.setProfileCity}
           onProfileStateChange={app.account.setProfileState}
           onProfilePostalCodeChange={app.account.setProfilePostalCode}
+          onUploadProfilePhoto={(uri) => void app.account.uploadProfilePhoto(uri)}
           onSaveProfile={() => void app.account.saveProfile()}
           onToggleLocale={() => void app.account.toggleLocale()}
           onToggleTheme={() => void app.account.toggleTheme()}

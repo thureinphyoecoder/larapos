@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { tr } from "../i18n/strings";
 import type { Locale, ThemeMode } from "../types/domain";
 
@@ -19,6 +20,8 @@ type Props = {
   profileCity: string;
   profileState: string;
   profilePostalCode: string;
+  profilePhotoUrl: string | null;
+  profilePhotoBusy: boolean;
   onProfileNameChange: (value: string) => void;
   onProfileEmailChange: (value: string) => void;
   onProfilePhoneChange: (value: string) => void;
@@ -27,6 +30,7 @@ type Props = {
   onProfileCityChange: (value: string) => void;
   onProfileStateChange: (value: string) => void;
   onProfilePostalCodeChange: (value: string) => void;
+  onUploadProfilePhoto: (uri: string) => void;
   onSaveProfile: () => void;
   onToggleLocale: () => void;
   onToggleTheme: () => void;
@@ -50,6 +54,8 @@ export function AccountScreen({
   profileCity,
   profileState,
   profilePostalCode,
+  profilePhotoUrl,
+  profilePhotoBusy,
   onProfileNameChange,
   onProfileEmailChange,
   onProfilePhoneChange,
@@ -58,11 +64,27 @@ export function AccountScreen({
   onProfileCityChange,
   onProfileStateChange,
   onProfilePostalCodeChange,
+  onUploadProfilePhoto,
   onSaveProfile,
   onToggleLocale,
   onToggleTheme,
   onLogout,
 }: Props) {
+  const pickProfilePhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+
+    if (result.canceled || !result.assets?.[0]?.uri) {
+      return;
+    }
+
+    onUploadProfilePhoto(result.assets[0].uri);
+  };
+
   return (
     <ScrollView className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`} contentContainerStyle={{ padding: 16, paddingBottom: 132 }}>
       <View className={`rounded-3xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
@@ -71,11 +93,22 @@ export function AccountScreen({
       </View>
 
       <View className={`mt-4 rounded-2xl border p-5 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
-        <View className={`h-12 w-12 items-center justify-center rounded-2xl ${dark ? "bg-slate-700" : "bg-orange-100"}`}>
-          <Text className={`text-lg font-black ${dark ? "text-orange-300" : "text-orange-700"}`}>{String(userName || "U").slice(0, 1).toUpperCase()}</Text>
-        </View>
+        {profilePhotoUrl ? (
+          <Image source={{ uri: profilePhotoUrl }} className="h-16 w-16 rounded-2xl" resizeMode="cover" />
+        ) : (
+          <View className={`h-12 w-12 items-center justify-center rounded-2xl ${dark ? "bg-slate-700" : "bg-orange-100"}`}>
+            <Text className={`text-lg font-black ${dark ? "text-orange-300" : "text-orange-700"}`}>{String(userName || "U").slice(0, 1).toUpperCase()}</Text>
+          </View>
+        )}
         <Text className={`mt-3 text-lg font-black ${dark ? "text-white" : "text-slate-900"}`}>{userName}</Text>
         <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{userEmail}</Text>
+        <Pressable
+          onPress={pickProfilePhoto}
+          disabled={profilePhotoBusy}
+          className={`mt-3 self-start rounded-xl px-3 py-2 ${profilePhotoBusy ? "bg-slate-300" : "bg-orange-600"}`}
+        >
+          <Text className="text-xs font-black text-white">{profilePhotoBusy ? tr(locale, "savingProfile") : "Upload Profile Photo"}</Text>
+        </Pressable>
       </View>
 
       <View className={`mt-3 rounded-2xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>

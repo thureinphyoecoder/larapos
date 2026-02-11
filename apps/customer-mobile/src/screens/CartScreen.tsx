@@ -11,9 +11,10 @@ type Props = {
   busyCheckout: boolean;
   onCheckout: () => void;
   onRemoveItem: (cartItemId: number) => void;
+  onOpenProduct: (productId: number) => void;
 };
 
-export function CartScreen({ locale, dark, cartItems, removingItemId, busyCheckout, onCheckout, onRemoveItem }: Props) {
+export function CartScreen({ locale, dark, cartItems, removingItemId, busyCheckout, onCheckout, onRemoveItem, onOpenProduct }: Props) {
   const subtotal = cartItems.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
 
   return (
@@ -28,13 +29,13 @@ export function CartScreen({ locale, dark, cartItems, removingItemId, busyChecko
           cartItems.map((item) => (
             <View key={item.id} className={`rounded-2xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
               <View className="flex-row items-start justify-between gap-3">
-                <View className="flex-1">
+                <Pressable className="flex-1" onPress={() => onOpenProduct(item.product_id)}>
                   <Text className={`text-sm font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{item.product?.name || `Item #${item.product_id}`}</Text>
                   <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>
                     {item.quantity} x {formatMoney(item.unit_price)}
                   </Text>
                   <Text className={`mt-2 text-sm font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{formatMoney(item.line_total)}</Text>
-                </View>
+                </Pressable>
 
                 <Pressable
                   onPress={() => onRemoveItem(item.id)}

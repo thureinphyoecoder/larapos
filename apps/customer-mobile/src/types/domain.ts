@@ -23,6 +23,7 @@ export type UserProfile = {
   city?: string | null;
   state?: string | null;
   postal_code?: string | null;
+  photo_url?: string | null;
 };
 
 export type MePayload = {

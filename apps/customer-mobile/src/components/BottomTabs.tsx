@@ -37,7 +37,7 @@ export function BottomTabs({ activeTab, onChange, items, dark, badges = {} }: Pr
               {Number(badges[item.key] || 0) > 0 ? (
                 <View className={`absolute -right-3 -top-2 min-w-[16px] rounded-full px-1 ${active ? "bg-white" : "bg-orange-600"}`}>
                   <Text className={`text-center text-[9px] font-black ${active ? "text-orange-600" : "text-white"}`}>
-                    {Number(badges[item.key]) > 99 ? "99+" : Number(badges[item.key])}
+                    {Number(badges[item.key])}
                   </Text>
                 </View>
               ) : null}
