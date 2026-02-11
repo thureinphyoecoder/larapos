@@ -39,4 +39,8 @@ return [
         'python' => env('SLIP_VERIFY_PYTHON', 'python3'),
     ],
 
+    'expo' => [
+        'access_token' => env('EXPO_ACCESS_TOKEN'),
+    ],
+
 ];

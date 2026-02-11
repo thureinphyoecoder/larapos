@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Requests\Api\V1\Auth\UpdateMeRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Services\MobilePushNotificationService;
 use App\Models\User;
 use App\Support\Payroll\PayrollCalculator;
 use Illuminate\Auth\Events\PasswordReset;
@@ -179,6 +180,45 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logged out successfully.',
+        ]);
+    }
+
+    public function registerPushToken(Request $request, MobilePushNotificationService $pushService): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        $validated = $request->validate([
+            'push_token' => ['required', 'string', 'max:255'],
+            'platform' => ['nullable', 'string', 'max:20'],
+            'app' => ['nullable', 'string', 'max:60'],
+        ]);
+
+        $pushService->registerToken(
+            user: $user,
+            token: $validated['push_token'],
+            platform: $validated['platform'] ?? null,
+            app: $validated['app'] ?? 'customer-mobile',
+        );
+
+        return response()->json([
+            'message' => 'Push token registered.',
+        ]);
+    }
+
+    public function unregisterPushToken(Request $request, MobilePushNotificationService $pushService): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        $validated = $request->validate([
+            'push_token' => ['required', 'string', 'max:255'],
+        ]);
+
+        $pushService->unregisterToken($user, $validated['push_token']);
+
+        return response()->json([
+            'message' => 'Push token removed.',
         ]);
     }
 

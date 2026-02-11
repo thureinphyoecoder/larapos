@@ -1,20 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppState, type AppStateStatus } from "react-native";
+import { AppState, Platform, type AppStateStatus } from "react-native";
 import { API_BASE_URL } from "../config/server";
 import { tr } from "../i18n/strings";
 import { ApiError } from "../lib/http";
-import { ensureNotificationPermission, showLocalNotification } from "../lib/notifications";
+import { ensureNotificationPermission, registerForRemotePushToken, showLocalNotification } from "../lib/notifications";
 import { clearSession, loadLocale, loadSession, loadTheme, saveLocale, saveSession, saveTheme } from "../lib/storage";
 import { addCartItem, fetchCart, removeCartItem } from "../services/cartService";
 import { fetchCategories, fetchProductDetail, fetchProducts, submitProductReview } from "../services/catalogService";
 import {
   fetchMe,
   logout as logoutService,
+  registerPushToken as registerPushTokenService,
   register as registerService,
   requestPasswordReset,
   resendEmailVerificationByEmail,
   resendEmailVerification,
   signIn,
+  unregisterPushToken as unregisterPushTokenService,
   updateMe,
   updateMePhoto,
 } from "../services/authService";
@@ -103,6 +105,8 @@ export function useCustomerApp() {
   const flashSaleSnapshotRef = useRef("");
   const supportLatestIdRef = useRef(0);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncedPushTokenRef = useRef<string | null>(null);
+  const syncedSessionTokenRef = useRef<string | null>(null);
 
   const dark = theme === "dark";
 
@@ -398,6 +402,42 @@ export function useCustomerApp() {
     void bootstrap();
   }, [bootstrap]);
 
+  const syncRemotePush = useCallback(async (authToken: string) => {
+    const pushResult = await registerForRemotePushToken();
+    if (!pushResult.token) {
+      if (pushResult.error) {
+        console.log("Customer push token warning:", pushResult.error);
+      }
+      return;
+    }
+
+    const needsSync = syncedPushTokenRef.current !== pushResult.token || syncedSessionTokenRef.current !== authToken;
+    if (!needsSync) {
+      return;
+    }
+
+    try {
+      await registerPushTokenService(API_BASE_URL, authToken, {
+        push_token: pushResult.token,
+        platform: Platform.OS,
+        app: "customer-mobile",
+      });
+      syncedPushTokenRef.current = pushResult.token;
+      syncedSessionTokenRef.current = authToken;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown push token sync error";
+      console.log("Customer push sync warning:", message);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!session?.token) {
+      return;
+    }
+
+    void syncRemotePush(session.token);
+  }, [session?.token, syncRemotePush]);
+
   useEffect(() => {
     if (!session?.token) {
       return;
@@ -507,9 +547,7 @@ export function useCustomerApp() {
       setProfileName(nextSession.user.name || "");
       setProfileEmail(nextSession.user.email || "");
       setActiveTab("home");
-      void ensureNotificationPermission().catch(() => {
-        // Ignore permission setup errors.
-      });
+      void syncRemotePush(nextSession.token);
       await Promise.all([
         hydratePrivateData(nextSession.token),
         syncMe(nextSession.token),
@@ -564,6 +602,7 @@ export function useCustomerApp() {
       setProfileName(nextSession.user.name || "");
       setProfileEmail(nextSession.user.email || "");
       setActiveTab("home");
+      void syncRemotePush(nextSession.token);
       await Promise.all([
         hydratePrivateData(nextSession.token),
         syncMe(nextSession.token),
@@ -591,6 +630,7 @@ export function useCustomerApp() {
     password,
     registerConfirmPassword,
     registerName,
+    syncRemotePush,
     syncMe,
   ]);
 
@@ -1120,6 +1160,9 @@ export function useCustomerApp() {
   const handleLogout = useCallback(async () => {
     if (session?.token) {
       try {
+        if (syncedPushTokenRef.current) {
+          await unregisterPushTokenService(API_BASE_URL, session.token, syncedPushTokenRef.current);
+        }
         await logoutService(API_BASE_URL, session.token);
       } catch {
         // Ignore logout network errors and clear local session anyway.
@@ -1169,6 +1212,8 @@ export function useCustomerApp() {
       clearTimeout(notificationTimerRef.current);
       notificationTimerRef.current = null;
     }
+    syncedPushTokenRef.current = null;
+    syncedSessionTokenRef.current = null;
   }, [session?.token]);
 
   const toggleLocale = useCallback(async () => {

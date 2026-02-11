@@ -11,6 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @method bool hasAnyRole(array|string $roles, string|null $guard = null)
@@ -60,6 +61,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function attendances()
     {
         return $this->hasMany(StaffAttendance::class);
+    }
+
+    public function mobilePushTokens(): HasMany
+    {
+        return $this->hasMany(MobilePushToken::class);
     }
 
     /**

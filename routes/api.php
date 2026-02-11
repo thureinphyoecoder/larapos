@@ -38,6 +38,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::patch('/me', [AuthController::class, 'updateMe'])->name('me.update');
             Route::post('/me/photo', [AuthController::class, 'updateMePhoto'])->name('me.photo.update');
             Route::post('/email/verification-notification', [AuthController::class, 'sendEmailVerification'])->name('verification.send');
+            Route::post('/push-token', [AuthController::class, 'registerPushToken'])->name('push-token.store');
+            Route::delete('/push-token', [AuthController::class, 'unregisterPushToken'])->name('push-token.destroy');
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
 

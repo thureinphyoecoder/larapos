@@ -1,3 +1,4 @@
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 type NotificationModule = any;
@@ -80,4 +81,39 @@ export async function showLocalNotification(title: string, body: string): Promis
     },
     trigger: null,
   });
+}
+
+export async function registerForRemotePushToken(): Promise<{ token: string | null; error: string | null }> {
+  const Notifications = getNotificationModule();
+  if (!Notifications) {
+    return { token: null, error: "expo-notifications module is unavailable." };
+  }
+
+  const granted = await ensureNotificationPermission();
+  if (!granted) {
+    return { token: null, error: "Notification permission is not granted." };
+  }
+
+  if (!Constants.isDevice) {
+    return { token: null, error: "Physical device is required for remote push token." };
+  }
+
+  const projectId =
+    process.env.EXPO_PUBLIC_EAS_PROJECT_ID ??
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    Constants.easConfig?.projectId ??
+    null;
+
+  try {
+    const tokenResult = projectId
+      ? await Notifications.getExpoPushTokenAsync({ projectId })
+      : await Notifications.getExpoPushTokenAsync();
+    return { token: tokenResult.data, error: null };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown push token error";
+    return {
+      token: null,
+      error: projectId ? message : `${message} (missing EAS projectId)`,
+    };
+  }
 }

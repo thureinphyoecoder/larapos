@@ -87,6 +87,30 @@ export async function logout(baseUrl: string, token: string): Promise<void> {
   });
 }
 
+export async function registerPushToken(
+  baseUrl: string,
+  token: string,
+  payload: { push_token: string; platform?: string; app?: string },
+): Promise<void> {
+  await requestJson({
+    baseUrl,
+    path: "/auth/push-token",
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function unregisterPushToken(baseUrl: string, token: string, pushToken: string): Promise<void> {
+  await requestJson({
+    baseUrl,
+    path: "/auth/push-token",
+    method: "DELETE",
+    token,
+    body: { push_token: pushToken },
+  });
+}
+
 export async function fetchMe(baseUrl: string, token: string): Promise<MePayload> {
   return requestJson<MePayload>({
     baseUrl,
