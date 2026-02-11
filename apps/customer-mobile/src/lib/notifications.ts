@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 type NotificationModule = any;
+const CUSTOM_SOUND = "larapee_alert.wav";
 
 let notificationModuleCache: NotificationModule | null | undefined;
 let handlerConfigured = false;
@@ -48,7 +49,15 @@ export async function ensureNotificationPermission(): Promise<boolean> {
       importance: Notifications.AndroidImportance?.HIGH ?? 4,
       vibrationPattern: [0, 250, 200, 250],
       lightColor: "#ea580c",
-      sound: "default",
+      sound: CUSTOM_SOUND,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility?.PUBLIC ?? 1,
+    });
+    await Notifications.setNotificationChannelAsync("orders", {
+      name: "Order Updates",
+      importance: Notifications.AndroidImportance?.MAX ?? 5,
+      vibrationPattern: [0, 250, 180, 250, 180, 250],
+      lightColor: "#f97316",
+      sound: CUSTOM_SOUND,
       lockscreenVisibility: Notifications.AndroidNotificationVisibility?.PUBLIC ?? 1,
     });
     channelConfigured = true;
@@ -76,8 +85,9 @@ export async function showLocalNotification(title: string, body: string): Promis
     content: {
       title,
       body,
-      sound: "default",
-      priority: Notifications.AndroidNotificationPriority?.HIGH ?? 4,
+      sound: CUSTOM_SOUND,
+      priority: Notifications.AndroidNotificationPriority?.MAX ?? 5,
+      channelId: Platform.OS === "android" ? "orders" : undefined,
     },
     trigger: null,
   });

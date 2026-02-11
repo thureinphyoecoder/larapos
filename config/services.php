@@ -41,6 +41,7 @@ return [
 
     'expo' => [
         'access_token' => env('EXPO_ACCESS_TOKEN'),
+        'sound' => env('EXPO_NOTIFICATION_SOUND', 'larapee_alert.wav'),
     ],
 
 ];

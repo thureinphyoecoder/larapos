@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 type NotificationModule = any;
+const CUSTOM_SOUND = "larapee_alert.wav";
 
 type PushRegistrationResult = {
   token: string | null;
@@ -58,7 +59,7 @@ export async function ensureNotificationPermission(): Promise<boolean> {
       importance: Notifications.AndroidImportance?.MAX ?? 5,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#16A34A",
-      sound: "default",
+      sound: CUSTOM_SOUND,
     });
     channelConfigured = true;
   }
@@ -88,7 +89,7 @@ export async function scheduleLocalNotification(title: string, body: string): Pr
     content: {
       title,
       body,
-      sound: true,
+      sound: CUSTOM_SOUND,
       channelId: Platform.OS === "android" ? "orders" : undefined,
       priority: Notifications.AndroidNotificationPriority?.MAX,
     },

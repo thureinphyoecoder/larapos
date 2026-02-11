@@ -21,7 +21,10 @@
       [
         "expo-notifications",
         {
-          "defaultChannel": "orders"
+          "defaultChannel": "orders",
+          "sounds": [
+            "./assets/sounds/larapee_alert.wav"
+          ]
         }
       ]
     ],
