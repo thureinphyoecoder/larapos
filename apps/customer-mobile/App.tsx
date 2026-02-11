@@ -116,7 +116,7 @@ export default function App() {
             }}
             items={app.tabItems}
             dark={app.dark}
-            badges={{ cart: app.cartCount }}
+            badges={{ cart: app.cartCount, orders: app.notificationsUnreadCount }}
           />
         </SafeAreaView>
       </SafeAreaProvider>
@@ -196,6 +196,8 @@ export default function App() {
           onAddToCart={(product) => void app.catalog.addToCart(product)}
           onOpenProduct={(product) => void app.catalog.openProductDetail(product)}
           onRefresh={() => void app.refreshAll()}
+          notificationsUnreadCount={app.notificationsUnreadCount}
+          onOpenNotifications={() => app.setActiveTab("orders")}
         />
       ) : null}
 
@@ -288,7 +290,7 @@ export default function App() {
           onChange={app.setActiveTab}
           items={app.tabItems}
           dark={app.dark}
-          badges={{ cart: app.cartCount }}
+          badges={{ cart: app.cartCount, orders: app.notificationsUnreadCount }}
         />
       </SafeAreaView>
     </SafeAreaProvider>

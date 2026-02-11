@@ -22,6 +22,8 @@ type Props = {
   onAddToCart: (product: Product) => void;
   onOpenProduct: (product: Product) => void;
   onRefresh: () => void;
+  notificationsUnreadCount: number;
+  onOpenNotifications: () => void;
 };
 
 export function HomeScreen({
@@ -39,6 +41,8 @@ export function HomeScreen({
   onAddToCart,
   onOpenProduct,
   onRefresh,
+  notificationsUnreadCount,
+  onOpenNotifications,
 }: Props) {
   const sliderItems = useMemo(() => products.slice(0, 4), [products]);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -80,9 +84,17 @@ export function HomeScreen({
           <Text className={`text-3xl font-black tracking-tight ${dark ? "text-orange-300" : "text-orange-600"}`}>LaraPee</Text>
           <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{`${tr(locale, "welcomeBack")} ${userName}`}</Text>
         </View>
-        <View className={`h-11 w-11 items-center justify-center rounded-2xl border ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+        <Pressable
+          onPress={onOpenNotifications}
+          className={`relative h-11 w-11 items-center justify-center rounded-2xl border ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
+        >
           <Ionicons name="notifications-outline" size={18} color={dark ? "#e2e8f0" : "#334155"} />
-        </View>
+          {notificationsUnreadCount > 0 ? (
+            <View className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5">
+              <Text className="text-[9px] font-black text-white">{notificationsUnreadCount > 99 ? "99+" : notificationsUnreadCount}</Text>
+            </View>
+          ) : null}
+        </Pressable>
       </View>
 
       <View className="relative mt-4 overflow-hidden rounded-3xl" onLayout={(event) => setHeroWidth(event.nativeEvent.layout.width)}>

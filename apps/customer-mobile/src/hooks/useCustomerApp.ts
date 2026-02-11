@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { AppState, type AppStateStatus } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Alert, AppState, type AppStateStatus } from "react-native";
 import { API_BASE_URL } from "../config/server";
 import { tr } from "../i18n/strings";
 import { ApiError } from "../lib/http";
@@ -90,6 +90,8 @@ export function useCustomerApp() {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [profilePhotoBusy, setProfilePhotoBusy] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
+  const [notificationsUnreadCount, setNotificationsUnreadCount] = useState(0);
+  const orderSnapshotRef = useRef<Map<number, string>>(new Map());
 
   const dark = theme === "dark";
 
@@ -109,6 +111,37 @@ export function useCustomerApp() {
   const hydratePrivateData = useCallback(async (token: string) => {
     const [nextOrders, nextCart] = await Promise.all([fetchOrders(API_BASE_URL, token), fetchCart(API_BASE_URL, token)]);
 
+    const snapshot = orderSnapshotRef.current;
+    if (snapshot.size === 0) {
+      nextOrders.forEach((order) => {
+        snapshot.set(order.id, String(order.status || ""));
+      });
+    } else {
+      const seenIds = new Set<number>();
+      const changed = nextOrders.filter((order) => {
+        seenIds.add(order.id);
+        const nextStatus = String(order.status || "");
+        const previous = snapshot.get(order.id);
+        snapshot.set(order.id, nextStatus);
+        return Boolean(previous && previous !== nextStatus);
+      });
+
+      for (const orderId of Array.from(snapshot.keys())) {
+        if (!seenIds.has(orderId)) {
+          snapshot.delete(orderId);
+        }
+      }
+
+      if (changed.length > 0) {
+        setNotificationsUnreadCount((current) => current + changed.length);
+        const latest = changed[changed.length - 1];
+        Alert.alert(
+          tr(locale, "notificationTitle"),
+          `${tr(locale, "notificationMsg")} (#${latest.id}: ${String(latest.status || "").toUpperCase()})`,
+        );
+      }
+    }
+
     setOrders(nextOrders);
     setCartItems(nextCart);
     setDetailOrder((current) => {
@@ -116,7 +149,7 @@ export function useCustomerApp() {
       const matched = nextOrders.find((item) => item.id === current.id);
       return matched ? { ...current, ...matched } : current;
     });
-  }, []);
+  }, [locale]);
 
   const loadSupport = useCallback(
     async (token: string) => {
@@ -268,6 +301,12 @@ export function useCustomerApp() {
 
     return () => clearInterval(timer);
   }, [activeTab, detailView, hydratePrivateData, session?.token]);
+
+  useEffect(() => {
+    if (activeTab === "orders") {
+      setNotificationsUnreadCount(0);
+    }
+  }, [activeTab]);
 
   const refreshAll = useCallback(async () => {
     setRefreshing(true);
@@ -890,6 +929,8 @@ export function useCustomerApp() {
     setCheckoutError("");
     setCheckoutSlipUri(null);
     setCheckoutQrData("");
+    setNotificationsUnreadCount(0);
+    orderSnapshotRef.current.clear();
   }, [session?.token]);
 
   const toggleLocale = useCallback(async () => {
@@ -929,6 +970,7 @@ export function useCustomerApp() {
     activeTab,
     tabItems,
     cartCount,
+    notificationsUnreadCount,
     setActiveTab,
     login: {
       registerName,
