@@ -88,6 +88,16 @@ export default function App() {
           onAddToCart={(product, variantId, quantity) => void app.catalog.addToCart(product, variantId, quantity)}
           onSubmitReview={(rating, comment) => void app.detail.submitReview(rating, comment)}
         />
+        <BottomTabs
+          activeTab={app.activeTab}
+          onChange={(tab) => {
+            app.detail.close();
+            app.setActiveTab(tab);
+          }}
+          items={app.tabItems}
+          dark={app.dark}
+          badges={{ cart: app.cartCount }}
+        />
       </SafeAreaView>
     );
   }

@@ -43,9 +43,10 @@ export function ProductDetailScreen({
   const variants = (product?.active_variants && product.active_variants.length ? product.active_variants : product?.variants) ?? [];
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(variants[0]?.id ?? null);
   const [qty, setQty] = useState(1);
-  const [tab, setTab] = useState<"details" | "reviews">("details");
+  const [tab, setTab] = useState<"details" | "comments" | "reviews">("details");
   const [reviewRating, setReviewRating] = useState<number>(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [commentDraft, setCommentDraft] = useState("");
   const selectedVariant = useMemo(
     () => variants.find((variant) => variant.id === selectedVariantId) ?? variants[0],
     [selectedVariantId, variants],
@@ -79,10 +80,13 @@ export function ProductDetailScreen({
     setTab("details");
     setReviewRating(5);
     setReviewComment("");
+    setCommentDraft("");
   }, [firstGalleryImage, firstVariantId, product?.id, product?.image_url]);
 
+  const commentOnlyReviews = reviews.filter((review) => String(review.comment || "").trim().length > 0);
+
   return (
-    <ScrollView className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`} contentContainerStyle={{ padding: 16, paddingBottom: 30 }}>
+    <ScrollView className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`} contentContainerStyle={{ padding: 16, paddingBottom: 132 }}>
       <View className="flex-row items-center justify-between">
         <Pressable onPress={onBack} className={`h-10 w-10 items-center justify-center rounded-xl border ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
           <Ionicons name="chevron-back" size={18} color={dark ? "#e2e8f0" : "#334155"} />
@@ -196,11 +200,19 @@ export function ProductDetailScreen({
               </Text>
             </Pressable>
             <Pressable
+              onPress={() => setTab("comments")}
+              className={`rounded-full px-3 py-1.5 ${tab === "comments" ? "bg-orange-600" : dark ? "bg-slate-800" : "bg-slate-100"}`}
+            >
+              <Text className={`text-[11px] font-black uppercase ${tab === "comments" ? "text-white" : dark ? "text-slate-300" : "text-slate-600"}`}>
+                Comments
+              </Text>
+            </Pressable>
+            <Pressable
               onPress={() => setTab("reviews")}
               className={`rounded-full px-3 py-1.5 ${tab === "reviews" ? "bg-orange-600" : dark ? "bg-slate-800" : "bg-slate-100"}`}
             >
               <Text className={`text-[11px] font-black uppercase ${tab === "reviews" ? "text-white" : dark ? "text-slate-300" : "text-slate-600"}`}>
-                {tr(locale, "customerReviews")}
+                Ratings
               </Text>
             </Pressable>
           </View>
@@ -212,6 +224,46 @@ export function ProductDetailScreen({
                 {product?.description || "No description available."}
               </Text>
             </>
+          ) : tab === "comments" ? (
+            <View className="mt-4">
+              <View className={`rounded-xl border p-3 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-slate-50"}`}>
+                <Text className={`text-xs font-black ${dark ? "text-slate-200" : "text-slate-700"}`}>Write Comment</Text>
+                <TextInput
+                  value={commentDraft}
+                  onChangeText={setCommentDraft}
+                  multiline
+                  numberOfLines={3}
+                  placeholder="Type your comment..."
+                  placeholderTextColor={dark ? "#64748b" : "#94a3b8"}
+                  className={`mt-2 rounded-xl border px-3 py-3 text-sm ${dark ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
+                />
+                <Pressable
+                  onPress={() => onSubmitReview(null, commentDraft)}
+                  disabled={reviewBusy || !commentDraft.trim()}
+                  className={`mt-2 rounded-xl py-2 ${reviewBusy || !commentDraft.trim() ? "bg-slate-300" : "bg-orange-600"}`}
+                >
+                  <Text className="text-center text-xs font-black text-white">{reviewBusy ? tr(locale, "savingProfile") : "Post Comment"}</Text>
+                </Pressable>
+                {reviewError ? <Text className="mt-2 text-xs font-semibold text-rose-600">{reviewError}</Text> : null}
+                {reviewMessage ? <Text className="mt-2 text-xs font-semibold text-emerald-600">{reviewMessage}</Text> : null}
+              </View>
+
+              {commentOnlyReviews.length ? (
+                <View className="mt-3 gap-3">
+                  {commentOnlyReviews.map((review) => (
+                    <View key={review.id} className={`rounded-xl border p-3 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-100 bg-slate-50"}`}>
+                      <View className="flex-row items-center justify-between">
+                        <Text className={`text-xs font-black ${dark ? "text-slate-200" : "text-slate-800"}`}>{review.reviewer_name || "Customer"}</Text>
+                        <Text className={`text-[11px] ${dark ? "text-slate-400" : "text-slate-500"}`}>{formatDate(review.created_at || null)}</Text>
+                      </View>
+                      <Text className={`mt-2 text-sm ${dark ? "text-slate-300" : "text-slate-700"}`}>{review.comment || "-"}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text className={`mt-3 text-sm ${dark ? "text-slate-400" : "text-slate-500"}`}>No comments yet.</Text>
+              )}
+            </View>
           ) : (
             <View className="mt-4">
               <View className={`rounded-xl border p-3 ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-slate-50"}`}>
