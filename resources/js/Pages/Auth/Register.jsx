@@ -1,9 +1,14 @@
 import { useEffect } from "react";
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import InputError from "@/Components/InputError";
+import LocaleSwitcher from "@/Components/LocaleSwitcher";
 import TextInput from "@/Components/TextInput";
 
 export default function Register() {
+    const { props } = usePage();
+    const i18n = props?.i18n || {};
+    const t = (key, fallback) => i18n?.[key] || fallback;
+
     const { data, setData, post, processing, errors, reset } = useForm({
         name: "",
         email: "",
@@ -25,7 +30,10 @@ export default function Register() {
 
     return (
         <div className="min-h-screen bg-orange-500 flex items-center justify-center p-4 md:p-10">
-            <Head title="Register - LaraPee" />
+            <Head title={`${t("register", "Register")} - LaraPee`} />
+            <div className="absolute right-4 top-4">
+                <LocaleSwitcher />
+            </div>
 
             <div className="max-w-4xl w-full bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col md:flex-row">
                 {/* Branding Side */}
@@ -42,7 +50,7 @@ export default function Register() {
                 {/* Form Side */}
                 <div className="w-full md:w-1/2 p-8 lg:p-12">
                     <h2 className="text-3xl font-bold text-gray-800 mb-8">
-                        Register
+                        {t("register", "Register")}
                     </h2>
 
                     <form onSubmit={submit} className="space-y-5">
@@ -51,7 +59,7 @@ export default function Register() {
                                 id="name"
                                 name="name"
                                 value={data.name}
-                                placeholder="အမည်"
+                                placeholder={t("register_name_placeholder", "Name")}
                                 className="w-full border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-lg shadow-sm"
                                 onChange={(e) =>
                                     setData("name", e.target.value)
@@ -70,7 +78,7 @@ export default function Register() {
                                 type="email"
                                 name="email"
                                 value={data.email}
-                                placeholder="Email လိပ်စာ"
+                                placeholder={t("register_email_placeholder", "Email Address")}
                                 className="w-full border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-lg shadow-sm"
                                 onChange={(e) =>
                                     setData("email", e.target.value)
@@ -89,7 +97,7 @@ export default function Register() {
                                 type="password"
                                 name="password"
                                 value={data.password}
-                                placeholder="Password"
+                                placeholder={t("login_password_placeholder", "Password")}
                                 className="w-full border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-lg shadow-sm"
                                 onChange={(e) =>
                                     setData("password", e.target.value)
@@ -108,7 +116,7 @@ export default function Register() {
                                 type="password"
                                 name="password_confirmation"
                                 value={data.password_confirmation}
-                                placeholder="Confirm Password"
+                                placeholder={t("register_confirm_password_placeholder", "Confirm Password")}
                                 className="w-full border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-lg shadow-sm"
                                 onChange={(e) =>
                                     setData(
@@ -128,7 +136,7 @@ export default function Register() {
                             disabled={processing}
                             className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg shadow-lg transform transition active:scale-95 disabled:opacity-50"
                         >
-                            {processing ? "မှတ်ပုံတင်နေပါသည်..." : "REGISTER"}
+                            {processing ? t("register_processing", "Registering...") : t("register_upper", "REGISTER")}
                         </button>
 
                         <div className="text-center mt-6">
@@ -139,7 +147,7 @@ export default function Register() {
                                 href={route("login")}
                                 className="text-orange-600 font-bold hover:underline"
                             >
-                                Log In
+                                {t("login", "Log In")}
                             </Link>
                         </div>
                     </form>

@@ -1,7 +1,12 @@
 import { useEffect } from "react";
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head, Link, useForm, usePage } from "@inertiajs/react";
+import LocaleSwitcher from "@/Components/LocaleSwitcher";
 
 export default function Login({ status, canResetPassword }) {
+    const { props } = usePage();
+    const i18n = props?.i18n || {};
+    const t = (key, fallback) => i18n?.[key] || fallback;
+
     const { data, setData, post, processing, errors, reset } = useForm({
         email: "",
         password: "",
@@ -21,7 +26,10 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <div className="min-h-screen bg-orange-500 flex items-center justify-center p-6">
-            <Head title="Log in" />
+            <Head title={t("login", "Log in")} />
+            <div className="absolute right-4 top-4">
+                <LocaleSwitcher />
+            </div>
 
             <div className="max-w-4xl w-full bg-white rounded-lg shadow-xl overflow-hidden flex flex-col md:flex-row">
                 {/* ဘယ်ဘက်ခြမ်း: Branding Section */}
@@ -38,14 +46,14 @@ export default function Login({ status, canResetPassword }) {
                 {/* ညာဘက်ခြမ်း: Login Form */}
                 <div className="md:w-1/2 p-8 md:p-12">
                     <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                        Log In
+                        {t("login", "Log In")}
                     </h2>
 
                     <form onSubmit={submit} className="space-y-4">
                         <div>
                             <input
                                 type="email"
-                                placeholder="Email Address"
+                                placeholder={t("login_email_placeholder", "Email Address")}
                                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition"
                                 value={data.email}
                                 onChange={(e) =>
@@ -62,7 +70,7 @@ export default function Login({ status, canResetPassword }) {
                         <div>
                             <input
                                 type="password"
-                                placeholder="Password"
+                                placeholder={t("login_password_placeholder", "Password")}
                                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition"
                                 value={data.password}
                                 onChange={(e) =>
@@ -93,7 +101,7 @@ export default function Login({ status, canResetPassword }) {
                                     href={route("password.request")}
                                     className="text-orange-600 hover:underline"
                                 >
-                                    Password မေ့နေသလား?
+                                    {t("forgot_password", "Forgot your password?")}
                                 </Link>
                             )}
                         </div>
@@ -102,7 +110,7 @@ export default function Login({ status, canResetPassword }) {
                             disabled={processing}
                             className="w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition shadow-md disabled:opacity-50"
                         >
-                            {processing ? "ခဏစောင့်ပါ..." : "LOG IN"}
+                            {processing ? t("please_wait", "Please wait...") : t("login_upper", "LOG IN")}
                         </button>
 
                         <div className="relative my-6">
@@ -120,7 +128,7 @@ export default function Login({ status, canResetPassword }) {
                             href={route("register")}
                             className="w-full flex justify-center border border-gray-300 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-50 transition"
                         >
-                            အကောင့်အသစ်ဖွင့်မည်
+                            {t("open_new_account", "Create new account")}
                         </Link>
                     </form>
                 </div>

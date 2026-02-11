@@ -1,5 +1,6 @@
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { useEffect, useMemo, useState } from "react";
+import LocaleSwitcher from "@/Components/LocaleSwitcher";
 
 function safePrice(product) {
     return Number(product?.variants?.[0]?.price || 0).toLocaleString();
@@ -11,6 +12,10 @@ export default function Welcome({
     filters = {},
     auth,
 }) {
+    const page = usePage();
+    const i18n = page.props?.i18n || {};
+    const t = (key, fallback) => i18n?.[key] || fallback;
+
     const [search, setSearch] = useState(filters?.search || "");
     const [activeCategory, setActiveCategory] = useState(
         filters?.category ? String(filters.category) : "",
@@ -115,7 +120,7 @@ export default function Welcome({
                                 <input
                                     type="text"
                                     className="w-full px-4 py-3 text-slate-800 focus:outline-none"
-                                    placeholder="Search products, brands or shops..."
+                                    placeholder={t("search_placeholder", "Search products, brands or shops...")}
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
@@ -149,7 +154,7 @@ export default function Welcome({
                                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 font-bold text-orange-700">
                                             {auth.user.name.charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="hidden sm:inline">Hi, {auth.user.name}</span>
+                                        <span className="hidden sm:inline">{t("hi", "Hi")}, {auth.user.name}</span>
                                     </Link>
                                     <span className="h-4 w-px bg-slate-300" />
                                     <Link
@@ -158,20 +163,22 @@ export default function Welcome({
                                         as="button"
                                         className="transition hover:text-red-500"
                                     >
-                                        Logout
+                                        {t("logout", "Logout")}
                                     </Link>
                                 </>
                             ) : (
                                 <>
                                     <Link href="/login" className="transition hover:text-orange-600">
-                                        Login
+                                        {t("login", "Login")}
                                     </Link>
                                     <span className="h-4 w-px bg-slate-300" />
                                     <Link href="/register" className="transition hover:text-orange-600">
-                                        Register
+                                        {t("register", "Register")}
                                     </Link>
                                 </>
                             )}
+                            <span className="hidden h-4 w-px bg-slate-300 sm:block" />
+                            <LocaleSwitcher />
                         </div>
                     </div>
                 </div>
@@ -194,7 +201,7 @@ export default function Welcome({
                     <div className="relative z-10 grid min-h-[330px] gap-5 p-6 sm:min-h-[390px] sm:p-10 lg:grid-cols-[1.4fr_1fr] lg:items-end">
                         <div>
                             <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-white/80">
-                                Featured Collection
+                                {t("featured_collection", "Featured Collection")}
                             </p>
                             <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight text-white sm:text-5xl">
                                 {activeItem?.name || "Shop smart with fresh deals today"}
@@ -209,13 +216,13 @@ export default function Welcome({
                                     href={activeItem?.slug ? route("product.show", { slug: activeItem.slug }) : route("home")}
                                     className="rounded-2xl bg-white px-6 py-3 text-sm font-extrabold text-slate-900 transition hover:bg-slate-100"
                                 >
-                                    Explore Product
+                                    {t("explore_product", "Explore Product")}
                                 </Link>
                                 <Link
                                     href={auth?.user ? route("dashboard") : route("login")}
                                     className="rounded-2xl border border-white/70 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10"
                                 >
-                                    {auth?.user ? "Open Dashboard" : "Login to Start"}
+                                    {auth?.user ? t("open_dashboard", "Open Dashboard") : t("login_to_start", "Login to Start")}
                                 </Link>
                             </div>
                         </div>
@@ -224,15 +231,15 @@ export default function Welcome({
                             <p className="text-xs font-black uppercase tracking-widest text-white/80">Live Snapshot</p>
                             <div className="mt-4 grid grid-cols-2 gap-3 text-white">
                                 <div>
-                                    <p className="text-[11px] text-white/70">Products</p>
+                                    <p className="text-[11px] text-white/70">{t("products", "Products")}</p>
                                     <p className="text-2xl font-black">{products.length}</p>
                                 </div>
                                 <div>
-                                    <p className="text-[11px] text-white/70">Categories</p>
+                                    <p className="text-[11px] text-white/70">{t("categories", "Categories")}</p>
                                     <p className="text-2xl font-black">{categories.length}</p>
                                 </div>
                                 <div className="col-span-2">
-                                    <p className="text-[11px] text-white/70">Active Brand</p>
+                                    <p className="text-[11px] text-white/70">{t("active_brand", "Active Brand")}</p>
                                     <p className="text-sm font-bold">{activeItem?.brand?.name || "LaraPee Store"}</p>
                                 </div>
                             </div>
@@ -281,7 +288,7 @@ export default function Welcome({
                                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                             }`}
                         >
-                            All
+                            {t("all", "All")}
                         </button>
                         {categories.map((cat) => (
                             <button
@@ -301,8 +308,8 @@ export default function Welcome({
 
                 <section className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-black text-slate-900 sm:text-2xl">Discover Products</h2>
-                        <p className="text-sm font-semibold text-slate-500">{filteredProducts.length} items found</p>
+                        <h2 className="text-xl font-black text-slate-900 sm:text-2xl">{t("discover_products", "Discover Products")}</h2>
+                        <p className="text-sm font-semibold text-slate-500">{filteredProducts.length} {t("items_found", "items found")}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
