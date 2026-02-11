@@ -16,12 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->web(prepend: [
-            \App\Http\Middleware\SetLocale::class,
-        ]);
-
         // 🎯 ဒီအပိုင်းက Props တွေ ရောက်ဖို့အတွက် အဓိကပါ
         $middleware->web(append: [
+            \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\AddSecurityHeaders::class,
         ]);
