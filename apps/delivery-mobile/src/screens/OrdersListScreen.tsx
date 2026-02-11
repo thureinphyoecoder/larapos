@@ -73,42 +73,34 @@ export function OrdersListScreen({
 
   return (
     <View className={`flex-1 ${dark ? "bg-slate-950" : "bg-slate-100"}`}>
-      <View className="absolute -left-24 top-10 h-56 w-56 rounded-full bg-cyan-400/10" />
-      <View className="absolute -right-16 top-24 h-52 w-52 rounded-full bg-emerald-400/10" />
-
       <FlatList
         data={filteredOrders}
         keyExtractor={(item) => String(item.id)}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={dark ? "#e2e8f0" : "#0f172a"} />}
-        contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 54, paddingBottom: 136 }}
+        contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 54, paddingBottom: 172 }}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         ListHeaderComponent={
-          <View className="mb-3 gap-3">
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className={`text-[30px] font-black leading-tight ${dark ? "text-white" : "text-slate-900"}`}>{COMPANY_NAME}</Text>
-                <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "userLabel")}: {user.name}</Text>
+          <View className="mb-4 gap-3">
+            <View className={`rounded-3xl border p-4 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
+              <View className="flex-row items-start justify-between">
+                <View className="flex-1 pr-3">
+                  <Text className={`text-[34px] font-black leading-tight ${dark ? "text-white" : "text-slate-900"}`}>{COMPANY_NAME}</Text>
+                  <Text className={`mt-1 text-sm ${dark ? "text-slate-300" : "text-slate-600"}`}>{tr(locale, "userLabel")}: {user.name}</Text>
+                </View>
+                <Pressable
+                  onPress={onOpenNotifications}
+                  className={`relative h-12 w-12 items-center justify-center rounded-2xl ${dark ? "bg-slate-800" : "bg-slate-100"}`}
+                >
+                  <Ionicons name="notifications-outline" size={20} color={dark ? "#f8fafc" : "#0f172a"} />
+                  {unreadCount > 0 ? (
+                    <View className="absolute -right-1 -top-1 min-w-5 rounded-full bg-rose-500 px-1">
+                      <Text className="text-center text-[10px] font-black text-white">{unreadCount > 99 ? "99+" : unreadCount}</Text>
+                    </View>
+                  ) : null}
+                </Pressable>
               </View>
 
-              <Pressable
-                onPress={onOpenNotifications}
-                className={`relative h-11 w-11 items-center justify-center rounded-2xl border ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}
-              >
-                <Ionicons name="notifications-outline" size={20} color={dark ? "#e2e8f0" : "#0f172a"} />
-                {unreadCount > 0 ? (
-                  <View className="absolute -right-1 -top-1 min-w-5 rounded-full bg-rose-500 px-1">
-                    <Text className="text-center text-[10px] font-bold text-white">{unreadCount > 99 ? "99+" : unreadCount}</Text>
-                  </View>
-                ) : null}
-              </Pressable>
-            </View>
-
-            <View className={`rounded-2xl border p-4 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
-              <View className="mb-3 flex-row items-center justify-between">
-                <Text className={`text-xs font-bold uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "ordersLabel")}</Text>
-                <Text className={`text-xs font-bold ${dark ? "text-cyan-300" : "text-cyan-700"}`}>{filteredOrders.length}</Text>
-              </View>
-              <View className="flex-row gap-2">
+              <View className="mt-4 flex-row gap-2">
                 <SummaryBadge label={tr(locale, "statusPending")} value={summary.pending} dark={dark} tone="amber" />
                 <SummaryBadge label={tr(locale, "statusShipped")} value={summary.shipped} dark={dark} tone="sky" />
                 <SummaryBadge label={tr(locale, "statusDelivered")} value={summary.delivered} dark={dark} tone="emerald" />
@@ -116,7 +108,7 @@ export function OrdersListScreen({
             </View>
 
             <View className={`rounded-2xl border px-3 ${dark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white"}`}>
-              <View className="h-11 flex-row items-center gap-2">
+              <View className="h-12 flex-row items-center gap-2">
                 <Ionicons name="search" size={16} color={dark ? "#94a3b8" : "#64748b"} />
                 <TextInput
                   value={query}
@@ -129,7 +121,7 @@ export function OrdersListScreen({
               </View>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 8 }}>
               {STATUS_TABS.map((tab) => {
                 const active = tab.key === activeStatus;
                 const labelMap = {
@@ -142,17 +134,17 @@ export function OrdersListScreen({
                   <Pressable
                     key={tab.key}
                     onPress={() => setActiveStatus(tab.key)}
-                    className={`rounded-full border px-4 py-2 ${
+                    className={`rounded-full px-4 py-2 ${
                       active
                         ? dark
-                          ? "border-cyan-400 bg-cyan-500/15"
-                          : "border-cyan-500 bg-cyan-50"
+                          ? "bg-white"
+                          : "bg-slate-900"
                         : dark
-                          ? "border-slate-700 bg-slate-900"
-                          : "border-slate-200 bg-white"
+                          ? "bg-slate-800"
+                          : "bg-white"
                     }`}
                   >
-                    <Text className={`text-xs font-bold ${active ? (dark ? "text-cyan-200" : "text-cyan-700") : dark ? "text-slate-300" : "text-slate-600"}`}>
+                    <Text className={`text-xs font-black ${active ? (dark ? "text-slate-900" : "text-white") : dark ? "text-slate-300" : "text-slate-600"}`}>
                       {labelMap[tab.key]}
                     </Text>
                   </Pressable>
@@ -212,14 +204,14 @@ function SummaryBadge({
   const toneClass =
     tone === "amber"
       ? dark
-        ? "bg-amber-500/12 border-amber-500/30 text-amber-200"
+        ? "bg-amber-500/12 border-amber-500/25 text-amber-200"
         : "bg-amber-50 border-amber-200 text-amber-800"
       : tone === "sky"
         ? dark
-          ? "bg-sky-500/12 border-sky-500/30 text-sky-200"
+          ? "bg-sky-500/12 border-sky-500/25 text-sky-200"
           : "bg-sky-50 border-sky-200 text-sky-800"
         : dark
-          ? "bg-emerald-500/12 border-emerald-500/30 text-emerald-200"
+          ? "bg-emerald-500/12 border-emerald-500/25 text-emerald-200"
           : "bg-emerald-50 border-emerald-200 text-emerald-800";
 
   return (
