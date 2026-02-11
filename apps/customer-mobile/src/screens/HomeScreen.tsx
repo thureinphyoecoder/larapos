@@ -44,7 +44,13 @@ export function HomeScreen({
 }: Props) {
   const sliderItems = useMemo(() => products.slice(0, 4), [products]);
   const [activeSlide, setActiveSlide] = useState(0);
-  const featuredProduct = sliderItems[activeSlide] ?? products[0] ?? null;
+  const quickStats = useMemo(
+    () => [
+      { label: tr(locale, "discoverProducts"), value: String(products.length) },
+      { label: tr(locale, "categories"), value: String(categories.length) },
+    ],
+    [categories.length, locale, products.length],
+  );
   const [heroWidth, setHeroWidth] = useState(0);
   const heroScrollRef = useRef<ScrollView | null>(null);
   const slideBackgrounds = [
@@ -81,7 +87,7 @@ export function HomeScreen({
       <View className="flex-row items-center justify-between">
         <View>
           <Text className={`text-3xl font-black tracking-tight ${dark ? "text-orange-300" : "text-orange-600"}`}>LaraPee</Text>
-          <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "homeWelcomeSubtitle")}</Text>
+          <Text className={`mt-1 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>{`${tr(locale, "welcomeBack")}, ${userName}`}</Text>
         </View>
         <View className={`h-11 w-11 items-center justify-center rounded-2xl border ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
           <Ionicons name="notifications-outline" size={18} color={dark ? "#e2e8f0" : "#334155"} />
@@ -103,7 +109,7 @@ export function HomeScreen({
         >
           {sliderItems.length ? (
             sliderItems.map((item, index) => (
-              <View key={`hero-${item.id}`} style={{ width: heroWidth || undefined }} className={`px-5 py-6 ${slideBackgrounds[index % slideBackgrounds.length]}`}>
+              <View key={`hero-${item.id}`} style={{ width: heroWidth || undefined }} className={`px-5 py-5 ${slideBackgrounds[index % slideBackgrounds.length]}`}>
                 <View className="absolute -right-10 -top-8 h-28 w-28 rounded-full bg-white/20" />
                 <View className="absolute -left-6 -bottom-8 h-24 w-24 rounded-full bg-violet-300/40" />
                 <View className="absolute inset-0 bg-fuchsia-500/25" />
@@ -122,14 +128,6 @@ export function HomeScreen({
                     <Pressable onPress={onOpenSupport} className="rounded-2xl border border-white/70 bg-white/10 px-4 py-2">
                       <Text className="text-xs font-bold text-white">Support Chat</Text>
                     </Pressable>
-                  </View>
-
-                  <View className="mt-4 rounded-2xl border border-white/35 bg-white/15 px-4 py-3">
-                    <Text className="text-[11px] font-extrabold uppercase tracking-wider text-white/80">Live Snapshot</Text>
-                    <View className="mt-2 flex-row gap-6">
-                      <StatPill label={tr(locale, "discoverProducts")} value={String(products.length)} />
-                      <StatPill label={tr(locale, "categories")} value={String(categories.length)} />
-                    </View>
                   </View>
                 </View>
               </View>
@@ -159,6 +157,18 @@ export function HomeScreen({
             ))}
           </View>
         ) : null}
+      </View>
+
+      <View className="mt-3 flex-row gap-3">
+        {quickStats.map((item) => (
+          <View
+            key={item.label}
+            className={`flex-1 rounded-2xl border px-3 py-3 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
+          >
+            <Text className={`text-[10px] font-bold uppercase tracking-wider ${dark ? "text-slate-400" : "text-slate-500"}`}>{item.label}</Text>
+            <Text className={`mt-1 text-lg font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{item.value}</Text>
+          </View>
+        ))}
       </View>
 
       <View className="mt-5">
@@ -213,14 +223,5 @@ export function HomeScreen({
         )}
       </View>
     </ScrollView>
-  );
-}
-
-function StatPill({ label, value }: { label: string; value: string }) {
-  return (
-    <View className="rounded-2xl border border-white/40 bg-white/20 px-3 py-2">
-      <Text className="text-[10px] font-bold uppercase tracking-wide text-white/75">{label}</Text>
-      <Text className="text-lg font-black text-white">{value}</Text>
-    </View>
   );
 }

@@ -79,7 +79,7 @@ export function ProductCard({
 
           <View className="mt-3 flex-row items-end flex-wrap gap-x-1">
             <Text className={`text-[11px] font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>{fromLabel}</Text>
-            <Text className={`text-sm font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{formatMoney(effectivePrice)}</Text>
+            <Text className={`text-base font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{formatMoney(effectivePrice)}</Text>
             {hasDiscount ? (
               <Text className={`text-[11px] line-through ${dark ? "text-slate-500" : "text-slate-400"}`}>{formatMoney(basePrice)}</Text>
             ) : null}
@@ -89,7 +89,7 @@ export function ProductCard({
             <Text className={`text-[11px] font-semibold ${dark ? "text-slate-300" : "text-slate-600"}`}>
               {inStock ? `${stockLevel} ${stockLeftLabel}` : outOfStockLabel}
             </Text>
-            <Text className={`text-[11px] font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>{viewDetailsLabel}</Text>
+            <Text className={`text-[11px] font-bold ${dark ? "text-slate-400" : "text-orange-600"}`}>{viewDetailsLabel}</Text>
           </View>
         </View>
       </Pressable>
@@ -98,7 +98,7 @@ export function ProductCard({
         <Pressable
           onPress={() => onAdd(product)}
           disabled={adding || !inStock}
-          className={`rounded-xl px-3 py-2 ${adding || !inStock ? "bg-slate-300" : "bg-orange-600"}`}
+          className={`rounded-xl px-3 py-2.5 ${adding || !inStock ? "bg-slate-300" : "bg-orange-600"}`}
         >
           <Text className="text-center text-[11px] font-black text-white">{adding ? addingLabel : addLabel}</Text>
         </Pressable>

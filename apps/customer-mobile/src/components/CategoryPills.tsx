@@ -31,7 +31,7 @@ function Pill({ label, active, onPress, dark }: { label: string; active: boolean
     <Pressable
       onPress={onPress}
       className={`mr-2 rounded-full px-4 py-2 ${
-        active ? "bg-orange-600" : dark ? "border border-slate-700 bg-slate-900" : "border border-slate-200 bg-white"
+        active ? "bg-slate-900" : dark ? "border border-slate-700 bg-slate-900" : "border border-slate-200 bg-slate-50"
       }`}
     >
       <Text className={`text-xs font-extrabold ${active ? "text-white" : dark ? "text-slate-300" : "text-slate-700"}`}>{label}</Text>

@@ -22,8 +22,8 @@ export function BottomTabs({ activeTab, onChange, items, dark, badges = {} }: Pr
 
   return (
     <View
-      className={`mx-4 mb-6 flex-row rounded-3xl border p-2 ${
-        dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"
+      className={`mx-4 mb-6 flex-row rounded-[28px] border px-2 py-1.5 shadow-sm ${
+        dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white/95"
       }`}
       style={{ marginBottom: Math.max(insets.bottom + 8, 20) }}
     >
@@ -34,14 +34,14 @@ export function BottomTabs({ activeTab, onChange, items, dark, badges = {} }: Pr
           <Pressable
             key={item.key}
             onPress={() => onChange(item.key)}
-            className={`flex-1 items-center rounded-2xl px-2 py-2.5 ${active ? "bg-orange-600" : "bg-transparent"}`}
+            className={`flex-1 items-center rounded-2xl px-2 py-2 ${active ? "bg-orange-600" : "bg-transparent"}`}
           >
             <View className="relative">
               <Ionicons name={iconForTab(item.key)} size={16} color={active ? "#ffffff" : dark ? "#cbd5e1" : "#475569"} />
               {Number(badges[item.key] || 0) > 0 ? (
                 <View className={`absolute -right-3 -top-2 min-w-[16px] rounded-full px-1 ${active ? "bg-white" : "bg-orange-600"}`}>
                   <Text className={`text-center text-[9px] font-black ${active ? "text-orange-600" : "text-white"}`}>
-                    {Number(badges[item.key])}
+                    {Number(badges[item.key]) > 99 ? "99+" : Number(badges[item.key])}
                   </Text>
                 </View>
               ) : null}

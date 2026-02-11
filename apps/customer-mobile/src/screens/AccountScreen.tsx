@@ -90,6 +90,7 @@ export function AccountScreen({
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
   const recentOrders = useMemo(() => orders.slice(0, 4), [orders]);
   const orderMetrics = useMemo(() => {
     let delivered = 0;
@@ -259,69 +260,78 @@ export function AccountScreen({
       </View>
 
       <View className={`mt-3 rounded-2xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
-        <Text className={`text-sm font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "accountProfile")}</Text>
-
-        <View className="mt-3 gap-3">
-          <InputField label={tr(locale, "name")} value={profileName} onChange={onProfileNameChange} dark={dark} />
-          <InputField label={tr(locale, "email")} value={profileEmail} onChange={onProfileEmailChange} dark={dark} autoCapitalize="none" keyboardType="email-address" />
-          <InputField label={tr(locale, "phoneNumber")} value={profilePhone} onChange={onProfilePhoneChange} dark={dark} keyboardType="phone-pad" />
-          <InputField label={tr(locale, "nrcNumber")} value={profileNrc} onChange={onProfileNrcChange} dark={dark} />
-          <View>
-            <View className="mb-1 flex-row items-center justify-between">
-              <Text className={`text-xs font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "addressLine")}</Text>
-              <Pressable onPress={useCurrentLocation} disabled={locating} className={`rounded-lg px-2 py-1 ${locating ? "bg-slate-300" : "bg-sky-600"}`}>
-                <Text className="text-[10px] font-black text-white">{locating ? "Locating..." : "Use Current Location"}</Text>
-              </Pressable>
-            </View>
-            <TextInput
-              value={profileAddress}
-              onChangeText={onProfileAddressChange}
-              onFocus={() => setAddressFocused(true)}
-              onBlur={() => setTimeout(() => setAddressFocused(false), 120)}
-              placeholderTextColor={dark ? "#64748b" : "#94a3b8"}
-              className={`rounded-xl border px-4 py-3 text-sm ${dark ? "border-slate-700 bg-slate-800 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
-            />
-            {addressFocused && (addressSuggestBusy || addressSuggestions.length > 0) ? (
-              <View className={`mt-2 overflow-hidden rounded-xl border ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
-                {addressSuggestBusy ? (
-                  <Text className={`px-3 py-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Loading suggestions...</Text>
-                ) : (
-                  addressSuggestions.map((item) => (
-                    <Pressable
-                      key={`${item.label}-${item.township || ""}-${item.state || ""}`}
-                      onPress={() => {
-                        onProfileAddressResolved({
-                          address: item.label,
-                          city: item.township || "",
-                          state: item.state || "",
-                        });
-                        setAddressSuggestions([]);
-                        setAddressFocused(false);
-                      }}
-                      className={`border-b px-3 py-2 ${dark ? "border-slate-700" : "border-slate-100"}`}
-                    >
-                      <Text className={`text-xs font-semibold ${dark ? "text-slate-100" : "text-slate-700"}`}>{item.label}</Text>
-                    </Pressable>
-                  ))
-                )}
-              </View>
-            ) : null}
-            {addressFocused && !addressSuggestBusy && profileAddress.trim().length >= 2 && addressSuggestions.length === 0 ? (
-              <Text className={`mt-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>No suggestions. Continue typing...</Text>
-            ) : null}
-            {locationError ? <Text className="mt-2 text-xs font-semibold text-rose-600">{locationError}</Text> : null}
-          </View>
-          <InputField label={tr(locale, "city")} value={profileCity} onChange={onProfileCityChange} dark={dark} />
-          <InputField label={tr(locale, "stateRegion")} value={profileState} onChange={onProfileStateChange} dark={dark} />
-          <InputField label={tr(locale, "postalCode")} value={profilePostalCode} onChange={onProfilePostalCodeChange} dark={dark} />
-        </View>
-
-        {profileError ? <Text className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{profileError}</Text> : null}
-        {profileMessage ? <Text className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{profileMessage}</Text> : null}
-
-        <Pressable onPress={onSaveProfile} disabled={profileBusy} className={`mt-4 rounded-xl py-3 ${profileBusy ? "bg-slate-300" : "bg-orange-600"}`}>
-          <Text className="text-center text-sm font-black text-white">{profileBusy ? tr(locale, "savingProfile") : tr(locale, "saveProfile")}</Text>
+        <Pressable onPress={() => setShowProfileEditor((prev) => !prev)} className="flex-row items-center justify-between">
+          <Text className={`text-sm font-black ${dark ? "text-slate-100" : "text-slate-900"}`}>{tr(locale, "accountProfile")}</Text>
+          <Text className={`text-xs font-black ${dark ? "text-orange-300" : "text-orange-600"}`}>{showProfileEditor ? "Hide" : "Edit"}</Text>
         </Pressable>
+
+        {showProfileEditor ? (
+          <>
+            <View className="mt-3 gap-3">
+              <InputField label={tr(locale, "name")} value={profileName} onChange={onProfileNameChange} dark={dark} />
+              <InputField label={tr(locale, "email")} value={profileEmail} onChange={onProfileEmailChange} dark={dark} autoCapitalize="none" keyboardType="email-address" />
+              <InputField label={tr(locale, "phoneNumber")} value={profilePhone} onChange={onProfilePhoneChange} dark={dark} keyboardType="phone-pad" />
+              <InputField label={tr(locale, "nrcNumber")} value={profileNrc} onChange={onProfileNrcChange} dark={dark} />
+              <View>
+                <View className="mb-1 flex-row items-center justify-between">
+                  <Text className={`text-xs font-bold ${dark ? "text-slate-400" : "text-slate-500"}`}>{tr(locale, "addressLine")}</Text>
+                  <Pressable onPress={useCurrentLocation} disabled={locating} className={`rounded-lg px-2 py-1 ${locating ? "bg-slate-300" : "bg-sky-600"}`}>
+                    <Text className="text-[10px] font-black text-white">{locating ? "Locating..." : "Use Current Location"}</Text>
+                  </Pressable>
+                </View>
+                <TextInput
+                  value={profileAddress}
+                  onChangeText={onProfileAddressChange}
+                  onFocus={() => setAddressFocused(true)}
+                  onBlur={() => setTimeout(() => setAddressFocused(false), 120)}
+                  placeholderTextColor={dark ? "#64748b" : "#94a3b8"}
+                  className={`rounded-xl border px-4 py-3 text-sm ${dark ? "border-slate-700 bg-slate-800 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
+                />
+                {addressFocused && (addressSuggestBusy || addressSuggestions.length > 0) ? (
+                  <View className={`mt-2 overflow-hidden rounded-xl border ${dark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
+                    {addressSuggestBusy ? (
+                      <Text className={`px-3 py-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Loading suggestions...</Text>
+                    ) : (
+                      addressSuggestions.map((item) => (
+                        <Pressable
+                          key={`${item.label}-${item.township || ""}-${item.state || ""}`}
+                          onPress={() => {
+                            onProfileAddressResolved({
+                              address: item.label,
+                              city: item.township || "",
+                              state: item.state || "",
+                            });
+                            setAddressSuggestions([]);
+                            setAddressFocused(false);
+                          }}
+                          className={`border-b px-3 py-2 ${dark ? "border-slate-700" : "border-slate-100"}`}
+                        >
+                          <Text className={`text-xs font-semibold ${dark ? "text-slate-100" : "text-slate-700"}`}>{item.label}</Text>
+                        </Pressable>
+                      ))
+                    )}
+                  </View>
+                ) : null}
+                {addressFocused && !addressSuggestBusy && profileAddress.trim().length >= 2 && addressSuggestions.length === 0 ? (
+                  <Text className={`mt-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>No suggestions. Continue typing...</Text>
+                ) : null}
+                {locationError ? <Text className="mt-2 text-xs font-semibold text-rose-600">{locationError}</Text> : null}
+              </View>
+              <InputField label={tr(locale, "city")} value={profileCity} onChange={onProfileCityChange} dark={dark} />
+              <InputField label={tr(locale, "stateRegion")} value={profileState} onChange={onProfileStateChange} dark={dark} />
+              <InputField label={tr(locale, "postalCode")} value={profilePostalCode} onChange={onProfilePostalCodeChange} dark={dark} />
+            </View>
+
+            {profileError ? <Text className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{profileError}</Text> : null}
+            {profileMessage ? <Text className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{profileMessage}</Text> : null}
+
+            <Pressable onPress={onSaveProfile} disabled={profileBusy} className={`mt-4 rounded-xl py-3 ${profileBusy ? "bg-slate-300" : "bg-orange-600"}`}>
+              <Text className="text-center text-sm font-black text-white">{profileBusy ? tr(locale, "savingProfile") : tr(locale, "saveProfile")}</Text>
+            </Pressable>
+          </>
+        ) : (
+          <Text className={`mt-2 text-xs ${dark ? "text-slate-400" : "text-slate-500"}`}>Tap Edit to update your profile details.</Text>
+        )}
       </View>
 
       <View className={`mt-3 rounded-2xl border p-4 ${dark ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
