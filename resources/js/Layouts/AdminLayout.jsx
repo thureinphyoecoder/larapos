@@ -182,6 +182,8 @@ export default function AdminLayout({ children, header }) {
     const [globalSearch, setGlobalSearch] = useState("");
     const [attendanceLoading, setAttendanceLoading] = useState(false);
     const [openGroups, setOpenGroups] = useState({});
+    const [themeMode, setThemeMode] = useState("system");
+    const [resolvedTheme, setResolvedTheme] = useState("light");
     const [, setTimeTick] = useState(0);
 
     const unreadCount = notifications.filter((n) => !n.isRead).length;
@@ -425,21 +427,50 @@ export default function AdminLayout({ children, header }) {
         setOpenGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
     };
 
+    useEffect(() => {
+        const saved = window.localStorage.getItem("larapee_admin_theme_mode");
+        if (saved === "light" || saved === "dark" || saved === "system") {
+            setThemeMode(saved);
+        }
+    }, []);
+
+    useEffect(() => {
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+        const applyTheme = () => {
+            const nextTheme = themeMode === "system"
+                ? (media.matches ? "dark" : "light")
+                : themeMode;
+            setResolvedTheme(nextTheme);
+            document.documentElement.dataset.theme = nextTheme;
+            document.documentElement.classList.toggle("dark", nextTheme === "dark");
+        };
+
+        applyTheme();
+        media.addEventListener("change", applyTheme);
+        window.localStorage.setItem("larapee_admin_theme_mode", themeMode);
+
+        return () => {
+            media.removeEventListener("change", applyTheme);
+        };
+    }, [themeMode]);
+
+    const isDark = resolvedTheme === "dark";
+
     return (
         <div
-            className="min-h-screen bg-slate-50 flex"
+            className={`min-h-screen flex ${isDark ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-800"}`}
             style={{ fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif' }}
         >
             {/* Sidebar */}
-            <aside className="w-64 bg-white text-slate-700 hidden md:flex flex-col fixed h-full border-r border-slate-200 shadow-sm">
-                <div className="p-6 border-b border-slate-200">
+            <aside className={`w-64 hidden h-full fixed md:flex flex-col border-r shadow-sm ${isDark ? "bg-slate-900 text-slate-200 border-slate-800" : "bg-white text-slate-700 border-slate-200"}`}>
+                <div className={`p-6 border-b ${isDark ? "border-slate-800" : "border-slate-200"}`}>
                     <Link
                         href="/"
-                        className="text-2xl font-black tracking-tight text-slate-800"
+                        className={`text-2xl font-black tracking-tight ${isDark ? "text-slate-100" : "text-slate-800"}`}
                     >
                         LaraPee Admin
                     </Link>
-                    <p className="text-xs text-slate-500 mt-1 uppercase tracking-[0.2em]">
+                    <p className={`text-xs mt-1 uppercase tracking-[0.2em] ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                         {role === "delivery" ? "rider panel" : `${role} panel`}
                     </p>
                 </div>
@@ -450,14 +481,21 @@ export default function AdminLayout({ children, header }) {
                         const isOpen = Boolean(openGroups[group.id]);
 
                         return (
-                            <div key={group.id} className="rounded-2xl border border-slate-200 bg-slate-50/80">
+                            <div
+                                key={group.id}
+                                className={`rounded-2xl border ${isDark ? "border-slate-700 bg-slate-800/60" : "border-slate-200 bg-slate-50/80"}`}
+                            >
                                 <button
                                     type="button"
                                     onClick={() => toggleNavGroup(group.id)}
-                                    className={`w-full px-3 py-2.5 flex items-center justify-between rounded-2xl text-xs font-black uppercase tracking-[0.16em] transition ${
+                                className={`w-full px-3 py-2.5 flex items-center justify-between rounded-2xl text-xs font-black uppercase tracking-[0.16em] transition ${
                                         hasActiveLink
-                                            ? "text-slate-800 bg-slate-200"
-                                            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+                                            ? isDark
+                                                ? "text-white bg-slate-700"
+                                                : "text-slate-800 bg-slate-200"
+                                            : isDark
+                                                ? "text-slate-300 hover:text-white hover:bg-slate-800"
+                                                : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
                                     }`}
                                 >
                                     <span>{group.label}</span>
@@ -474,8 +512,12 @@ export default function AdminLayout({ children, header }) {
                                                 href={route(link.route)}
                                                 className={`block px-3 py-2 rounded-xl text-sm font-bold transition ${
                                                     isLinkActive(link)
-                                                        ? "bg-slate-200 text-slate-800 border border-slate-300"
-                                                        : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
+                                                        ? isDark
+                                                            ? "bg-slate-700 text-white border border-slate-600"
+                                                            : "bg-slate-200 text-slate-800 border border-slate-300"
+                                                        : isDark
+                                                            ? "text-slate-300 hover:text-white hover:bg-slate-800 border border-transparent"
+                                                            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
                                                 }`}
                                             >
                                                 {link.label}
@@ -488,18 +530,22 @@ export default function AdminLayout({ children, header }) {
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-slate-200 bg-slate-50">
-                    <p className="text-sm font-semibold text-slate-800 truncate">
+                <div className={`p-4 border-t ${isDark ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-slate-50"}`}>
+                    <p className={`text-sm font-semibold truncate ${isDark ? "text-slate-100" : "text-slate-800"}`}>
                         {primaryIdentity}
                     </p>
-                    <p className="text-xs text-slate-500 uppercase tracking-wider truncate">
+                    <p className={`text-xs uppercase tracking-wider truncate ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                         {secondaryIdentity}
                     </p>
                     <Link
                         href={route("logout")}
                         method="post"
                         as="button"
-                        className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100"
+                        className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-black uppercase tracking-widest transition ${
+                            isDark
+                                ? "border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700"
+                                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                        }`}
                     >
                         Log out
                     </Link>
@@ -508,9 +554,9 @@ export default function AdminLayout({ children, header }) {
 
             {/* Main Content */}
             <div className="flex-1 md:ms-64 flex flex-col min-h-screen">
-                <header className="h-20 bg-white/90 backdrop-blur border-b border-slate-200 px-6 sticky top-0 z-50">
+                <header className={`h-20 backdrop-blur border-b px-6 sticky top-0 z-50 ${isDark ? "bg-slate-900/90 border-slate-800" : "bg-white/90 border-slate-200"}`}>
                     <div className="h-full grid grid-cols-[auto,1fr,auto] items-center gap-6">
-                        <div className="text-lg font-black text-slate-900 whitespace-nowrap">
+                        <div className={`text-lg font-black whitespace-nowrap ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                             {header || "Admin"}
                         </div>
 
@@ -540,7 +586,11 @@ export default function AdminLayout({ children, header }) {
                                         </svg>
                                         <input
                                             type="text"
-                                            className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 ps-11 pe-4 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm transition focus:border-orange-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-100"
+                                            className={`h-11 w-full rounded-full border ps-11 pe-4 text-sm shadow-sm transition focus:outline-none focus:ring-2 ${
+                                                isDark
+                                                    ? "border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-amber-500 focus:bg-slate-800 focus:ring-amber-400/20"
+                                                    : "border-slate-200 bg-slate-50 text-slate-700 placeholder:text-slate-400 focus:border-orange-300 focus:bg-white focus:ring-orange-100"
+                                            }`}
                                             placeholder="Search products, SKU, order ID, phone, customer..."
                                             value={globalSearch}
                                             onChange={(e) => setGlobalSearch(e.target.value)}
@@ -555,7 +605,7 @@ export default function AdminLayout({ children, header }) {
                             )}
                         </div>
 
-                        <div className="flex items-center gap-6 justify-self-end">
+                        <div className="flex items-center gap-4 justify-self-end">
                         {canTrackAttendance && role !== "admin" && (
                             <div className="hidden lg:flex items-center gap-2 border border-slate-200 rounded-xl px-2 py-1 bg-white shadow-sm">
                                 {attendance?.is_checked_in ? (
@@ -586,7 +636,11 @@ export default function AdminLayout({ children, header }) {
                         {canAccessSupport && (
                             <Link
                                 href={route("admin.support.index")}
-                                className="hidden sm:inline-flex px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-slate-200 text-slate-600 hover:bg-slate-100"
+                                className={`hidden sm:inline-flex px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border ${
+                                    isDark
+                                        ? "border-slate-700 text-slate-200 hover:bg-slate-800"
+                                        : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                                }`}
                             >
                                 Support Inbox
                             </Link>
@@ -594,11 +648,30 @@ export default function AdminLayout({ children, header }) {
 
                         <LocaleSwitcher compact />
 
+                        <select
+                            aria-label="Theme"
+                            value={themeMode}
+                            onChange={(e) => setThemeMode(e.target.value)}
+                            className={`h-9 rounded-lg border px-2 text-xs font-semibold ${
+                                isDark
+                                    ? "border-slate-700 bg-slate-800 text-slate-100"
+                                    : "border-slate-300 bg-white text-slate-700"
+                            }`}
+                        >
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="system">System</option>
+                        </select>
+
                         {/* 🔔 Notification Icon Section */}
                         <div className="relative">
                             <button
                                 onClick={() => setShowNoti(!showNoti)}
-                                className="p-2 text-slate-500 hover:text-orange-600 transition rounded-full hover:bg-slate-100 focus:outline-none"
+                                className={`p-2 transition rounded-full focus:outline-none ${
+                                    isDark
+                                        ? "text-slate-300 hover:text-amber-300 hover:bg-slate-800"
+                                        : "text-slate-500 hover:text-orange-600 hover:bg-slate-100"
+                                }`}
                             >
                                 {/* ခေါင်းလောင်း Icon */}
                                 <svg
@@ -618,7 +691,7 @@ export default function AdminLayout({ children, header }) {
 
                                 {/* 🎯 နံပါတ် Badge - ခေါင်းလောင်းပေါ်မှာ ကပ်ဖို့ absolute နဲ့ translate သုံးထားတယ် */}
                                 {unreadCount > 0 && (
-                                    <span className="absolute top-1 right-1 flex h-5 w-5 transform translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white ring-2 ring-white">
+                                    <span className={`absolute top-1 right-1 flex h-5 w-5 transform translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white ring-2 ${isDark ? "ring-slate-900" : "ring-white"}`}>
                                         {unreadCount > 9 ? "9+" : unreadCount}
                                     </span>
                                 )}
@@ -631,12 +704,14 @@ export default function AdminLayout({ children, header }) {
                                         className="fixed inset-0 z-10"
                                         onClick={() => setShowNoti(false)}
                                     ></div>
-                                    <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-20 overflow-hidden animate-in fade-in zoom-in duration-200">
-                                        <div className="px-4 py-2 border-b border-slate-50 flex justify-between items-center">
-                                            <span className="font-bold text-slate-700">
+                                    <div className={`absolute right-0 mt-3 w-80 rounded-2xl shadow-2xl border py-2 z-20 overflow-hidden animate-in fade-in zoom-in duration-200 ${
+                                        isDark ? "bg-slate-900 border-slate-700" : "bg-white border-slate-100"
+                                    }`}>
+                                        <div className={`px-4 py-2 border-b flex justify-between items-center ${isDark ? "border-slate-800" : "border-slate-50"}`}>
+                                            <span className={`font-bold ${isDark ? "text-slate-100" : "text-slate-700"}`}>
                                                 Notifications
                                             </span>
-                                            <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase">
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${isDark ? "bg-amber-300/20 text-amber-300" : "bg-orange-100 text-orange-600"}`}>
                                                 Recent
                                             </span>
                                         </div>
@@ -647,18 +722,22 @@ export default function AdminLayout({ children, header }) {
                                                         key={n.id}
                                                         type="button"
                                                         onClick={() => openNotification(n)}
-                                                        className={`w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 cursor-pointer ${!n.isRead ? "bg-blue-50/30" : ""}`}
+                                                        className={`w-full text-left px-4 py-3 border-b last:border-0 cursor-pointer ${
+                                                            isDark
+                                                                ? `hover:bg-slate-800 border-slate-800 ${!n.isRead ? "bg-sky-500/10" : ""}`
+                                                                : `hover:bg-slate-50 border-slate-50 ${!n.isRead ? "bg-blue-50/30" : ""}`
+                                                        }`}
                                                     >
-                                                        <p className="text-sm text-slate-700 leading-snug">
+                                                        <p className={`text-sm leading-snug ${isDark ? "text-slate-200" : "text-slate-700"}`}>
                                                             {n.message}
                                                         </p>
-                                                        <p className="text-[11px] text-slate-400 mt-1">
+                                                        <p className={`text-[11px] mt-1 ${isDark ? "text-slate-400" : "text-slate-400"}`}>
                                                             {formatRelativeTime(n.createdAt)}
                                                         </p>
                                                     </button>
                                                 ))
                                             ) : (
-                                                <div className="p-8 text-center text-slate-400 text-sm">
+                                                <div className={`p-8 text-center text-sm ${isDark ? "text-slate-400" : "text-slate-400"}`}>
                                                     Notification မရှိသေးပါ
                                                 </div>
                                             )}
@@ -666,7 +745,11 @@ export default function AdminLayout({ children, header }) {
                                         <button
                                             type="button"
                                             onClick={() => setNotifications([])}
-                                            className="w-full py-2 text-xs font-bold text-slate-400 hover:text-orange-600 transition bg-slate-50/50 uppercase tracking-widest"
+                                            className={`w-full py-2 text-xs font-bold transition uppercase tracking-widest ${
+                                                isDark
+                                                    ? "text-slate-400 hover:text-amber-300 bg-slate-800/60"
+                                                    : "text-slate-400 hover:text-orange-600 bg-slate-50/50"
+                                            }`}
                                         >
                                             Clear All
                                         </button>
@@ -679,7 +762,7 @@ export default function AdminLayout({ children, header }) {
                     </div>
                 </header>
 
-                <main className="flex-1 p-6 md:p-8">{children}</main>
+                <main className={`flex-1 p-6 md:p-8 ${isDark ? "bg-slate-950" : ""}`}>{children}</main>
             </div>
         </div>
     );
