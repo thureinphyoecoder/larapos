@@ -1,6 +1,11 @@
 import React, { useMemo } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, useForm } from "@inertiajs/react";
+import { Badge } from "@/Components/ui/badge";
+import { Button } from "@/Components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
+import { Input } from "@/Components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
 
 export default function ManagerDashboard({
     stats,
@@ -61,7 +66,8 @@ export default function ManagerDashboard({
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl border border-slate-100 p-6">
+                    <Card>
+                        <CardContent className="p-6">
                         <h3 className="font-bold text-slate-900">Submit End-of-Day Report</h3>
                         <p className="text-xs text-slate-500 mt-1">
                             ဆိုင်ပိတ်ခါနီး report တင်ပါ။ Super Admin dashboard မှာချက်ချင်းပေါ်ပါမယ်။
@@ -75,64 +81,60 @@ export default function ManagerDashboard({
                                 });
                             }}
                         >
-                            <input
+                            <Input
                                 type="date"
-                                className="w-full border border-slate-300 rounded-xl px-3 py-2.5"
                                 value={closeForm.data.date}
                                 onChange={(event) => closeForm.setData("date", event.target.value)}
                                 required
                             />
-                            <button
-                                className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+                            <Button
+                                className="w-full"
                                 disabled={closeForm.processing}
                             >
                                 {closeForm.processing ? "Submitting..." : "Submit Daily Close"}
-                            </button>
+                            </Button>
                         </form>
-                    </div>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-50">
-                            <h3 className="font-bold text-slate-800">Recent Daily Close Reports</h3>
-                        </div>
+                    <Card className="overflow-hidden">
+                        <CardHeader><CardTitle>Recent Daily Close Reports</CardTitle></CardHeader>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="text-left text-slate-400 uppercase text-[11px] border-b border-slate-50">
-                                        <th className="px-6 py-3">Date</th>
-                                        <th className="px-6 py-3">Orders</th>
-                                        <th className="px-6 py-3">Net</th>
-                                        <th className="px-6 py-3">Submitted By</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="hover:bg-slate-50">
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Orders</TableHead>
+                                        <TableHead>Net</TableHead>
+                                        <TableHead>Submitted By</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                                     {dailyClosings?.length ? (
                                         dailyClosings.map((row) => (
-                                            <tr key={row.id}>
-                                                <td className="px-6 py-3">{new Date(row.business_date).toLocaleDateString()}</td>
-                                                <td className="px-6 py-3">{row.orders_count}</td>
-                                                <td className="px-6 py-3 font-semibold">{Number(row.net_amount).toLocaleString()} MMK</td>
-                                                <td className="px-6 py-3">{row.closed_by || "System"}</td>
-                                            </tr>
+                                            <TableRow key={row.id}>
+                                                <TableCell>{new Date(row.business_date).toLocaleDateString()}</TableCell>
+                                                <TableCell>{row.orders_count}</TableCell>
+                                                <TableCell className="font-semibold">{Number(row.net_amount).toLocaleString()} MMK</TableCell>
+                                                <TableCell>{row.closed_by || "System"}</TableCell>
+                                            </TableRow>
                                         ))
                                     ) : (
-                                        <tr>
-                                            <td colSpan="4" className="px-6 py-10 text-center text-slate-400">
+                                        <TableRow className="hover:bg-transparent">
+                                            <TableCell colSpan="4" className="px-6 py-10 text-center text-slate-400">
                                                 No daily close reports yet.
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     )}
-                                </tbody>
-                            </table>
+                                </TableBody>
+                            </Table>
                         </div>
-                    </div>
+                    </Card>
 
-                    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-50">
-                            <h3 className="font-bold text-slate-800">Team Active Status</h3>
-                        </div>
+                    <Card className="overflow-hidden">
+                        <CardHeader><CardTitle>Team Active Status</CardTitle></CardHeader>
                         <div className="divide-y divide-slate-100">
                             {teamAttendance?.length ? (
                                 teamAttendance.map((member) => (
@@ -141,61 +143,53 @@ export default function ManagerDashboard({
                                             <p className="font-semibold text-slate-800">{member.name}</p>
                                             <p className="text-xs text-slate-500 uppercase">{member.role}</p>
                                         </div>
-                                        <span
-                                            className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
-                                                member.checked_in
-                                                    ? "bg-emerald-100 text-emerald-700"
-                                                    : "bg-slate-100 text-slate-600"
-                                            }`}
-                                        >
+                                        <Badge variant={member.checked_in ? "success" : "default"}>
                                             {member.checked_in ? "active now" : "offline"}
-                                        </span>
+                                        </Badge>
                                     </div>
                                 ))
                             ) : (
                                 <div className="px-6 py-10 text-center text-slate-400">No team members found.</div>
                             )}
                         </div>
-                    </div>
+                    </Card>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-50">
-                        <h3 className="font-bold text-slate-800">Recent Shop Orders</h3>
-                    </div>
+                <Card className="overflow-hidden">
+                    <CardHeader><CardTitle>Recent Shop Orders</CardTitle></CardHeader>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="text-left text-slate-400 uppercase text-[11px] border-b border-slate-50">
-                                    <th className="px-6 py-3">Order</th>
-                                    <th className="px-6 py-3">Customer</th>
-                                    <th className="px-6 py-3">Amount</th>
-                                    <th className="px-6 py-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="hover:bg-slate-50">
+                                    <TableHead>Order</TableHead>
+                                    <TableHead>Customer</TableHead>
+                                    <TableHead>Amount</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {recentOrders?.length ? (
                                     recentOrders.map((order) => (
-                                        <tr key={order.id}>
-                                            <td className="px-6 py-3 font-bold text-slate-700">#{order.id}</td>
-                                            <td className="px-6 py-3">{order.user?.name || "Unknown"}</td>
-                                            <td className="px-6 py-3 font-semibold">
+                                        <TableRow key={order.id}>
+                                            <TableCell className="font-bold text-slate-700">#{order.id}</TableCell>
+                                            <TableCell>{order.user?.name || "Unknown"}</TableCell>
+                                            <TableCell className="font-semibold">
                                                 {Number(order.total_amount).toLocaleString()} MMK
-                                            </td>
-                                            <td className="px-6 py-3 uppercase">{order.status}</td>
-                                        </tr>
+                                            </TableCell>
+                                            <TableCell><Badge variant="info">{order.status}</Badge></TableCell>
+                                        </TableRow>
                                     ))
                                 ) : (
-                                    <tr>
-                                        <td colSpan="4" className="px-6 py-10 text-center text-slate-400">
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableCell colSpan="4" className="px-6 py-10 text-center text-slate-400">
                                             No orders yet.
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 )}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
-                </div>
+                </Card>
             </div>
         </AdminLayout>
     );

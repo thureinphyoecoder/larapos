@@ -1,6 +1,9 @@
 import React from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, Link } from "@inertiajs/react";
+import { Badge } from "@/Components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
 
 export default function SalesDashboard({ stats, recentOrders, shop }) {
     return (
@@ -24,7 +27,8 @@ export default function SalesDashboard({ stats, recentOrders, shop }) {
                     <StatCard label="Today Sales" value={`${stats?.today_sales || 0} MMK`} />
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-100 p-6">
+                <Card>
+                    <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-slate-800">Quick Actions</h3>
                         <Link
@@ -37,45 +41,44 @@ export default function SalesDashboard({ stats, recentOrders, shop }) {
                     <p className="mt-3 text-sm text-slate-600">
                         Pending orders ကိုအရင်စစ်ပြီး confirmed status ပြောင်းပေးပါ။
                     </p>
-                </div>
+                    </CardContent>
+                </Card>
 
-                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-50">
-                        <h3 className="font-bold text-slate-800">Latest Orders</h3>
-                    </div>
+                <Card className="overflow-hidden">
+                    <CardHeader><CardTitle>Latest Orders</CardTitle></CardHeader>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="text-left text-slate-400 uppercase text-[11px] border-b border-slate-50">
-                                    <th className="px-6 py-3">Order</th>
-                                    <th className="px-6 py-3">Customer</th>
-                                    <th className="px-6 py-3">Amount</th>
-                                    <th className="px-6 py-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="hover:bg-slate-50">
+                                    <TableHead>Order</TableHead>
+                                    <TableHead>Customer</TableHead>
+                                    <TableHead>Amount</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {recentOrders?.length ? (
                                     recentOrders.map((order) => (
-                                        <tr key={order.id}>
-                                            <td className="px-6 py-3 font-bold text-slate-700">#{order.id}</td>
-                                            <td className="px-6 py-3">{order.user?.name || "Unknown"}</td>
-                                            <td className="px-6 py-3 font-semibold">
+                                        <TableRow key={order.id}>
+                                            <TableCell className="font-bold text-slate-700">#{order.id}</TableCell>
+                                            <TableCell>{order.user?.name || "Unknown"}</TableCell>
+                                            <TableCell className="font-semibold">
                                                 {Number(order.total_amount).toLocaleString()} MMK
-                                            </td>
-                                            <td className="px-6 py-3 uppercase">{order.status}</td>
-                                        </tr>
+                                            </TableCell>
+                                            <TableCell><Badge variant="info">{order.status}</Badge></TableCell>
+                                        </TableRow>
                                     ))
                                 ) : (
-                                    <tr>
-                                        <td colSpan="4" className="px-6 py-10 text-center text-slate-400">
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableCell colSpan="4" className="px-6 py-10 text-center text-slate-400">
                                             No orders yet.
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 )}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
-                </div>
+                </Card>
             </div>
         </AdminLayout>
     );
@@ -89,4 +92,3 @@ function StatCard({ label, value }) {
         </div>
     );
 }
-
