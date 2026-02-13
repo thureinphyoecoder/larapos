@@ -5,9 +5,12 @@ import {
     LuBell,
     LuBoxes,
     LuChartColumn,
+    LuCompass,
     LuChevronDown,
     LuClipboardList,
+    LuBuilding2,
     LuFileClock,
+    LuFolderKanban,
     LuHeadset,
     LuLayoutDashboard,
     LuPackage,
@@ -185,6 +188,15 @@ export default function AdminLayout({ children, header }) {
         Users: LuUsers,
         "Rider Dashboard": LuLayoutDashboard,
         "Delivery Orders": LuClipboardList,
+    };
+    const groupIconById = {
+        overview: LuCompass,
+        operations: LuBuilding2,
+        catalog: LuFolderKanban,
+        finance: LuWallet,
+        admin: LuShieldCheck,
+        frontdesk: LuClipboardList,
+        delivery: LuTruck,
     };
     const canAccessSupport = ["admin", "manager", "sales"].includes(role);
     const toMinutes = (value) => Math.max(0, Math.round(Number(value || 0)));
@@ -512,6 +524,7 @@ export default function AdminLayout({ children, header }) {
                     {navGroups.map((group) => {
                         const hasActiveLink = group.links.some((link) => isLinkActive(link));
                         const isOpen = Boolean(openGroups[group.id]);
+                        const GroupIcon = groupIconById[group.id];
 
                         return (
                             <div
@@ -531,7 +544,10 @@ export default function AdminLayout({ children, header }) {
                                                 : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
                                     }`}
                                 >
-                                    <span>{group.label}</span>
+                                    <span className="inline-flex items-center gap-2">
+                                        {GroupIcon ? <GroupIcon className="h-4 w-4" /> : null}
+                                        {group.label}
+                                    </span>
                                     <LuChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                                 </button>
 
