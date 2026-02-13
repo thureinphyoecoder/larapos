@@ -105,12 +105,12 @@ export default function Create({ categories }) {
         <AdminLayout header="Create Product">
             <Head title="Create Product" />
 
-            <div className="max-w-5xl bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <div className="max-w-5xl rounded-2xl border border-slate-100 bg-white p-6 text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100">
                 <form onSubmit={submit} className="space-y-5">
                     <div>
                         <label className="text-sm font-semibold">Name</label>
                         <input
-                            className="mt-1 w-full border rounded-lg px-3 py-2"
+                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                             value={data.name}
                             onChange={(e) => setData("name", e.target.value)}
                             required
@@ -122,7 +122,7 @@ export default function Create({ categories }) {
                         <div>
                             <label className="text-sm font-semibold">Base SKU (optional)</label>
                             <input
-                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                 value={data.sku}
                                 onChange={(e) => setData("sku", e.target.value)}
                             />
@@ -130,7 +130,7 @@ export default function Create({ categories }) {
                         <div>
                             <label className="text-sm font-semibold">Category</label>
                             <select
-                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                 value={data.category_id}
                                 onChange={(e) => setData("category_id", e.target.value)}
                                 required
@@ -149,7 +149,7 @@ export default function Create({ categories }) {
                     <div>
                         <label className="text-sm font-semibold">Description</label>
                         <textarea
-                            className="mt-1 w-full border rounded-lg px-3 py-2 h-28"
+                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 h-28"
                             value={data.description}
                             onChange={(e) => setData("description", e.target.value)}
                         />
@@ -166,7 +166,7 @@ export default function Create({ categories }) {
                         {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image}</p>}
                     </div>
 
-                    <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                    <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                         <input
                             type="checkbox"
                             checked={Boolean(data.is_hero)}
@@ -175,9 +175,9 @@ export default function Create({ categories }) {
                         Use as Hero Product
                     </label>
 
-                    <div className="rounded-xl border border-slate-200 p-4 bg-slate-50 space-y-4">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4 dark:border-slate-700 dark:bg-slate-800/70">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-bold text-slate-800">Variants</h3>
+                            <h3 className="font-bold text-slate-800 dark:text-slate-100">Variants</h3>
                             <button
                                 type="button"
                                 onClick={addVariant}
@@ -188,49 +188,49 @@ export default function Create({ categories }) {
                         </div>
 
                         {data.variants.map((variant, index) => (
-                            <div key={index} className="space-y-3 bg-white p-3 rounded-lg border border-slate-200">
+                            <div key={index} className="space-y-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/70">
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                                 <div className="lg:col-span-3">
-                                    <label className="text-xs font-semibold text-slate-500">Label</label>
+                                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Label</label>
                                     <input
-                                        className="mt-1 w-full border rounded-lg px-3 py-2"
+                                        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                         value={variant.label}
                                         onChange={(e) => updateVariant(index, "label", e.target.value)}
                                         required
                                     />
                                 </div>
                                 <div className="lg:col-span-3">
-                                    <label className="text-xs font-semibold text-slate-500">Variant SKU</label>
+                                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Variant SKU</label>
                                     <input
-                                        className="mt-1 w-full border rounded-lg px-3 py-2"
+                                        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                         value={variant.sku}
                                         onChange={(e) => updateVariant(index, "sku", e.target.value)}
                                     />
                                 </div>
                                 <div className="lg:col-span-2">
-                                    <label className="text-xs font-semibold text-slate-500">Price</label>
+                                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Price</label>
                                     <input
                                         type="number"
                                         min="0"
-                                        className="mt-1 w-full border rounded-lg px-3 py-2"
+                                        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                         value={variant.price}
                                         onChange={(e) => updateVariant(index, "price", e.target.value)}
                                         required
                                     />
                                 </div>
                                 <div className="lg:col-span-2">
-                                    <label className="text-xs font-semibold text-slate-500">Stock</label>
+                                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Stock</label>
                                     <input
                                         type="number"
                                         min="0"
-                                        className="mt-1 w-full border rounded-lg px-3 py-2"
+                                        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                         value={variant.stock_level}
                                         onChange={(e) => updateVariant(index, "stock_level", e.target.value)}
                                         required
                                     />
                                 </div>
                                 <div className="lg:col-span-1 flex items-end">
-                                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
                                         <input
                                             type="checkbox"
                                             checked={variant.is_active}
@@ -243,20 +243,20 @@ export default function Create({ categories }) {
                                     <button
                                         type="button"
                                         onClick={() => removeVariant(index)}
-                                        className="text-xs font-bold text-red-600"
+                                        className="text-xs font-bold text-red-600 dark:text-red-400"
                                     >
                                         Remove
                                     </button>
                                 </div>
                             </div>
 
-                                <div className="rounded-lg border border-orange-100 bg-orange-50/40 p-3">
+                                <div className="rounded-lg border border-orange-100 bg-orange-50/40 p-3 dark:border-orange-500/30 dark:bg-orange-500/10">
                                     <p className="text-[11px] font-bold uppercase tracking-wider text-orange-700 mb-2">Scheduled Discount / Flash Sale</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
                                         <div className="lg:col-span-1">
-                                            <label className="text-xs font-semibold text-slate-500">Type</label>
+                                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Type</label>
                                             <select
-                                                className="mt-1 w-full border rounded-lg px-3 py-2 bg-white"
+                                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                 value={variant.promo_type || ""}
                                                 onChange={(e) => updateVariant(index, "promo_type", e.target.value)}
                                             >
@@ -267,9 +267,9 @@ export default function Create({ categories }) {
                                         </div>
 
                                         <div className="lg:col-span-1">
-                                            <label className="text-xs font-semibold text-slate-500">Value Type</label>
+                                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Value Type</label>
                                             <select
-                                                className="mt-1 w-full border rounded-lg px-3 py-2 bg-white"
+                                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                 value={variant.promo_value_type || "percent"}
                                                 onChange={(e) => updateVariant(index, "promo_value_type", e.target.value)}
                                                 disabled={!variant.promo_type}
@@ -281,11 +281,11 @@ export default function Create({ categories }) {
                                         </div>
 
                                         <div className="lg:col-span-1">
-                                            <label className="text-xs font-semibold text-slate-500">Value</label>
+                                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Value</label>
                                             <input
                                                 type="number"
                                                 min="0"
-                                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                 value={variant.promo_value || ""}
                                                 onChange={(e) => updateVariant(index, "promo_value", e.target.value)}
                                                 disabled={!variant.promo_type}
@@ -293,9 +293,9 @@ export default function Create({ categories }) {
                                         </div>
 
                                         <div className="lg:col-span-1">
-                                            <label className="text-xs font-semibold text-slate-500">Label</label>
+                                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Label</label>
                                             <input
-                                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                 value={variant.promo_label || ""}
                                                 onChange={(e) => updateVariant(index, "promo_label", e.target.value)}
                                                 placeholder="Flash Hour"
@@ -304,10 +304,10 @@ export default function Create({ categories }) {
                                         </div>
 
                                         <div className="lg:col-span-1">
-                                            <label className="text-xs font-semibold text-slate-500">Start</label>
+                                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Start</label>
                                             <input
                                                 type="datetime-local"
-                                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                 value={variant.promo_starts_at || ""}
                                                 onChange={(e) => updateVariant(index, "promo_starts_at", e.target.value)}
                                                 disabled={!variant.promo_type}
@@ -315,10 +315,10 @@ export default function Create({ categories }) {
                                         </div>
 
                                         <div className="lg:col-span-1">
-                                            <label className="text-xs font-semibold text-slate-500">End</label>
+                                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">End</label>
                                             <input
                                                 type="datetime-local"
-                                                className="mt-1 w-full border rounded-lg px-3 py-2"
+                                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                 value={variant.promo_ends_at || ""}
                                                 onChange={(e) => updateVariant(index, "promo_ends_at", e.target.value)}
                                                 disabled={!variant.promo_type}
