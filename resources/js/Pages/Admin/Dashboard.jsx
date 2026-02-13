@@ -1,6 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, usePage } from "@inertiajs/react";
+import {
+    FaArrowRightArrowLeft,
+    FaCartShopping,
+    FaChartColumn,
+    FaChartLine,
+    FaChevronLeft,
+    FaChevronRight,
+    FaClipboardList,
+    FaClock,
+    FaMoneyBillWave,
+    FaStore,
+    FaTriangleExclamation,
+    FaUserCheck,
+    FaUsers,
+} from "react-icons/fa6";
 
 const PERIODS = [
     { key: "daily", label: "Daily" },
@@ -234,7 +249,10 @@ export default function Dashboard({
                             </div>
 
                             <h1 className="text-center text-2xl sm:text-3xl font-black tracking-tight">
-                                Revenue Overview
+                                <span className="inline-flex items-center gap-2">
+                                    <FaChartLine className="h-6 w-6 text-orange-300" />
+                                    Revenue Overview
+                                </span>
                             </h1>
 
                             <div className="hidden xl:block justify-self-end text-xs uppercase tracking-widest text-slate-300 font-bold">
@@ -292,33 +310,36 @@ export default function Dashboard({
                             </div>
 
                             <div className="xl:w-[22rem] space-y-3">
-                                <MetricPill label="Total Sales" value={`${liveStats.total_sales || 0} MMK`} />
-                                <MetricPill label="Total Orders" value={liveStats.total_orders || 0} />
-                                <MetricPill label="Checked In Staff" value={liveStats.checked_in_staff ?? 0} />
+                                <MetricPill label="Total Sales" value={`${liveStats.total_sales || 0} MMK`} icon={<FaMoneyBillWave className="h-4 w-4" />} />
+                                <MetricPill label="Total Orders" value={liveStats.total_orders || 0} icon={<FaCartShopping className="h-4 w-4" />} />
+                                <MetricPill label="Checked In Staff" value={liveStats.checked_in_staff ?? 0} icon={<FaUserCheck className="h-4 w-4" />} />
                             </div>
                         </div>
                     </div>
                 </section>
 
                 <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-                    <StatCard label="Active Shops" value={liveStats.active_shops || 0} tone="sky" />
-                    <StatCard label="System Users" value={liveStats.system_users || 0} tone="violet" />
-                    <StatCard label="Orders" value={liveStats.total_orders || 0} tone="emerald" />
-                    <StatCard label="Low Stock Shops" value={stockSummary.filter((s) => Number(s.low_stock_variants || 0) > 0).length} tone="amber" />
-                    <StatCard label="Active Staff" value={`${liveStats.checked_in_staff ?? 0}/${attendanceSeries.length}`} tone="rose" />
+                    <StatCard label="Active Shops" value={liveStats.active_shops || 0} tone="sky" icon={<FaStore className="h-3.5 w-3.5" />} />
+                    <StatCard label="System Users" value={liveStats.system_users || 0} tone="violet" icon={<FaUsers className="h-3.5 w-3.5" />} />
+                    <StatCard label="Orders" value={liveStats.total_orders || 0} tone="emerald" icon={<FaCartShopping className="h-3.5 w-3.5" />} />
+                    <StatCard label="Low Stock Shops" value={stockSummary.filter((s) => Number(s.low_stock_variants || 0) > 0).length} tone="amber" icon={<FaTriangleExclamation className="h-3.5 w-3.5" />} />
+                    <StatCard label="Active Staff" value={`${liveStats.checked_in_staff ?? 0}/${attendanceSeries.length}`} tone="rose" icon={<FaUserCheck className="h-3.5 w-3.5" />} />
                 </section>
 
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <StatCard label="Branches Reported Today" value={`${managerKpis.submitted}/${managerKpis.total}`} tone="emerald" />
-                    <StatCard label="Pending Daily Close" value={managerKpis.missing} tone="amber" />
-                    <StatCard label="Managers Tracked" value={attendanceSeries.filter((row) => row.role === "manager").length} tone="violet" />
+                    <StatCard label="Branches Reported Today" value={`${managerKpis.submitted}/${managerKpis.total}`} tone="emerald" icon={<FaClipboardList className="h-3.5 w-3.5" />} />
+                    <StatCard label="Pending Daily Close" value={managerKpis.missing} tone="amber" icon={<FaClock className="h-3.5 w-3.5" />} />
+                    <StatCard label="Managers Tracked" value={attendanceSeries.filter((row) => row.role === "manager").length} tone="violet" icon={<FaUsers className="h-3.5 w-3.5" />} />
                 </section>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700">
                             <div>
-                                <h3 className="font-black text-slate-900 dark:text-slate-100">Stock by Shop</h3>
+                                <h3 className="inline-flex items-center gap-2 font-black text-slate-900 dark:text-slate-100">
+                                    <FaChartColumn className="h-4 w-4 text-cyan-500 dark:text-cyan-300" />
+                                    Stock by Shop
+                                </h3>
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Realtime inventory balance per branch</p>
                             </div>
                             <div className="text-right">
@@ -368,7 +389,10 @@ export default function Dashboard({
                     <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700">
                             <div>
-                                <h3 className="font-black text-slate-900 dark:text-slate-100">Transfer Trend (7 days)</h3>
+                                <h3 className="inline-flex items-center gap-2 font-black text-slate-900 dark:text-slate-100">
+                                    <FaArrowRightArrowLeft className="h-4 w-4 text-violet-500 dark:text-violet-300" />
+                                    Transfer Trend (7 days)
+                                </h3>
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Inter-shop stock sharing performance</p>
                             </div>
                             <span className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Shared qty</span>
@@ -405,18 +429,31 @@ export default function Dashboard({
 
                 <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                     <div className="flex items-center justify-between border-b border-slate-50 p-5 dark:border-slate-700">
-                        <h3 className="font-bold text-slate-800 dark:text-slate-100">Recent Orders</h3>
+                        <h3 className="inline-flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100">
+                            <FaCartShopping className="h-4 w-4 text-orange-500 dark:text-orange-300" />
+                            Recent Orders
+                        </h3>
                         <span className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500">Realtime feed</span>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
                             <thead>
                                 <tr className="border-b border-slate-50 text-[11px] uppercase tracking-widest text-slate-400 dark:border-slate-700 dark:text-slate-500">
-                                    <th className="px-5 py-3 font-bold">Order</th>
-                                    <th className="px-5 py-3 font-bold">Customer</th>
-                                    <th className="px-5 py-3 font-bold">Shop</th>
-                                    <th className="px-5 py-3 font-bold">Amount</th>
-                                    <th className="px-5 py-3 font-bold">Status</th>
+                                    <th className="px-5 py-3 font-bold">
+                                        <span className="inline-flex items-center gap-1.5"><FaClipboardList className="h-3 w-3" />Order</span>
+                                    </th>
+                                    <th className="px-5 py-3 font-bold">
+                                        <span className="inline-flex items-center gap-1.5"><FaUsers className="h-3 w-3" />Customer</span>
+                                    </th>
+                                    <th className="px-5 py-3 font-bold">
+                                        <span className="inline-flex items-center gap-1.5"><FaStore className="h-3 w-3" />Shop</span>
+                                    </th>
+                                    <th className="px-5 py-3 font-bold">
+                                        <span className="inline-flex items-center gap-1.5"><FaMoneyBillWave className="h-3 w-3" />Amount</span>
+                                    </th>
+                                    <th className="px-5 py-3 font-bold">
+                                        <span className="inline-flex items-center gap-1.5"><FaClock className="h-3 w-3" />Status</span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -455,7 +492,10 @@ export default function Dashboard({
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                         <div className="border-b border-slate-100 p-5 dark:border-slate-700">
-                            <h3 className="font-bold text-slate-800 dark:text-slate-100">Team Active Status</h3>
+                            <h3 className="inline-flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100">
+                                <FaUserCheck className="h-4 w-4 text-emerald-500 dark:text-emerald-300" />
+                                Team Active Status
+                            </h3>
                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Super Admin can quickly monitor who is on shift now.</p>
                         </div>
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -482,17 +522,28 @@ export default function Dashboard({
 
                     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                         <div className="border-b border-slate-100 p-5 dark:border-slate-700">
-                            <h3 className="font-bold text-slate-800 dark:text-slate-100">Daily Close Submission Status</h3>
+                            <h3 className="inline-flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100">
+                                <FaClipboardList className="h-4 w-4 text-sky-500 dark:text-sky-300" />
+                                Daily Close Submission Status
+                            </h3>
                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Manager reports by branch for today.</p>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-400 dark:border-slate-700 dark:text-slate-500">
-                                        <th className="px-5 py-3">Branch</th>
-                                        <th className="px-5 py-3">Orders</th>
-                                        <th className="px-5 py-3">Net</th>
-                                        <th className="px-5 py-3">Status</th>
+                                        <th className="px-5 py-3">
+                                            <span className="inline-flex items-center gap-1.5"><FaStore className="h-3 w-3" />Branch</span>
+                                        </th>
+                                        <th className="px-5 py-3">
+                                            <span className="inline-flex items-center gap-1.5"><FaCartShopping className="h-3 w-3" />Orders</span>
+                                        </th>
+                                        <th className="px-5 py-3">
+                                            <span className="inline-flex items-center gap-1.5"><FaMoneyBillWave className="h-3 w-3" />Net</span>
+                                        </th>
+                                        <th className="px-5 py-3">
+                                            <span className="inline-flex items-center gap-1.5"><FaClock className="h-3 w-3" />Status</span>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -535,7 +586,10 @@ function SimplePager({ current, total, onChange }) {
                 className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300"
                 disabled={current <= 1}
             >
-                Previous
+                <span className="inline-flex items-center gap-1">
+                    <FaChevronLeft className="h-3 w-3" />
+                    Previous
+                </span>
             </button>
             <span className="text-xs text-slate-500 dark:text-slate-400">Page {current} / {total}</span>
             <button
@@ -544,13 +598,16 @@ function SimplePager({ current, total, onChange }) {
                 className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300"
                 disabled={current >= total}
             >
-                Next
+                <span className="inline-flex items-center gap-1">
+                    Next
+                    <FaChevronRight className="h-3 w-3" />
+                </span>
             </button>
         </div>
     );
 }
 
-function StatCard({ label, value, tone = "sky" }) {
+function StatCard({ label, value, tone = "sky", icon = null }) {
     const tones = {
         sky: {
             bar: "from-sky-500 via-cyan-400 to-blue-500",
@@ -589,7 +646,10 @@ function StatCard({ label, value, tone = "sky" }) {
         <div className={`rounded-2xl border border-slate-200/70 bg-gradient-to-br ${style.card} p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-700/70 dark:from-slate-900/70 dark:to-slate-900/50 ${style.darkCard}`}>
             <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{label}</p>
-                <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`}></span>
+                <span className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                    {icon ? <span>{icon}</span> : null}
+                    <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`}></span>
+                </span>
             </div>
             <div className="mt-3 flex items-center justify-between">
                 <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{value}</p>
@@ -599,10 +659,13 @@ function StatCard({ label, value, tone = "sky" }) {
     );
 }
 
-function MetricPill({ label, value }) {
+function MetricPill({ label, value, icon = null }) {
     return (
         <div className="rounded-2xl bg-white/10 border border-white/20 px-4 py-3">
-            <p className="text-[11px] uppercase tracking-widest text-slate-300 font-bold">{label}</p>
+            <p className="inline-flex items-center gap-2 text-[11px] uppercase tracking-widest text-slate-300 font-bold">
+                {icon ? <span className="text-orange-300">{icon}</span> : null}
+                {label}
+            </p>
             <p className="mt-1 text-lg font-black text-white">{value}</p>
         </div>
     );
