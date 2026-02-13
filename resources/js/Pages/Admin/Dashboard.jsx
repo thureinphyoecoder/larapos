@@ -2,20 +2,20 @@ import React, { useEffect, useMemo, useState } from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, usePage } from "@inertiajs/react";
 import {
-    FaArrowRightArrowLeft,
-    FaCartShopping,
-    FaChartColumn,
-    FaChartLine,
-    FaChevronLeft,
-    FaChevronRight,
-    FaClipboardList,
-    FaClock,
-    FaMoneyBillWave,
-    FaStore,
-    FaTriangleExclamation,
-    FaUserCheck,
-    FaUsers,
-} from "react-icons/fa6";
+    LuArrowLeftRight,
+    LuShoppingCart,
+    LuChartColumn,
+    LuChartLine,
+    LuChevronLeft,
+    LuChevronRight,
+    LuClipboardList,
+    LuClock3,
+    LuBanknote,
+    LuStore,
+    LuTriangleAlert,
+    LuUserCheck,
+    LuUsers,
+} from "react-icons/lu";
 
 const PERIODS = [
     { key: "daily", label: "Daily" },
@@ -250,7 +250,7 @@ export default function Dashboard({
 
                             <h1 className="text-center text-2xl sm:text-3xl font-black tracking-tight">
                                 <span className="inline-flex items-center gap-2">
-                                    <FaChartLine className="h-6 w-6 text-orange-300" />
+                                    <LuChartLine className="h-6 w-6 text-orange-300" />
                                     Revenue Overview
                                 </span>
                             </h1>
@@ -310,26 +310,26 @@ export default function Dashboard({
                             </div>
 
                             <div className="xl:w-[22rem] space-y-3">
-                                <MetricPill label="Total Sales" value={`${liveStats.total_sales || 0} MMK`} icon={<FaMoneyBillWave className="h-4 w-4" />} />
-                                <MetricPill label="Total Orders" value={liveStats.total_orders || 0} icon={<FaCartShopping className="h-4 w-4" />} />
-                                <MetricPill label="Checked In Staff" value={liveStats.checked_in_staff ?? 0} icon={<FaUserCheck className="h-4 w-4" />} />
+                                <MetricPill label="Total Sales" value={`${liveStats.total_sales || 0} MMK`} icon={<LuBanknote className="h-4 w-4" />} />
+                                <MetricPill label="Total Orders" value={liveStats.total_orders || 0} icon={<LuShoppingCart className="h-4 w-4" />} />
+                                <MetricPill label="Checked In Staff" value={liveStats.checked_in_staff ?? 0} icon={<LuUserCheck className="h-4 w-4" />} />
                             </div>
                         </div>
                     </div>
                 </section>
 
                 <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-                    <StatCard label="Active Shops" value={liveStats.active_shops || 0} tone="sky" icon={<FaStore className="h-3.5 w-3.5" />} />
-                    <StatCard label="System Users" value={liveStats.system_users || 0} tone="violet" icon={<FaUsers className="h-3.5 w-3.5" />} />
-                    <StatCard label="Orders" value={liveStats.total_orders || 0} tone="emerald" icon={<FaCartShopping className="h-3.5 w-3.5" />} />
-                    <StatCard label="Low Stock Shops" value={stockSummary.filter((s) => Number(s.low_stock_variants || 0) > 0).length} tone="amber" icon={<FaTriangleExclamation className="h-3.5 w-3.5" />} />
-                    <StatCard label="Active Staff" value={`${liveStats.checked_in_staff ?? 0}/${attendanceSeries.length}`} tone="rose" icon={<FaUserCheck className="h-3.5 w-3.5" />} />
+                    <StatCard label="Active Shops" value={liveStats.active_shops || 0} tone="sky" icon={<LuStore className="h-3.5 w-3.5" />} />
+                    <StatCard label="System Users" value={liveStats.system_users || 0} tone="violet" icon={<LuUsers className="h-3.5 w-3.5" />} />
+                    <StatCard label="Orders" value={liveStats.total_orders || 0} tone="emerald" icon={<LuShoppingCart className="h-3.5 w-3.5" />} />
+                    <StatCard label="Low Stock Shops" value={stockSummary.filter((s) => Number(s.low_stock_variants || 0) > 0).length} tone="amber" icon={<LuTriangleAlert className="h-3.5 w-3.5" />} />
+                    <StatCard label="Active Staff" value={`${liveStats.checked_in_staff ?? 0}/${attendanceSeries.length}`} tone="rose" icon={<LuUserCheck className="h-3.5 w-3.5" />} />
                 </section>
 
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <StatCard label="Branches Reported Today" value={`${managerKpis.submitted}/${managerKpis.total}`} tone="emerald" icon={<FaClipboardList className="h-3.5 w-3.5" />} />
-                    <StatCard label="Pending Daily Close" value={managerKpis.missing} tone="amber" icon={<FaClock className="h-3.5 w-3.5" />} />
-                    <StatCard label="Managers Tracked" value={attendanceSeries.filter((row) => row.role === "manager").length} tone="violet" icon={<FaUsers className="h-3.5 w-3.5" />} />
+                    <StatCard label="Branches Reported Today" value={`${managerKpis.submitted}/${managerKpis.total}`} tone="emerald" icon={<LuClipboardList className="h-3.5 w-3.5" />} />
+                    <StatCard label="Pending Daily Close" value={managerKpis.missing} tone="amber" icon={<LuClock3 className="h-3.5 w-3.5" />} />
+                    <StatCard label="Managers Tracked" value={attendanceSeries.filter((row) => row.role === "manager").length} tone="violet" icon={<LuUsers className="h-3.5 w-3.5" />} />
                 </section>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -337,7 +337,7 @@ export default function Dashboard({
                         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700">
                             <div>
                                 <h3 className="inline-flex items-center gap-2 font-black text-slate-900 dark:text-slate-100">
-                                    <FaChartColumn className="h-4 w-4 text-cyan-500 dark:text-cyan-300" />
+                                    <LuChartColumn className="h-4 w-4 text-cyan-500 dark:text-cyan-300" />
                                     Stock by Shop
                                 </h3>
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Realtime inventory balance per branch</p>
@@ -390,7 +390,7 @@ export default function Dashboard({
                         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700">
                             <div>
                                 <h3 className="inline-flex items-center gap-2 font-black text-slate-900 dark:text-slate-100">
-                                    <FaArrowRightArrowLeft className="h-4 w-4 text-violet-500 dark:text-violet-300" />
+                                    <LuArrowLeftRight className="h-4 w-4 text-violet-500 dark:text-violet-300" />
                                     Transfer Trend (7 days)
                                 </h3>
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Inter-shop stock sharing performance</p>
@@ -430,7 +430,7 @@ export default function Dashboard({
                 <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                     <div className="flex items-center justify-between border-b border-slate-50 p-5 dark:border-slate-700">
                         <h3 className="inline-flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100">
-                            <FaCartShopping className="h-4 w-4 text-orange-500 dark:text-orange-300" />
+                            <LuShoppingCart className="h-4 w-4 text-orange-500 dark:text-orange-300" />
                             Recent Orders
                         </h3>
                         <span className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500">Realtime feed</span>
@@ -440,19 +440,19 @@ export default function Dashboard({
                             <thead>
                                 <tr className="border-b border-slate-50 text-[11px] uppercase tracking-widest text-slate-400 dark:border-slate-700 dark:text-slate-500">
                                     <th className="px-5 py-3 font-bold">
-                                        <span className="inline-flex items-center gap-1.5"><FaClipboardList className="h-3 w-3" />Order</span>
+                                        <span className="inline-flex items-center gap-1.5"><LuClipboardList className="h-3 w-3" />Order</span>
                                     </th>
                                     <th className="px-5 py-3 font-bold">
-                                        <span className="inline-flex items-center gap-1.5"><FaUsers className="h-3 w-3" />Customer</span>
+                                        <span className="inline-flex items-center gap-1.5"><LuUsers className="h-3 w-3" />Customer</span>
                                     </th>
                                     <th className="px-5 py-3 font-bold">
-                                        <span className="inline-flex items-center gap-1.5"><FaStore className="h-3 w-3" />Shop</span>
+                                        <span className="inline-flex items-center gap-1.5"><LuStore className="h-3 w-3" />Shop</span>
                                     </th>
                                     <th className="px-5 py-3 font-bold">
-                                        <span className="inline-flex items-center gap-1.5"><FaMoneyBillWave className="h-3 w-3" />Amount</span>
+                                        <span className="inline-flex items-center gap-1.5"><LuBanknote className="h-3 w-3" />Amount</span>
                                     </th>
                                     <th className="px-5 py-3 font-bold">
-                                        <span className="inline-flex items-center gap-1.5"><FaClock className="h-3 w-3" />Status</span>
+                                        <span className="inline-flex items-center gap-1.5"><LuClock3 className="h-3 w-3" />Status</span>
                                     </th>
                                 </tr>
                             </thead>
@@ -493,7 +493,7 @@ export default function Dashboard({
                     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                         <div className="border-b border-slate-100 p-5 dark:border-slate-700">
                             <h3 className="inline-flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100">
-                                <FaUserCheck className="h-4 w-4 text-emerald-500 dark:text-emerald-300" />
+                                <LuUserCheck className="h-4 w-4 text-emerald-500 dark:text-emerald-300" />
                                 Team Active Status
                             </h3>
                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Super Admin can quickly monitor who is on shift now.</p>
@@ -523,7 +523,7 @@ export default function Dashboard({
                     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                         <div className="border-b border-slate-100 p-5 dark:border-slate-700">
                             <h3 className="inline-flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100">
-                                <FaClipboardList className="h-4 w-4 text-sky-500 dark:text-sky-300" />
+                                <LuClipboardList className="h-4 w-4 text-sky-500 dark:text-sky-300" />
                                 Daily Close Submission Status
                             </h3>
                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Manager reports by branch for today.</p>
@@ -533,16 +533,16 @@ export default function Dashboard({
                                 <thead>
                                     <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-400 dark:border-slate-700 dark:text-slate-500">
                                         <th className="px-5 py-3">
-                                            <span className="inline-flex items-center gap-1.5"><FaStore className="h-3 w-3" />Branch</span>
+                                            <span className="inline-flex items-center gap-1.5"><LuStore className="h-3 w-3" />Branch</span>
                                         </th>
                                         <th className="px-5 py-3">
-                                            <span className="inline-flex items-center gap-1.5"><FaCartShopping className="h-3 w-3" />Orders</span>
+                                            <span className="inline-flex items-center gap-1.5"><LuShoppingCart className="h-3 w-3" />Orders</span>
                                         </th>
                                         <th className="px-5 py-3">
-                                            <span className="inline-flex items-center gap-1.5"><FaMoneyBillWave className="h-3 w-3" />Net</span>
+                                            <span className="inline-flex items-center gap-1.5"><LuBanknote className="h-3 w-3" />Net</span>
                                         </th>
                                         <th className="px-5 py-3">
-                                            <span className="inline-flex items-center gap-1.5"><FaClock className="h-3 w-3" />Status</span>
+                                            <span className="inline-flex items-center gap-1.5"><LuClock3 className="h-3 w-3" />Status</span>
                                         </th>
                                     </tr>
                                 </thead>
@@ -587,7 +587,7 @@ function SimplePager({ current, total, onChange }) {
                 disabled={current <= 1}
             >
                 <span className="inline-flex items-center gap-1">
-                    <FaChevronLeft className="h-3 w-3" />
+                    <LuChevronLeft className="h-3 w-3" />
                     Previous
                 </span>
             </button>
@@ -600,7 +600,7 @@ function SimplePager({ current, total, onChange }) {
             >
                 <span className="inline-flex items-center gap-1">
                     Next
-                    <FaChevronRight className="h-3 w-3" />
+                    <LuChevronRight className="h-3 w-3" />
                 </span>
             </button>
         </div>

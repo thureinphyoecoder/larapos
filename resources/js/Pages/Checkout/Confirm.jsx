@@ -1,5 +1,6 @@
 import React from "react";
 import { router, Head, useForm } from "@inertiajs/react";
+import { LuCheckCheck, LuImage, LuMapPin } from "react-icons/lu";
 import Swal from "sweetalert2";
 
 export default function Confirm({ formData, cartItems }) {
@@ -68,14 +69,14 @@ export default function Confirm({ formData, cartItems }) {
             <Head title="Order Confirmation" />
             <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-sm border">
                 <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
-                    <span className="mr-2">📝</span> အော်ဒါကို အတည်ပြုပေးပါ
+                    <LuCheckCheck className="mr-2 h-5 w-5 text-orange-600" /> အော်ဒါကို အတည်ပြုပေးပါ
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                     {/* ပို့ဆောင်မည့်လိပ်စာ အကျဉ်းချုပ် */}
                     <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
                         <h4 className="font-bold text-blue-800 mb-3 flex items-center">
-                            📍 ပို့ဆောင်မည့် လိပ်စာ
+                            <LuMapPin className="mr-2 h-4 w-4" /> ပို့ဆောင်မည့် လိပ်စာ
                         </h4>
                         <div className="text-gray-700 space-y-1">
                             <p>
@@ -91,7 +92,7 @@ export default function Confirm({ formData, cartItems }) {
                     {/* ငွေလွှဲဖြတ်ပိုင်း */}
                     <div className="border border-dashed border-gray-300 p-5 rounded-xl text-center bg-gray-50">
                         <h4 className="font-bold mb-3 text-gray-700 flex items-center justify-center">
-                            🖼️ ငွေလွှဲဖြတ်ပိုင်း (Slip)
+                            <LuImage className="mr-2 h-4 w-4" /> ငွေလွှဲဖြတ်ပိုင်း (Slip)
                         </h4>
                         <img
                             src={`/storage/${formData.payment_slip}`}

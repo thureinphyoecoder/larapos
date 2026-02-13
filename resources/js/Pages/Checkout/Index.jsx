@@ -1,5 +1,6 @@
 import { useForm, Head } from "@inertiajs/react";
 import { useState } from "react";
+import { LuMapPin } from "react-icons/lu";
 import Swal from "sweetalert2";
 
 export default function Checkout({ cartItems, user }) {
@@ -180,7 +181,7 @@ export default function Checkout({ cartItems, user }) {
                     <div className="md:col-span-2 space-y-6">
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                             <h2 className="font-bold text-lg mb-4 border-b pb-2 flex items-center">
-                                <span className="mr-2">📍</span>{" "}
+                                <LuMapPin className="mr-2 h-4 w-4 text-orange-500" />
                                 ပစ္စည်းပို့ဆောင်မည့် လိပ်စာ
                             </h2>
                             <div className="space-y-4">

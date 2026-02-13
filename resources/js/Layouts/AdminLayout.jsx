@@ -1,6 +1,23 @@
 import { useState, useEffect } from "react";
 import { Link, usePage, router } from "@inertiajs/react";
 import LocaleSwitcher from "@/Components/LocaleSwitcher";
+import {
+    LuBell,
+    LuBoxes,
+    LuChartColumn,
+    LuChevronDown,
+    LuClipboardList,
+    LuFileClock,
+    LuHeadset,
+    LuLayoutDashboard,
+    LuPackage,
+    LuReceiptText,
+    LuSearch,
+    LuShieldCheck,
+    LuStore,
+    LuUsers,
+    LuWallet,
+} from "react-icons/lu";
 import Swal from "sweetalert2";
 
 export default function AdminLayout({ children, header }) {
@@ -152,6 +169,23 @@ export default function AdminLayout({ children, header }) {
     };
 
     const navGroups = menuByRole[role] || menuByRole.admin;
+    const menuIconByLabel = {
+        Dashboard: LuLayoutDashboard,
+        Orders: LuClipboardList,
+        Support: LuHeadset,
+        "Service Jobs": LuFileClock,
+        Products: LuPackage,
+        Categories: LuBoxes,
+        Inventory: LuBoxes,
+        "Stock Logs": LuChartColumn,
+        Payments: LuWallet,
+        Payroll: LuReceiptText,
+        "Audit Logs": LuShieldCheck,
+        Shops: LuStore,
+        Users: LuUsers,
+        "Rider Dashboard": LuLayoutDashboard,
+        "Delivery Orders": LuClipboardList,
+    };
     const canAccessSupport = ["admin", "manager", "sales"].includes(role);
     const toMinutes = (value) => Math.max(0, Math.round(Number(value || 0)));
     const formatWorkedTime = (value) => {
@@ -498,35 +532,34 @@ export default function AdminLayout({ children, header }) {
                                     }`}
                                 >
                                     <span>{group.label}</span>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 20 20"
-                                        fill="none"
-                                        className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                                    >
-                                        <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
+                                    <LuChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                                 </button>
 
                                 {isOpen && (
                                     <div className="pb-3 px-2 space-y-1.5">
-                                        {group.links.map((link) => (
-                                            <Link
-                                                key={link.route}
-                                                href={route(link.route)}
-                                                className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition ${
-                                                    isLinkActive(link)
-                                                        ? isDark
-                                                            ? "bg-white/[0.1] text-white border border-white/10"
-                                                            : "bg-slate-200 text-slate-800 border border-slate-300"
-                                                        : isDark
-                                                            ? "text-slate-300 hover:text-white hover:bg-white/[0.06] border border-transparent"
-                                                            : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
-                                                }`}
-                                            >
-                                                {link.label}
-                                            </Link>
-                                        ))}
+                                        {group.links.map((link) => {
+                                            const LinkIcon = menuIconByLabel[link.label];
+                                            return (
+                                                <Link
+                                                    key={link.route}
+                                                    href={route(link.route)}
+                                                    className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition ${
+                                                        isLinkActive(link)
+                                                            ? isDark
+                                                                ? "bg-white/[0.1] text-white border border-white/10"
+                                                                : "bg-slate-200 text-slate-800 border border-slate-300"
+                                                            : isDark
+                                                                ? "text-slate-300 hover:text-white hover:bg-white/[0.06] border border-transparent"
+                                                                : "text-slate-600 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
+                                                    }`}
+                                                >
+                                                    <span className="inline-flex items-center gap-2">
+                                                        {LinkIcon ? <LinkIcon className="h-4 w-4" /> : null}
+                                                        {link.label}
+                                                    </span>
+                                                </Link>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
@@ -574,20 +607,7 @@ export default function AdminLayout({ children, header }) {
                                     className="hidden xl:block w-[42rem] max-w-full"
                                 >
                                     <div className="relative">
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M21 21l-4.35-4.35m1.6-4.15a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"
-                                            />
-                                        </svg>
+                                        <LuSearch className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                         <input
                                             type="text"
                                             className={`h-11 w-full rounded-full border ps-11 pe-4 text-sm shadow-sm transition focus:outline-none focus:ring-2 ${
@@ -677,21 +697,7 @@ export default function AdminLayout({ children, header }) {
                                         : "text-slate-500 hover:text-orange-600 hover:bg-slate-100"
                                 }`}
                             >
-                                {/* ခေါင်းလောင်း Icon */}
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-6 w-6"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                                    />
-                                </svg>
+                                <LuBell className="h-6 w-6" />
 
                                 {/* 🎯 နံပါတ် Badge - ခေါင်းလောင်းပေါ်မှာ ကပ်ဖို့ absolute နဲ့ translate သုံးထားတယ် */}
                                 {unreadCount > 0 && (

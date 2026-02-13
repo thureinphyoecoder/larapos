@@ -2,26 +2,26 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import { useMemo, useState, useCallback } from "react";
 import {
-    FaArrowRight,
-    FaArrowRightArrowLeft,
-    FaBoxOpen,
-    FaBoxesStacked,
-    FaChartColumn,
-    FaClipboardList,
-    FaClock,
-    FaFloppyDisk,
-    FaGear,
-    FaLink,
-    FaLock,
-    FaMagnifyingGlass,
-    FaPenToSquare,
-    FaSackDollar,
-    FaStore,
-    FaTag,
-    FaTriangleExclamation,
-    FaTruckFast,
-    FaUser,
-} from "react-icons/fa6";
+    LuArrowRight,
+    LuArrowLeftRight,
+    LuPackageOpen,
+    LuBoxes,
+    LuChartColumn,
+    LuClipboardList,
+    LuClock3,
+    LuSave,
+    LuSettings,
+    LuLink2,
+    LuLock,
+    LuSearch,
+    LuSquarePen,
+    LuHandCoins,
+    LuStore,
+    LuTag,
+    LuTriangleAlert,
+    LuTruck,
+    LuUser,
+} from "react-icons/lu";
 import { sanitizePaginationLabel } from "@/utils/sanitizePaginationLabel";
 
 // ===== CONSTANTS =====
@@ -539,25 +539,25 @@ export default function InventoryIndex({
                     <MetricCard
                         label={text.totalSku}
                         value={stats.totalVariants}
-                        icon={<FaChartColumn />}
+                        icon={<LuChartColumn />}
                         tone="indigo"
                     />
                     <MetricCard
                         label={text.lowSku}
                         value={stats.lowStockCount}
-                        icon={<FaTriangleExclamation />}
+                        icon={<LuTriangleAlert />}
                         tone="red"
                     />
                     <MetricCard
                         label={text.transferToday}
                         value={stats.transferCount}
-                        icon={<FaArrowRightArrowLeft />}
+                        icon={<LuArrowLeftRight />}
                         tone="blue"
                     />
                     <MetricCard
                         label="Share Permission"
                         value={stats.shareRules}
-                        icon={<FaLink />}
+                        icon={<LuLink2 />}
                         tone="orange"
                     />
                 </div>
@@ -566,7 +566,7 @@ export default function InventoryIndex({
                 <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/70">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
-                            <FaMagnifyingGlass className="h-5 w-5" />
+                            <LuSearch className="h-5 w-5" />
                         </div>
                         <div>
                             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -613,7 +613,7 @@ export default function InventoryIndex({
                                     }
                                 />
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                                    <FaTriangleExclamation className="mr-2 inline h-3.5 w-3.5 text-amber-500" />
+                                    <LuTriangleAlert className="mr-2 inline h-3.5 w-3.5 text-amber-500" />
                                     {text.lowStockOnly}
                                 </span>
                             </label>
@@ -624,7 +624,7 @@ export default function InventoryIndex({
                                 type="submit"
                                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-sky-600 px-8 py-3.5 text-sm font-bold text-white transition duration-200 hover:bg-sky-500 md:flex-none"
                             >
-                                <FaMagnifyingGlass className="h-3.5 w-3.5" />
+                                <LuSearch className="h-3.5 w-3.5" />
                                 {text.search}
                             </button>
                             <button
@@ -632,7 +632,7 @@ export default function InventoryIndex({
                                 onClick={clearFilters}
                                 className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-8 py-3.5 text-sm font-semibold text-slate-700 transition duration-200 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 md:flex-none"
                             >
-                                <FaArrowRightArrowLeft className="h-3.5 w-3.5" />
+                                <LuArrowLeftRight className="h-3.5 w-3.5" />
                                 {text.clear}
                             </button>
                         </div>
@@ -693,7 +693,7 @@ export default function InventoryIndex({
                         <div className="rounded-2xl border border-amber-200 bg-white p-5 dark:border-amber-500/30 dark:bg-slate-900/70">
                             <div className="mb-4 flex items-center gap-3">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300">
-                                    <FaPenToSquare className="h-6 w-6" />
+                                    <LuSquarePen className="h-6 w-6" />
                                 </div>
                                 <div>
                                     <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
@@ -745,7 +745,7 @@ export default function InventoryIndex({
                                     />
                                     <div className="flex items-end">
                                         <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 py-3 font-bold text-white transition hover:bg-orange-500">
-                                            <FaFloppyDisk className="h-3.5 w-3.5" />
+                                            <LuSave className="h-3.5 w-3.5" />
                                             {text.save}
                                         </button>
                                     </div>
@@ -765,7 +765,7 @@ export default function InventoryIndex({
                         <div className="rounded-2xl border border-sky-200 bg-white p-5 dark:border-sky-500/30 dark:bg-slate-900/70">
                             <div className="mb-4 flex items-center gap-3">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300">
-                                    <FaArrowRightArrowLeft className="h-6 w-6" />
+                                    <LuArrowLeftRight className="h-6 w-6" />
                                 </div>
                                 <div>
                                     <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
@@ -822,7 +822,7 @@ export default function InventoryIndex({
                                 />
 
                                 <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 py-3.5 font-bold text-white transition hover:bg-orange-500">
-                                    <FaTruckFast className="h-4 w-4" />
+                                    <LuTruck className="h-4 w-4" />
                                     {text.transferNow}
                                 </button>
                             </form>
@@ -833,7 +833,7 @@ export default function InventoryIndex({
                         <div className="rounded-2xl border border-orange-200 bg-white p-5 dark:border-orange-500/30 dark:bg-slate-900/70">
                             <div className="mb-4 flex items-center gap-3">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
-                                    <FaLock className="h-5 w-5" />
+                                    <LuLock className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
@@ -874,7 +874,7 @@ export default function InventoryIndex({
                                 />
                                 <div className="flex items-end">
                                     <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 py-3 font-bold text-white transition hover:bg-orange-500">
-                                        <FaFloppyDisk className="h-3.5 w-3.5" />
+                                        <LuSave className="h-3.5 w-3.5" />
                                         {text.save}
                                     </button>
                                 </div>
@@ -916,7 +916,7 @@ export default function InventoryIndex({
                 <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/70">
                     <div className="border-b border-slate-200 bg-slate-50 px-6 py-5 dark:border-slate-700 dark:bg-slate-900/80">
                         <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
-                            <FaClipboardList className="h-4 w-4" /> {text.inventoryTitle}
+                            <LuClipboardList className="h-4 w-4" /> {text.inventoryTitle}
                         </h3>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                             {text.inventorySubtitle}
@@ -928,37 +928,37 @@ export default function InventoryIndex({
                                 <tr className="border-b border-slate-200 text-left text-xs font-bold text-slate-600 dark:border-slate-700 dark:text-slate-400">
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaStore className="h-3 w-3" />
+                                            <LuStore className="h-3 w-3" />
                                             {text.shop}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaBoxOpen className="h-3 w-3" />
+                                            <LuPackageOpen className="h-3 w-3" />
                                             {text.product}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaTag className="h-3 w-3" />
+                                            <LuTag className="h-3 w-3" />
                                             SKU
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaSackDollar className="h-3 w-3" />
+                                            <LuHandCoins className="h-3 w-3" />
                                             {text.price}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaChartColumn className="h-3 w-3" />
+                                            <LuChartColumn className="h-3 w-3" />
                                             {text.stock}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaGear className="h-3 w-3" />
+                                            <LuSettings className="h-3 w-3" />
                                             {text.actionCol}
                                         </span>
                                     </th>
@@ -1013,7 +1013,7 @@ export default function InventoryIndex({
                                                         className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 dark:border-amber-500/35 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/15"
                                                     >
                                                         <span className="inline-flex items-center gap-1">
-                                                            <FaPenToSquare className="h-3 w-3" />
+                                                            <LuSquarePen className="h-3 w-3" />
                                                             {text.adjust}
                                                         </span>
                                                     </button>
@@ -1029,7 +1029,7 @@ export default function InventoryIndex({
                                                         className="rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 dark:border-sky-500/35 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/15"
                                                     >
                                                         <span className="inline-flex items-center gap-1">
-                                                            <FaArrowRightArrowLeft className="h-3 w-3" />
+                                                            <LuArrowLeftRight className="h-3 w-3" />
                                                             {text.transfer}
                                                         </span>
                                                     </button>
@@ -1039,7 +1039,7 @@ export default function InventoryIndex({
                                     ))
                                 ) : (
                                     <EmptyState
-                                        icon={<FaBoxesStacked />}
+                                        icon={<LuBoxes />}
                                         title={text.noProduct}
                                     />
                                 )}
@@ -1071,7 +1071,7 @@ export default function InventoryIndex({
                 <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/70">
                     <div className="border-b border-slate-200 bg-slate-50 px-6 py-5 dark:border-slate-700 dark:bg-slate-900/80">
                         <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
-                            <FaClipboardList className="h-4 w-4" /> {text.transferHistory}
+                            <LuClipboardList className="h-4 w-4" /> {text.transferHistory}
                         </h3>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                             {text.transferHistorySub}
@@ -1083,43 +1083,43 @@ export default function InventoryIndex({
                                 <tr className="border-b border-slate-200 text-left text-xs font-bold text-slate-600 dark:border-slate-700 dark:text-slate-400">
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaClock className="h-3 w-3" />
+                                            <LuClock3 className="h-3 w-3" />
                                             {text.time}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaStore className="h-3 w-3" />
+                                            <LuStore className="h-3 w-3" />
                                             {text.fromShopCol}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaArrowRight className="h-3 w-3" />
+                                            <LuArrowRight className="h-3 w-3" />
                                             {text.toShopCol}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaTag className="h-3 w-3" />
+                                            <LuTag className="h-3 w-3" />
                                             SKU
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaChartColumn className="h-3 w-3" />
+                                            <LuChartColumn className="h-3 w-3" />
                                             {text.qty}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaUser className="h-3 w-3" />
+                                            <LuUser className="h-3 w-3" />
                                             {text.actor}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
-                                            <FaGear className="h-3 w-3" />
+                                            <LuSettings className="h-3 w-3" />
                                             အခြေအနေ
                                         </span>
                                     </th>
@@ -1172,7 +1172,7 @@ export default function InventoryIndex({
                                     ))
                                 ) : (
                                     <EmptyState
-                                        icon={<FaClipboardList />}
+                                        icon={<LuClipboardList />}
                                         title={text.noHistoryTitle}
                                         subtitle={text.noHistorySub}
                                         colSpan={7}

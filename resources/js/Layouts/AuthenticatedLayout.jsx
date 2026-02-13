@@ -4,6 +4,15 @@ import LocaleSwitcher from "@/Components/LocaleSwitcher";
 import NavLink from "@/Components/NavLink";
 import { Link, router, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
+import {
+    LuClipboardList,
+    LuHouse,
+    LuLayoutDashboard,
+    LuMapPin,
+    LuMessageSquare,
+    LuPackage,
+    LuTruck,
+} from "react-icons/lu";
 import Swal from "sweetalert2";
 
 export default function AuthenticatedLayout({ header, children }) {
@@ -225,27 +234,27 @@ export default function AuthenticatedLayout({ header, children }) {
     // Role အလိုက် Menu Configuration (SOLID: Data and UI logic Separation)
     const sideMenu = {
         admin: [
-            { label: "📊 Dashboard", route: "admin.dashboard" },
-            { label: "🧾 Orders", route: "admin.orders.index" },
-            { label: "📦 Products", route: "admin.products.index" },
+            { label: "Dashboard", route: "admin.dashboard", icon: LuLayoutDashboard },
+            { label: "Orders", route: "admin.orders.index", icon: LuClipboardList },
+            { label: "Products", route: "admin.products.index", icon: LuPackage },
         ],
         manager: [
-            { label: "📊 Dashboard", route: "admin.dashboard" },
-            { label: "🧾 Orders", route: "admin.orders.index" },
-            { label: "📦 Inventory", route: "admin.products.index" },
+            { label: "Dashboard", route: "admin.dashboard", icon: LuLayoutDashboard },
+            { label: "Orders", route: "admin.orders.index", icon: LuClipboardList },
+            { label: "Inventory", route: "admin.products.index", icon: LuPackage },
         ],
         sales: [
-            { label: "📊 Dashboard", route: "admin.dashboard" },
-            { label: "🧾 Orders", route: "admin.orders.index" },
+            { label: "Dashboard", route: "admin.dashboard", icon: LuLayoutDashboard },
+            { label: "Orders", route: "admin.orders.index", icon: LuClipboardList },
         ],
         delivery: [
-            { label: "📍 Dashboard", route: "dashboard" },
-            { label: "🚚 My Deliveries", route: "admin.orders.index" },
+            { label: "Dashboard", route: "dashboard", icon: LuMapPin },
+            { label: "My Deliveries", route: "admin.orders.index", icon: LuTruck },
         ],
         user: [
-            { label: "🏠 Dashboard", route: "dashboard" },
-            { label: "🧾 My Orders", route: "orders.index" },
-            { label: "💬 Support Chat", route: "support.index" },
+            { label: "Dashboard", route: "dashboard", icon: LuHouse },
+            { label: "My Orders", route: "orders.index", icon: LuClipboardList },
+            { label: "Support Chat", route: "support.index", icon: LuMessageSquare },
         ],
     };
 
@@ -274,7 +283,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                 active={route().current(link.route)}
                                 className="w-full flex items-center px-3 py-2 text-sm font-medium transition-colors duration-150"
                             >
-                                {link.label}
+                                <span className="inline-flex items-center gap-2">
+                                    {link.icon ? <link.icon className="h-4 w-4" /> : null}
+                                    {link.label}
+                                </span>
                             </NavLink>
                         ))}
                     </nav>
@@ -312,7 +324,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                                         }`}
                                     >
-                                        {link.label}
+                                        <span className="inline-flex items-center gap-1.5">
+                                            {link.icon ? <link.icon className="h-3.5 w-3.5" /> : null}
+                                            {link.label}
+                                        </span>
                                     </Link>
                                 ))}
                             </div>

@@ -2,14 +2,14 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, Link, router, useForm } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 import {
-    FaArrowRotateLeft,
-    FaClipboardList,
-    FaFilter,
-    FaPenToSquare,
-    FaSackDollar,
-    FaWallet,
-    FaXmark,
-} from "react-icons/fa6";
+    LuRotateCcw,
+    LuClipboardList,
+    LuFilter,
+    LuSquarePen,
+    LuHandCoins,
+    LuWallet,
+    LuX,
+} from "react-icons/lu";
 import { sanitizePaginationLabel } from "@/utils/sanitizePaginationLabel";
 
 const STATUS_OPTIONS = [
@@ -79,7 +79,7 @@ function Modal({ open, title, children, onClose }) {
                         onClick={onClose}
                         className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                     >
-                        <FaXmark className="h-4 w-4" />
+                        <LuX className="h-4 w-4" />
                     </button>
                 </div>
                 {children}
@@ -243,7 +243,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/65 dark:backdrop-blur">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
-                            <FaWallet className="h-6 w-6" />
+                            <LuWallet className="h-6 w-6" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">Payment Console</h1>
@@ -276,7 +276,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                         />
                         <Select options={STATUS_OPTIONS} value={status} onChange={(event) => setStatus(event.target.value)} />
                         <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-500">
-                            <FaFilter className="h-3.5 w-3.5" />
+                            <LuFilter className="h-3.5 w-3.5" />
                             Filter
                         </button>
                         <button
@@ -284,7 +284,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                             onClick={resetFilters}
                             className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            <FaArrowRotateLeft className="h-3.5 w-3.5" />
+                            <LuRotateCcw className="h-3.5 w-3.5" />
                             Reset
                         </button>
                     </form>
@@ -345,7 +345,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                                 onClick={() => setModal({ open: true, type: "approval" })}
                                 className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white hover:bg-orange-500"
                             >
-                                <FaPenToSquare className="h-3.5 w-3.5" />
+                                <LuSquarePen className="h-3.5 w-3.5" />
                                 New Request
                             </button>
                         </div>
@@ -392,7 +392,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                                 onClick={() => setModal({ open: true, type: "adjustment" })}
                                 className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white hover:bg-orange-500"
                             >
-                                <FaSackDollar className="h-3.5 w-3.5" />
+                                <LuHandCoins className="h-3.5 w-3.5" />
                                 New Adjustment
                             </button>
                         </div>
@@ -430,7 +430,7 @@ export default function PaymentsIndex({ orders, payments, approvals, adjustments
                 {activeTab === "ledger" && (
                     <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/65">
                         <div className="mb-3 flex items-center gap-2">
-                            <FaClipboardList className="h-4 w-4 text-slate-500 dark:text-slate-300" />
+                            <LuClipboardList className="h-4 w-4 text-slate-500 dark:text-slate-300" />
                             <h2 className="text-sm font-black uppercase tracking-wide text-slate-700 dark:text-slate-200">Payment Ledger</h2>
                         </div>
 

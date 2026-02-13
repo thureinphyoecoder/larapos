@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { LuCheckCheck, LuHouse, LuPackage, LuTruck } from "react-icons/lu";
 import Swal from "sweetalert2";
 
 export default function Show({ order }) {
@@ -99,10 +100,10 @@ export default function Show({ order }) {
         return base.toLocaleDateString();
     })();
     const trackingSteps = [
-        { key: "confirmed", label: "Order Confirmed", icon: "✓" },
-        { key: "shipped", label: "Order Shipped", icon: "📦" },
-        { key: "out", label: "Out for Delivery", icon: "🚚" },
-        { key: "delivered", label: "Order Delivered", icon: "🏠" },
+        { key: "confirmed", label: "Order Confirmed", icon: LuCheckCheck },
+        { key: "shipped", label: "Order Shipped", icon: LuPackage },
+        { key: "out", label: "Out for Delivery", icon: LuTruck },
+        { key: "delivered", label: "Order Delivered", icon: LuHouse },
     ];
 
     return (
@@ -173,7 +174,7 @@ export default function Show({ order }) {
                                 return (
                                     <React.Fragment key={step.key}>
                                         <div className={`h-8 w-8 shrink-0 rounded-full text-white flex items-center justify-center text-sm font-bold ${done ? "bg-emerald-500" : "bg-slate-400"}`}>
-                                            {step.icon}
+                                            {step.icon ? <step.icon className="h-4 w-4" /> : null}
                                         </div>
                                         {idx < trackingSteps.length - 1 && (
                                             <div className={`h-1 flex-1 ${lineDone ? "bg-emerald-500" : "bg-slate-300"}`} />
