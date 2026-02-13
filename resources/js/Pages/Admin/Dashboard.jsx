@@ -212,9 +212,9 @@ export default function Dashboard({
         <AdminLayout>
             <Head title="Super Admin Dashboard" />
 
-            <div className="space-y-6">
-                <section className="rounded-3xl overflow-hidden border border-slate-800 bg-slate-900 text-white shadow-2xl">
-                    <div className="px-6 sm:px-8 py-6 sm:py-7 bg-[radial-gradient(circle_at_top_right,_rgba(251,146,60,0.35),_transparent_42%)]">
+            <div className="space-y-6 pb-8">
+                <section className="rounded-3xl overflow-hidden border border-slate-700/80 bg-slate-950/90 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)]">
+                    <div className="px-6 sm:px-8 py-6 sm:py-7 bg-[radial-gradient(circle_at_top_right,_rgba(251,146,60,0.35),_transparent_42%),radial-gradient(circle_at_left_center,_rgba(34,211,238,0.18),_transparent_45%)]">
                         <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto_1fr] items-center gap-4">
                             <div className="inline-flex p-1 rounded-2xl bg-white/10 border border-white/20 justify-self-start">
                                 {PERIODS.map((p) => (
@@ -244,7 +244,7 @@ export default function Dashboard({
 
                         <div className="mt-4 flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5">
                             <div className="xl:flex-1">
-                                <div className="h-44 sm:h-52 rounded-2xl border border-white/10 bg-black/15 p-4 overflow-hidden">
+                                <div className="h-44 sm:h-52 rounded-2xl border border-white/15 bg-black/20 p-4 overflow-hidden">
                                     {chartPoints.length ? (
                                         <svg viewBox="0 0 920 210" className="w-full h-full">
                                             <defs>
@@ -315,7 +315,7 @@ export default function Dashboard({
                 </section>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700">
                             <div>
                                 <h3 className="font-black text-slate-900 dark:text-slate-100">Stock by Shop</h3>
@@ -365,7 +365,7 @@ export default function Dashboard({
                         </div>
                     </div>
 
-                    <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700">
                             <div>
                                 <h3 className="font-black text-slate-900 dark:text-slate-100">Transfer Trend (7 days)</h3>
@@ -403,7 +403,7 @@ export default function Dashboard({
                     </div>
                 </section>
 
-                <section className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                     <div className="flex items-center justify-between border-b border-slate-50 p-5 dark:border-slate-700">
                         <h3 className="font-bold text-slate-800 dark:text-slate-100">Recent Orders</h3>
                         <span className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500">Realtime feed</span>
@@ -453,7 +453,7 @@ export default function Dashboard({
                 </section>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                         <div className="border-b border-slate-100 p-5 dark:border-slate-700">
                             <h3 className="font-bold text-slate-800 dark:text-slate-100">Team Active Status</h3>
                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Super Admin can quickly monitor who is on shift now.</p>
@@ -480,7 +480,7 @@ export default function Dashboard({
                         <SimplePager current={attendancePage} total={attendancePages} onChange={setAttendancePage} />
                     </div>
 
-                    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
                         <div className="border-b border-slate-100 p-5 dark:border-slate-700">
                             <h3 className="font-bold text-slate-800 dark:text-slate-100">Daily Close Submission Status</h3>
                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Manager reports by branch for today.</p>
@@ -553,35 +553,40 @@ function SimplePager({ current, total, onChange }) {
 function StatCard({ label, value, tone = "sky" }) {
     const tones = {
         sky: {
-            bar: "from-sky-500 to-cyan-400",
+            bar: "from-sky-500 via-cyan-400 to-blue-500",
             card: "from-sky-50 to-cyan-50",
+            darkCard: "dark:from-sky-500/10 dark:to-cyan-500/5",
             dot: "bg-cyan-500",
         },
         violet: {
-            bar: "from-violet-500 to-fuchsia-400",
+            bar: "from-violet-500 via-fuchsia-400 to-pink-500",
             card: "from-violet-50 to-fuchsia-50",
+            darkCard: "dark:from-violet-500/10 dark:to-fuchsia-500/5",
             dot: "bg-fuchsia-500",
         },
         emerald: {
-            bar: "from-emerald-500 to-lime-400",
+            bar: "from-emerald-500 via-teal-400 to-lime-500",
             card: "from-emerald-50 to-lime-50",
+            darkCard: "dark:from-emerald-500/10 dark:to-lime-500/5",
             dot: "bg-emerald-500",
         },
         amber: {
-            bar: "from-amber-500 to-orange-400",
+            bar: "from-amber-500 via-orange-500 to-rose-500",
             card: "from-amber-50 to-orange-50",
+            darkCard: "dark:from-amber-500/12 dark:to-orange-500/5",
             dot: "bg-amber-500",
         },
         rose: {
-            bar: "from-rose-500 to-pink-400",
+            bar: "from-rose-500 via-pink-500 to-orange-500",
             card: "from-rose-50 to-pink-50",
+            darkCard: "dark:from-rose-500/10 dark:to-pink-500/5",
             dot: "bg-rose-500",
         },
     };
     const style = tones[tone] || tones.sky;
 
     return (
-        <div className={`rounded-2xl border border-slate-100 bg-gradient-to-br ${style.card} p-4 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:to-slate-800`}>
+        <div className={`rounded-2xl border border-slate-200/70 bg-gradient-to-br ${style.card} p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-700/70 dark:from-slate-900/70 dark:to-slate-900/50 ${style.darkCard}`}>
             <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{label}</p>
                 <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`}></span>

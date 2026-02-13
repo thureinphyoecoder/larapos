@@ -1,5 +1,5 @@
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head, Link, router, useForm } from "@inertiajs/react";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import { useMemo, useState, useCallback } from "react";
 import {
     FaArrowRight,
@@ -110,13 +110,14 @@ function VariantSelect({
     onChange,
     variants,
     placeholder,
+    stockLabel,
     colorScheme = "indigo",
 }) {
     const options = [
         { value: "", label: placeholder },
         ...variants.map((v) => ({
             value: v.id,
-            label: `${v.product?.shop?.name} | ${v.product?.name} | ${v.sku} (လက်ကျန်: ${v.stock_level})`,
+            label: `${v.product?.shop?.name} | ${v.product?.name} | ${v.sku} (${stockLabel}: ${v.stock_level})`,
         })),
     ];
 
@@ -155,7 +156,12 @@ function ShopSelect({
     );
 }
 
-function SelectedVariantInfo({ variant, color = "orange" }) {
+function SelectedVariantInfo({
+    variant,
+    color = "orange",
+    selectedLabel,
+    stockLabel,
+}) {
     if (!variant) return null;
 
     const colorClasses = {
@@ -170,13 +176,13 @@ function SelectedVariantInfo({ variant, color = "orange" }) {
             <p
                 className={`mb-1 text-xs font-semibold ${color === "orange" ? "text-amber-700 dark:text-amber-300" : "text-sky-700 dark:text-sky-300"}`}
             >
-                ရွေးချယ်ထားသော SKU
+                {selectedLabel}
             </p>
             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                 {variant.product?.name}
             </p>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                SKU: {variant.sku} • လက်ကျန်:{" "}
+                SKU: {variant.sku} • {stockLabel}:{" "}
                 <span
                     className={`font-bold ${color === "orange" ? "text-amber-600 dark:text-amber-300" : "text-sky-600 dark:text-sky-300"}`}
                 >
@@ -225,6 +231,154 @@ export default function InventoryIndex({
     canManageShares = false,
     filters = {},
 }) {
+    const { locale } = usePage().props;
+    const fallbackLang =
+        typeof document !== "undefined" ? document.documentElement.lang : "en";
+    const activeLocale = String(locale || fallbackLang || "en").toLowerCase();
+    const isMM = activeLocale.startsWith("mm") || activeLocale.startsWith("my");
+    const text = useMemo(
+        () =>
+            isMM
+                ? {
+                      header: "ကုန်ပစ္စည်းစီမံခန့်ခွဲမှု",
+                      successAdjust: "ကုန်လက်ကျန် ပြင်ဆင်ပြီးပါပြီ",
+                      errorAdjust: "ကုန်လက်ကျန် ပြင်ဆင်ခြင်း မအောင်မြင်ပါ",
+                      successTransfer: "ဆိုင်ခွဲအကြား ကုန်လွှဲပြောင်းပြီးပါပြီ",
+                      errorTransfer: "ကုန်လွှဲပြောင်းမှု မအောင်မြင်ပါ",
+                      successShare: "Share Permission သိမ်းဆည်းပြီးပါပြီ",
+                      errorShare: "Share Permission အပ်ဒိတ်မအောင်မြင်ပါ",
+                      totalSku: "စုစုပေါင်း SKU",
+                      lowSku: "လက်ကျန်နည်းနေသော SKU",
+                      transferToday: "ယနေ့ လွှဲပြောင်းမှု",
+                      searchTitle: "ကုန်ပစ္စည်း ရှာဖွေခြင်း",
+                      searchSubtitle: "Product အမည်၊ SKU၊ Brand၊ Category (သို့) ဆိုင်ခွဲအမည် ဖြင့် ရှာဖွေနိုင်ပါသည်",
+                      searchText: "ရှာမည့်စာသား",
+                      pickShop: "ဆိုင်ခွဲ ရွေးချယ်ရန်",
+                      allShops: "ဆိုင်ခွဲအားလုံး",
+                      filterOption: "စစ်ထုတ်မှု ရွေးချယ်ချက်",
+                      lowStockOnly: "လက်ကျန်နည်းများသာ ပြရန်",
+                      search: "ရှာမည်",
+                      clear: "ပြန်ရှင်းမည်",
+                      actionsHelp: "Form တစ်ခုချင်းစီကို tab ခွဲပြီး လုပ်ဆောင်နိုင်ပါသည်။",
+                      adjustTitle: "လက်ကျန် ပြင်ဆင်ခြင်း",
+                      adjustSubtitle: "SKU အလိုက် ထည့်/လျှော့/သတ်မှတ် ပြုလုပ်ရန်",
+                      selectedSku: "ရွေးချယ်ထားသော SKU",
+                      stock: "လက်ကျန်",
+                      pickSku: "SKU ရွေးချယ်ပါ",
+                      pickSkuPlaceholder: "SKU ရွေးချယ်ပါ...",
+                      action: "လုပ်ဆောင်ချက်",
+                      add: "ထည့်",
+                      remove: "လျှော့",
+                      set: "သတ်မှတ်",
+                      qty: "အရေအတွက်",
+                      save: "သိမ်း",
+                      noteOptional: "မှတ်ချက် (ရွေးချယ်ရန်)",
+                      notePlaceholder: "မှတ်ချက်ရေးရန်...",
+                      transferTitle: "ဆိုင်ခွဲအကြား လွှဲပြောင်းခြင်း",
+                      transferSubtitle: "တစ်ဆိုင်ခွဲမှ အခြားဆိုင်ခွဲသို့ ကုန်ပစ္စည်း ရွှေ့ရန်",
+                      sourceSku: "မူလ SKU ရွေးချယ်ပါ",
+                      sourceSkuPlaceholder: "မူလ SKU ရွေးချယ်ပါ...",
+                      targetShop: "လွှဲပို့မည့် ဆိုင်ခွဲ",
+                      chooseShop: "ဆိုင်ရွေးပါ...",
+                      transferNote: "လွှဲပြောင်းမှု အကြောင်းအရာ...",
+                      transferNow: "လွှဲပြောင်းမည်",
+                      shareTitle: "Share Permission စီမံခန့်ခွဲမှု",
+                      shareSubtitle: "ဆိုင်ခွဲများအကြား Stock မျှဝေခွင့် ပေးရန် (Admin သာ)",
+                      fromShop: "မူလ ဆိုင်ခွဲ",
+                      toShop: "ပန်းတိုင် ဆိုင်ခွဲ",
+                      status: "အခြေအနေ",
+                      enabled: "ဖွင့်ထား",
+                      disabled: "ပိတ်ထား",
+                      activePermissions: "လက်ရှိ Permissions",
+                      inventoryTitle: "လက်ရှိ ကုန်လက်ကျန် စာရင်း",
+                      inventorySubtitle: "ပြင်ဆင် (သို့) လွှဲပြောင်း ခလုတ်များကို နှိပ်၍ အပေါ်ရှိ Form များတွင် အလိုအလျောက် ဖြည့်သွင်းပေးပါမည်",
+                      shop: "ဆိုင်ခွဲ",
+                      product: "ကုန်ပစ္စည်း",
+                      price: "ဈေးနှုန်း",
+                      actionCol: "လုပ်ဆောင်ချက်",
+                      adjust: "ပြင်ဆင်",
+                      transfer: "လွှဲပြောင်း",
+                      noProduct: "ကုန်ပစ္စည်း မရှိသေးပါ",
+                      transferHistory: "လွှဲပြောင်းမှု မှတ်တမ်း",
+                      transferHistorySub: "လတ်တလော လုပ်ဆောင်ခဲ့သော ကုန်လွှဲပြောင်းမှုများ",
+                      time: "အချိန်",
+                      fromShopCol: "မူလဆိုင်",
+                      toShopCol: "ပန်းတိုင်ဆိုင်",
+                      actor: "လုပ်ဆောင်သူ",
+                      noHistoryTitle: "မှတ်တမ်း မရှိသေးပါ",
+                      noHistorySub: "ကုန်လွှဲပြောင်းမှု မရှိသေးပါ",
+                  }
+                : {
+                      header: "Inventory Management",
+                      successAdjust: "Stock adjustment completed",
+                      errorAdjust: "Stock adjustment failed",
+                      successTransfer: "Stock transfer completed",
+                      errorTransfer: "Stock transfer failed",
+                      successShare: "Share permission saved",
+                      errorShare: "Share permission update failed",
+                      totalSku: "Total SKU",
+                      lowSku: "Low Stock SKU",
+                      transferToday: "Transfers Today",
+                      searchTitle: "Inventory Search",
+                      searchSubtitle: "Search by product name, SKU, brand, category, or shop name",
+                      searchText: "Search text",
+                      pickShop: "Shop filter",
+                      allShops: "All shops",
+                      filterOption: "Filter options",
+                      lowStockOnly: "Show low stock only",
+                      search: "Search",
+                      clear: "Clear",
+                      actionsHelp: "Forms are split into tabs for cleaner workflow.",
+                      adjustTitle: "Stock Adjustment",
+                      adjustSubtitle: "Add, remove, or set stock quantity by SKU",
+                      selectedSku: "Selected SKU",
+                      stock: "Stock",
+                      pickSku: "Select SKU",
+                      pickSkuPlaceholder: "Select SKU...",
+                      action: "Action",
+                      add: "Add",
+                      remove: "Remove",
+                      set: "Set",
+                      qty: "Quantity",
+                      save: "Save",
+                      noteOptional: "Note (optional)",
+                      notePlaceholder: "Write a note...",
+                      transferTitle: "Inter-shop Transfer",
+                      transferSubtitle: "Move stock from one shop to another",
+                      sourceSku: "Select source SKU",
+                      sourceSkuPlaceholder: "Select source SKU...",
+                      targetShop: "Destination shop",
+                      chooseShop: "Select shop...",
+                      transferNote: "Transfer note...",
+                      transferNow: "Transfer",
+                      shareTitle: "Share Permission Management",
+                      shareSubtitle: "Control stock sharing rules across shops (Admin only)",
+                      fromShop: "Source shop",
+                      toShop: "Destination shop",
+                      status: "Status",
+                      enabled: "Enabled",
+                      disabled: "Disabled",
+                      activePermissions: "Active Permissions",
+                      inventoryTitle: "Current Stock List",
+                      inventorySubtitle: "Use Adjust or Transfer actions to prefill forms above",
+                      shop: "Shop",
+                      product: "Product",
+                      price: "Price",
+                      actionCol: "Actions",
+                      adjust: "Adjust",
+                      transfer: "Transfer",
+                      noProduct: "No products found",
+                      transferHistory: "Transfer History",
+                      transferHistorySub: "Recent stock transfer records",
+                      time: "Time",
+                      fromShopCol: "From Shop",
+                      toShopCol: "To Shop",
+                      actor: "Actor",
+                      noHistoryTitle: "No records yet",
+                      noHistorySub: "No transfer activity yet",
+                  },
+        [isMM],
+    );
     const [q, setQ] = useState(filters?.q || "");
     const [selectedShop, setSelectedShop] = useState(
         filters?.shop_id ? String(filters.shop_id) : "",
@@ -342,28 +496,28 @@ export default function InventoryIndex({
     const submitAdjust = handleFormSubmit(
         adjustForm,
         route("admin.inventory.adjust"),
-        "ကုန်လက်ကျန် ပြင်ဆင်ပြီးပါပြီ",
-        "ကုန်လက်ကျန် ပြင်ဆင်ခြင်း မအောင်မြင်ပါ",
+        text.successAdjust,
+        text.errorAdjust,
         ["quantity", "note"],
     );
 
     const submitTransfer = handleFormSubmit(
         transferForm,
         route("admin.inventory.transfer"),
-        "ဆိုင်ခွဲအကြား ကုန်လွှဲပြောင်းပြီးပါပြီ",
-        "ကုန်လွှဲပြောင်းမှု မအောင်မြင်ပါ",
+        text.successTransfer,
+        text.errorTransfer,
         ["quantity", "note"],
     );
 
     const submitShare = handleFormSubmit(
         shareForm,
         route("admin.inventory.share"),
-        "Share Permission သိမ်းဆည်းပြီးပါပြီ",
-        "Share Permission အပ်ဒိတ်မအောင်မြင်ပါ",
+        text.successShare,
+        text.errorShare,
     );
 
     return (
-        <AdminLayout header="ကုန်ပစ္စည်းစီမံခန့်ခွဲမှု">
+        <AdminLayout header={text.header}>
             <Head title="Inventory Management" />
 
             <div className="space-y-8 pb-8">
@@ -383,19 +537,19 @@ export default function InventoryIndex({
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <MetricCard
-                        label="စုစုပေါင်း SKU"
+                        label={text.totalSku}
                         value={stats.totalVariants}
                         icon={<FaChartColumn />}
                         tone="indigo"
                     />
                     <MetricCard
-                        label="လက်ကျန်နည်းနေသော SKU"
+                        label={text.lowSku}
                         value={stats.lowStockCount}
                         icon={<FaTriangleExclamation />}
                         tone="red"
                     />
                     <MetricCard
-                        label="ယနေ့ လွှဲပြောင်းမှု"
+                        label={text.transferToday}
                         value={stats.transferCount}
                         icon={<FaArrowRightArrowLeft />}
                         tone="blue"
@@ -416,11 +570,10 @@ export default function InventoryIndex({
                         </div>
                         <div>
                             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                                ကုန်ပစ္စည်း ရှာဖွေခြင်း
+                                {text.searchTitle}
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Product အမည်၊ SKU၊ Brand၊ Category (သို့)
-                                ဆိုင်ခွဲအမည် ဖြင့် ရှာဖွေနိုင်ပါသည်
+                                {text.searchSubtitle}
                             </p>
                         </div>
                     </div>
@@ -430,7 +583,7 @@ export default function InventoryIndex({
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4"
                     >
                         <FormInput
-                            label="ရှာမည့်စာသား"
+                            label={text.searchText}
                             placeholder="Product / SKU / Brand / Category"
                             value={q}
                             onChange={(e) => setQ(e.target.value)}
@@ -438,17 +591,17 @@ export default function InventoryIndex({
                         />
 
                         <ShopSelect
-                            label="ဆိုင်ခွဲ ရွေးချယ်ရန်"
+                            label={text.pickShop}
                             value={selectedShop}
                             onChange={(e) => setSelectedShop(e.target.value)}
                             shops={shops}
-                            placeholder="ဆိုင်ခွဲအားလုံး"
+                            placeholder={text.allShops}
                             className="lg:col-span-2"
                         />
 
                         <div className="space-y-3 lg:col-span-2">
                             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400">
-                                စစ်ထုတ်မှု ရွေးချယ်ချက်
+                                {text.filterOption}
                             </label>
                             <label className="inline-flex cursor-pointer items-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 transition hover:border-sky-400 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-cyan-400">
                                 <input
@@ -461,7 +614,7 @@ export default function InventoryIndex({
                                 />
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                                     <FaTriangleExclamation className="mr-2 inline h-3.5 w-3.5 text-amber-500" />
-                                    လက်ကျန်နည်းများသာ ပြရန်
+                                    {text.lowStockOnly}
                                 </span>
                             </label>
                         </div>
@@ -472,7 +625,7 @@ export default function InventoryIndex({
                                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-sky-600 px-8 py-3.5 text-sm font-bold text-white transition duration-200 hover:bg-sky-500 md:flex-none"
                             >
                                 <FaMagnifyingGlass className="h-3.5 w-3.5" />
-                                ရှာမည်
+                                {text.search}
                             </button>
                             <button
                                 type="button"
@@ -480,7 +633,7 @@ export default function InventoryIndex({
                                 className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-8 py-3.5 text-sm font-semibold text-slate-700 transition duration-200 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 md:flex-none"
                             >
                                 <FaArrowRightArrowLeft className="h-3.5 w-3.5" />
-                                ပြန်ရှင်းမည်
+                                {text.clear}
                             </button>
                         </div>
                     </form>
@@ -494,7 +647,7 @@ export default function InventoryIndex({
                                 Inventory Actions
                             </h3>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Form တစ်ခုချင်းစီကို tab ခွဲပြီး လုပ်ဆောင်နိုင်ပါသည်။
+                                {text.actionsHelp}
                             </p>
                         </div>
                         <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
@@ -544,40 +697,46 @@ export default function InventoryIndex({
                                 </div>
                                 <div>
                                     <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                                        လက်ကျန် ပြင်ဆင်ခြင်း
+                                        {text.adjustTitle}
                                     </h4>
                                     <p className="text-xs text-slate-600 dark:text-slate-400">
-                                        SKU အလိုက် ထည့်/လျှော့/သတ်မှတ် ပြုလုပ်ရန်
+                                        {text.adjustSubtitle}
                                     </p>
                                 </div>
                             </div>
 
-                            <SelectedVariantInfo variant={selectedAdjustVariant} color="orange" />
+                            <SelectedVariantInfo
+                                variant={selectedAdjustVariant}
+                                color="orange"
+                                selectedLabel={text.selectedSku}
+                                stockLabel={text.stock}
+                            />
 
                             <form onSubmit={submitAdjust} className="space-y-4">
                                 <VariantSelect
-                                    label="SKU ရွေးချယ်ပါ"
+                                    label={text.pickSku}
                                     value={adjustForm.data.variant_id}
                                     onChange={(e) => adjustForm.setData("variant_id", e.target.value)}
                                     variants={variantRows}
-                                    placeholder="SKU ရွေးချယ်ပါ..."
+                                    placeholder={text.pickSkuPlaceholder}
+                                    stockLabel={text.stock}
                                     colorScheme="orange"
                                 />
 
                                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                                     <FormSelect
-                                        label="လုပ်ဆောင်ချက်"
+                                        label={text.action}
                                         value={adjustForm.data.action}
                                         onChange={(e) => adjustForm.setData("action", e.target.value)}
                                         options={[
-                                            { value: "add", label: "ထည့်" },
-                                            { value: "remove", label: "လျှော့" },
-                                            { value: "set", label: "သတ်မှတ်" },
+                                            { value: "add", label: text.add },
+                                            { value: "remove", label: text.remove },
+                                            { value: "set", label: text.set },
                                         ]}
                                         colorScheme="orange"
                                     />
                                     <FormInput
-                                        label="အရေအတွက်"
+                                        label={text.qty}
                                         type="number"
                                         min="0"
                                         value={adjustForm.data.quantity}
@@ -587,14 +746,14 @@ export default function InventoryIndex({
                                     <div className="flex items-end">
                                         <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 py-3 font-bold text-white transition hover:bg-orange-500">
                                             <FaFloppyDisk className="h-3.5 w-3.5" />
-                                            သိမ်း
+                                            {text.save}
                                         </button>
                                     </div>
                                 </div>
 
                                 <FormInput
-                                    label="မှတ်ချက် (ရွေးချယ်ရန်)"
-                                    placeholder="မှတ်ချက်ရေးရန်..."
+                                    label={text.noteOptional}
+                                    placeholder={text.notePlaceholder}
                                     value={adjustForm.data.note}
                                     onChange={(e) => adjustForm.setData("note", e.target.value)}
                                 />
@@ -610,37 +769,43 @@ export default function InventoryIndex({
                                 </div>
                                 <div>
                                     <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                                        ဆိုင်ခွဲအကြား လွှဲပြောင်းခြင်း
+                                        {text.transferTitle}
                                     </h4>
                                     <p className="text-xs text-slate-600 dark:text-slate-400">
-                                        တစ်ဆိုင်ခွဲမှ အခြားဆိုင်ခွဲသို့ ကုန်ပစ္စည်း ရွှေ့ရန်
+                                        {text.transferSubtitle}
                                     </p>
                                 </div>
                             </div>
 
-                            <SelectedVariantInfo variant={selectedTransferVariant} color="blue" />
+                            <SelectedVariantInfo
+                                variant={selectedTransferVariant}
+                                color="blue"
+                                selectedLabel={text.selectedSku}
+                                stockLabel={text.stock}
+                            />
 
                             <form onSubmit={submitTransfer} className="space-y-4">
                                 <VariantSelect
-                                    label="မူလ SKU ရွေးချယ်ပါ"
+                                    label={text.sourceSku}
                                     value={transferForm.data.variant_id}
                                     onChange={(e) => transferForm.setData("variant_id", e.target.value)}
                                     variants={variantRows}
-                                    placeholder="မူလ SKU ရွေးချယ်ပါ..."
+                                    placeholder={text.sourceSkuPlaceholder}
+                                    stockLabel={text.stock}
                                     colorScheme="blue"
                                 />
 
                                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                                     <ShopSelect
-                                        label="လွှဲပို့မည့် ဆိုင်ခွဲ"
+                                        label={text.targetShop}
                                         value={transferForm.data.to_shop_id}
                                         onChange={(e) => transferForm.setData("to_shop_id", e.target.value)}
                                         shops={shops}
-                                        placeholder="ဆိုင်ရွေးပါ..."
+                                        placeholder={text.chooseShop}
                                         colorScheme="blue"
                                     />
                                     <FormInput
-                                        label="အရေအတွက်"
+                                        label={text.qty}
                                         type="number"
                                         min="1"
                                         value={transferForm.data.quantity}
@@ -650,15 +815,15 @@ export default function InventoryIndex({
                                 </div>
 
                                 <FormInput
-                                    label="မှတ်ချက် (ရွေးချယ်ရန်)"
-                                    placeholder="လွှဲပြောင်းမှု အကြောင်းအရာ..."
+                                    label={text.noteOptional}
+                                    placeholder={text.transferNote}
                                     value={transferForm.data.note}
                                     onChange={(e) => transferForm.setData("note", e.target.value)}
                                 />
 
                                 <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 py-3.5 font-bold text-white transition hover:bg-orange-500">
                                     <FaTruckFast className="h-4 w-4" />
-                                    လွှဲပြောင်းမည်
+                                    {text.transferNow}
                                 </button>
                             </form>
                         </div>
@@ -672,45 +837,45 @@ export default function InventoryIndex({
                                 </div>
                                 <div>
                                     <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                                        Share Permission စီမံခန့်ခွဲမှု
+                                        {text.shareTitle}
                                     </h4>
                                     <p className="text-xs text-slate-600 dark:text-slate-400">
-                                        ဆိုင်ခွဲများအကြား Stock မျှဝေခွင့် ပေးရန် (Admin သာ)
+                                        {text.shareSubtitle}
                                     </p>
                                 </div>
                             </div>
 
                             <form onSubmit={submitShare} className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
                                 <ShopSelect
-                                    label="မူလ ဆိုင်ခွဲ"
+                                    label={text.fromShop}
                                     value={shareForm.data.from_shop_id}
                                     onChange={(e) => shareForm.setData("from_shop_id", e.target.value)}
                                     shops={shops}
-                                    placeholder="မူလ ဆိုင်"
+                                    placeholder={text.fromShop}
                                     colorScheme="purple"
                                 />
                                 <ShopSelect
-                                    label="ပန်းတိုင် ဆိုင်ခွဲ"
+                                    label={text.toShop}
                                     value={shareForm.data.to_shop_id}
                                     onChange={(e) => shareForm.setData("to_shop_id", e.target.value)}
                                     shops={shops}
-                                    placeholder="ပန်းတိုင် ဆိုင်"
+                                    placeholder={text.toShop}
                                     colorScheme="purple"
                                 />
                                 <FormSelect
-                                    label="အခြေအနေ"
+                                    label={text.status}
                                     value={shareForm.data.is_enabled ? "1" : "0"}
                                     onChange={(e) => shareForm.setData("is_enabled", e.target.value === "1")}
                                     options={[
-                                        { value: "1", label: "ဖွင့်ထား" },
-                                        { value: "0", label: "ပိတ်ထား" },
+                                        { value: "1", label: text.enabled },
+                                        { value: "0", label: text.disabled },
                                     ]}
                                     colorScheme="purple"
                                 />
                                 <div className="flex items-end">
                                     <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 py-3 font-bold text-white transition hover:bg-orange-500">
                                         <FaFloppyDisk className="h-3.5 w-3.5" />
-                                        သိမ်း
+                                        {text.save}
                                     </button>
                                 </div>
                             </form>
@@ -718,7 +883,7 @@ export default function InventoryIndex({
                             {shares.length > 0 && (
                                 <div>
                                     <h4 className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-300">
-                                        လက်ရှိ Permissions
+                                        {text.activePermissions}
                                     </h4>
                                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                                         {shares.map((share) => (
@@ -736,7 +901,7 @@ export default function InventoryIndex({
                                                             : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
                                                     }`}
                                                 >
-                                                    {share.is_enabled ? "ဖွင့်ထား" : "ပိတ်ထား"}
+                                                    {share.is_enabled ? text.enabled : text.disabled}
                                                 </span>
                                             </div>
                                         ))}
@@ -751,12 +916,10 @@ export default function InventoryIndex({
                 <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/70">
                     <div className="border-b border-slate-200 bg-slate-50 px-6 py-5 dark:border-slate-700 dark:bg-slate-900/80">
                         <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
-                            <FaClipboardList className="h-4 w-4" /> လက်ရှိ ကုန်လက်ကျန် စာရင်း
+                            <FaClipboardList className="h-4 w-4" /> {text.inventoryTitle}
                         </h3>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                            ပြင်ဆင် (သို့) လွှဲပြောင်း ခလုတ်များကို နှိပ်၍
-                            အပေါ်ရှိ Form များတွင် အလိုအလျောက်
-                            ဖြည့်သွင်းပေးပါမည်
+                            {text.inventorySubtitle}
                         </p>
                     </div>
                     <div className="overflow-x-auto">
@@ -766,13 +929,13 @@ export default function InventoryIndex({
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaStore className="h-3 w-3" />
-                                            ဆိုင်ခွဲ
+                                            {text.shop}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaBoxOpen className="h-3 w-3" />
-                                            ကုန်ပစ္စည်း
+                                            {text.product}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
@@ -784,19 +947,19 @@ export default function InventoryIndex({
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaSackDollar className="h-3 w-3" />
-                                            ဈေးနှုန်း
+                                            {text.price}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaChartColumn className="h-3 w-3" />
-                                            လက်ကျန်
+                                            {text.stock}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaGear className="h-3 w-3" />
-                                            လုပ်ဆောင်ချက်
+                                            {text.actionCol}
                                         </span>
                                     </th>
                                 </tr>
@@ -851,7 +1014,7 @@ export default function InventoryIndex({
                                                     >
                                                         <span className="inline-flex items-center gap-1">
                                                             <FaPenToSquare className="h-3 w-3" />
-                                                            ပြင်ဆင်
+                                                            {text.adjust}
                                                         </span>
                                                     </button>
                                                     <button
@@ -867,7 +1030,7 @@ export default function InventoryIndex({
                                                     >
                                                         <span className="inline-flex items-center gap-1">
                                                             <FaArrowRightArrowLeft className="h-3 w-3" />
-                                                            လွှဲပြောင်း
+                                                            {text.transfer}
                                                         </span>
                                                     </button>
                                                 </div>
@@ -877,7 +1040,7 @@ export default function InventoryIndex({
                                 ) : (
                                     <EmptyState
                                         icon={<FaBoxesStacked />}
-                                        title="ကုန်ပစ္စည်း မရှိသေးပါ"
+                                        title={text.noProduct}
                                     />
                                 )}
                             </tbody>
@@ -908,10 +1071,10 @@ export default function InventoryIndex({
                 <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/70">
                     <div className="border-b border-slate-200 bg-slate-50 px-6 py-5 dark:border-slate-700 dark:bg-slate-900/80">
                         <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
-                            <FaClipboardList className="h-4 w-4" /> လွှဲပြောင်းမှု မှတ်တမ်း
+                            <FaClipboardList className="h-4 w-4" /> {text.transferHistory}
                         </h3>
                         <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                            လတ်တလော လုပ်ဆောင်ခဲ့သော ကုန်လွှဲပြောင်းမှုများ
+                            {text.transferHistorySub}
                         </p>
                     </div>
                     <div className="overflow-x-auto">
@@ -921,19 +1084,19 @@ export default function InventoryIndex({
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaClock className="h-3 w-3" />
-                                            အချိန်
+                                            {text.time}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaStore className="h-3 w-3" />
-                                            မူလဆိုင်
+                                            {text.fromShopCol}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaArrowRight className="h-3 w-3" />
-                                            ပန်းတိုင်ဆိုင်
+                                            {text.toShopCol}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
@@ -945,13 +1108,13 @@ export default function InventoryIndex({
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaChartColumn className="h-3 w-3" />
-                                            အရေအတွက်
+                                            {text.qty}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
                                         <span className="inline-flex items-center gap-2">
                                             <FaUser className="h-3 w-3" />
-                                            လုပ်ဆောင်သူ
+                                            {text.actor}
                                         </span>
                                     </th>
                                     <th className="px-6 py-4">
@@ -1010,8 +1173,8 @@ export default function InventoryIndex({
                                 ) : (
                                     <EmptyState
                                         icon={<FaClipboardList />}
-                                        title="မှတ်တမ်း မရှိသေးပါ"
-                                        subtitle="ကုန်လွှဲပြောင်းမှု မရှိသေးပါ"
+                                        title={text.noHistoryTitle}
+                                        subtitle={text.noHistorySub}
                                         colSpan={7}
                                     />
                                 )}
