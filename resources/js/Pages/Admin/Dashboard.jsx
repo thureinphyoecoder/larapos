@@ -315,30 +315,30 @@ export default function Dashboard({
                 </section>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700">
                             <div>
-                                <h3 className="font-black text-slate-900">Stock by Shop</h3>
-                                <p className="text-xs text-slate-500 mt-1">Realtime inventory balance per branch</p>
+                                <h3 className="font-black text-slate-900 dark:text-slate-100">Stock by Shop</h3>
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Realtime inventory balance per branch</p>
                             </div>
                             <div className="text-right">
                                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
                                     <span className={`h-2 w-2 rounded-full ${refreshing ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`}></span>
                                     {refreshing ? "Syncing" : "Live"}
                                 </span>
-                                <p className="text-[11px] text-slate-400 mt-1">
+                                <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
                                     {lastSyncAt.toLocaleTimeString()}
                                 </p>
                             </div>
                         </div>
-                        <div className="p-5 space-y-4">
+                        <div className="space-y-4 p-5">
                             {stockSummary.length ? (
                                 stockSummary.map((item, idx) => (
-                                    <div key={`${item.shop}-${idx}`} className="rounded-2xl border border-slate-100 p-3.5 bg-slate-50/60">
+                                    <div key={`${item.shop}-${idx}`} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-3.5 dark:border-slate-700 dark:bg-slate-800/70">
                                         <div className="mb-2 flex items-center justify-between gap-3">
-                                            <div className="text-sm font-bold text-slate-700 truncate">{item.shop}</div>
-                                            <div className="text-xs text-slate-500">
-                                                Low stock: <span className="font-bold text-slate-700">{Number(item.low_stock_variants || 0)}</span>
+                                            <div className="truncate text-sm font-bold text-slate-700 dark:text-slate-200">{item.shop}</div>
+                                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                Low stock: <span className="font-bold text-slate-700 dark:text-slate-200">{Number(item.low_stock_variants || 0)}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -353,31 +353,31 @@ export default function Dashboard({
                                                     }}
                                                 ></div>
                                             </div>
-                                            <div className="w-24 text-right text-sm font-black text-slate-800">
+                                            <div className="w-24 text-right text-sm font-black text-slate-800 dark:text-slate-100">
                                                 {Number(item.total_stock || 0).toLocaleString()}
                                             </div>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-sm text-slate-400">No stock records yet.</p>
+                                <p className="text-sm text-slate-400 dark:text-slate-500">No stock records yet.</p>
                             )}
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700">
                             <div>
-                                <h3 className="font-black text-slate-900">Transfer Trend (7 days)</h3>
-                                <p className="text-xs text-slate-500 mt-1">Inter-shop stock sharing performance</p>
+                                <h3 className="font-black text-slate-900 dark:text-slate-100">Transfer Trend (7 days)</h3>
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Inter-shop stock sharing performance</p>
                             </div>
-                            <span className="text-xs text-slate-500 uppercase tracking-wider">Shared qty</span>
+                            <span className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Shared qty</span>
                         </div>
-                        <div className="p-5 space-y-3.5">
+                        <div className="space-y-3.5 p-5">
                             {transferSummary.length ? (
                                 transferSummary.map((item) => (
-                                    <div key={item.date} className="rounded-2xl border border-slate-100 bg-slate-50/60 px-3 py-2.5 flex items-center gap-3">
-                                        <div className="w-24 text-xs text-slate-500">
+                                    <div key={item.date} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800/70">
+                                        <div className="w-24 text-xs text-slate-500 dark:text-slate-400">
                                             {new Date(item.date).toLocaleDateString()}
                                         </div>
                                         <div className="flex-1 h-3.5 bg-slate-200/70 rounded-full overflow-hidden">
@@ -391,27 +391,27 @@ export default function Dashboard({
                                                 }}
                                             ></div>
                                         </div>
-                                        <div className="w-14 text-right text-sm font-black text-slate-800">
+                                        <div className="w-14 text-right text-sm font-black text-slate-800 dark:text-slate-100">
                                             {Number(item.qty || 0)}
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-sm text-slate-400">No transfer activity yet.</p>
+                                <p className="text-sm text-slate-400 dark:text-slate-500">No transfer activity yet.</p>
                             )}
                         </div>
                     </div>
                 </section>
 
-                <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-5 border-b border-slate-50 flex items-center justify-between">
-                        <h3 className="font-bold text-slate-800">Recent Orders</h3>
-                        <span className="text-xs text-slate-400 uppercase tracking-wider">Realtime feed</span>
+                <section className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                    <div className="flex items-center justify-between border-b border-slate-50 p-5 dark:border-slate-700">
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100">Recent Orders</h3>
+                        <span className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500">Realtime feed</span>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
                             <thead>
-                                <tr className="text-slate-400 text-[11px] uppercase tracking-widest border-b border-slate-50">
+                                <tr className="border-b border-slate-50 text-[11px] uppercase tracking-widest text-slate-400 dark:border-slate-700 dark:text-slate-500">
                                     <th className="px-5 py-3 font-bold">Order</th>
                                     <th className="px-5 py-3 font-bold">Customer</th>
                                     <th className="px-5 py-3 font-bold">Shop</th>
@@ -419,17 +419,17 @@ export default function Dashboard({
                                     <th className="px-5 py-3 font-bold">Status</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50">
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                                 {orders.length ? (
                                     orders.map((order) => {
                                         const statusKey = String(order.status || "pending").toLowerCase();
                                         const tone = ORDER_STATUS_TONES[statusKey] || "bg-slate-100 text-slate-700";
                                         return (
-                                            <tr key={order.id} className="hover:bg-slate-50/70 transition">
-                                                <td className="px-5 py-3 font-bold text-slate-800">#{order.id}</td>
-                                                <td className="px-5 py-3 text-slate-600">{order.user?.name || "Customer not set"}</td>
-                                                <td className="px-5 py-3 text-slate-600">{order.shop?.name || "Shop not assigned"}</td>
-                                                <td className="px-5 py-3 font-semibold text-slate-800">
+                                            <tr key={order.id} className="transition hover:bg-slate-50/70 dark:hover:bg-slate-800/60">
+                                                <td className="px-5 py-3 font-bold text-slate-800 dark:text-slate-100">#{order.id}</td>
+                                                <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{order.user?.name || "Customer not set"}</td>
+                                                <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{order.shop?.name || "Shop not assigned"}</td>
+                                                <td className="px-5 py-3 font-semibold text-slate-800 dark:text-slate-100">
                                                     {Number(order.total_amount || 0).toLocaleString()} MMK
                                                 </td>
                                                 <td className="px-5 py-3">
@@ -442,7 +442,7 @@ export default function Dashboard({
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan="5" className="p-10 text-center text-slate-400">
+                                        <td colSpan="5" className="p-10 text-center text-slate-400 dark:text-slate-500">
                                             No orders available yet.
                                         </td>
                                     </tr>
@@ -453,18 +453,18 @@ export default function Dashboard({
                 </section>
 
                 <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div className="p-5 border-b border-slate-100">
-                            <h3 className="font-bold text-slate-800">Team Active Status</h3>
-                            <p className="text-xs text-slate-500 mt-1">Super Admin can quickly monitor who is on shift now.</p>
+                    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                        <div className="border-b border-slate-100 p-5 dark:border-slate-700">
+                            <h3 className="font-bold text-slate-800 dark:text-slate-100">Team Active Status</h3>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Super Admin can quickly monitor who is on shift now.</p>
                         </div>
-                        <div className="divide-y divide-slate-100">
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
                             {attendanceRows.length ? (
                                 attendanceRows.map((member) => (
-                                    <div key={member.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                                    <div key={member.id} className="flex items-center justify-between gap-3 px-5 py-3">
                                         <div>
-                                            <p className="font-semibold text-slate-800">{member.name}</p>
-                                            <p className="text-xs uppercase text-slate-500">
+                                            <p className="font-semibold text-slate-800 dark:text-slate-100">{member.name}</p>
+                                            <p className="text-xs uppercase text-slate-500 dark:text-slate-400">
                                                 {member.role || "staff"} {member.shop ? `• ${member.shop}` : ""}
                                             </p>
                                         </div>
@@ -474,34 +474,34 @@ export default function Dashboard({
                                     </div>
                                 ))
                             ) : (
-                                <div className="px-5 py-8 text-sm text-slate-400">No staff attendance data.</div>
+                                <div className="px-5 py-8 text-sm text-slate-400 dark:text-slate-500">No staff attendance data.</div>
                             )}
                         </div>
                         <SimplePager current={attendancePage} total={attendancePages} onChange={setAttendancePage} />
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div className="p-5 border-b border-slate-100">
-                            <h3 className="font-bold text-slate-800">Daily Close Submission Status</h3>
-                            <p className="text-xs text-slate-500 mt-1">Manager reports by branch for today.</p>
+                    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                        <div className="border-b border-slate-100 p-5 dark:border-slate-700">
+                            <h3 className="font-bold text-slate-800 dark:text-slate-100">Daily Close Submission Status</h3>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Manager reports by branch for today.</p>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="text-left text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-100">
+                                    <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-400 dark:border-slate-700 dark:text-slate-500">
                                         <th className="px-5 py-3">Branch</th>
                                         <th className="px-5 py-3">Orders</th>
                                         <th className="px-5 py-3">Net</th>
                                         <th className="px-5 py-3">Status</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {closeStatusRows.length ? (
                                         closeStatusRows.map((row) => (
                                             <tr key={row.shop_id}>
-                                                <td className="px-5 py-3 font-semibold text-slate-700">{row.shop}</td>
-                                                <td className="px-5 py-3">{row.orders_count}</td>
-                                                <td className="px-5 py-3">{Number(row.net_amount || 0).toLocaleString()} MMK</td>
+                                                <td className="px-5 py-3 font-semibold text-slate-700 dark:text-slate-200">{row.shop}</td>
+                                                <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{row.orders_count}</td>
+                                                <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{Number(row.net_amount || 0).toLocaleString()} MMK</td>
                                                 <td className="px-5 py-3">
                                                     <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${row.submitted ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
                                                         {row.submitted ? "submitted" : "pending"}
@@ -511,7 +511,7 @@ export default function Dashboard({
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="4" className="px-5 py-10 text-center text-slate-400">No branch close status.</td>
+                                            <td colSpan="4" className="px-5 py-10 text-center text-slate-400 dark:text-slate-500">No branch close status.</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -528,20 +528,20 @@ export default function Dashboard({
 function SimplePager({ current, total, onChange }) {
     if (total <= 1) return null;
     return (
-        <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
+        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 dark:border-slate-700">
             <button
                 type="button"
                 onClick={() => onChange(Math.max(1, current - 1))}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300"
                 disabled={current <= 1}
             >
                 Previous
             </button>
-            <span className="text-xs text-slate-500">Page {current} / {total}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Page {current} / {total}</span>
             <button
                 type="button"
                 onClick={() => onChange(Math.min(total, current + 1))}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300"
                 disabled={current >= total}
             >
                 Next
@@ -581,13 +581,13 @@ function StatCard({ label, value, tone = "sky" }) {
     const style = tones[tone] || tones.sky;
 
     return (
-        <div className={`rounded-2xl border border-slate-100 bg-gradient-to-br ${style.card} p-4 shadow-sm`}>
+        <div className={`rounded-2xl border border-slate-100 bg-gradient-to-br ${style.card} p-4 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:to-slate-800`}>
             <div className="flex items-center justify-between">
-                <p className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">{label}</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{label}</p>
                 <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`}></span>
             </div>
             <div className="mt-3 flex items-center justify-between">
-                <p className="text-2xl font-black text-slate-900">{value}</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{value}</p>
                 <div className={`h-2 w-14 rounded-full bg-gradient-to-r ${style.bar}`}></div>
             </div>
         </div>

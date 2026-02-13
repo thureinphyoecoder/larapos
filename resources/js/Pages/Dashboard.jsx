@@ -3,11 +3,11 @@ import { Head, Link, usePage } from "@inertiajs/react";
 import { useEffect, useMemo, useState } from "react";
 
 const statusClasses = {
-    pending: "bg-amber-100 text-amber-700",
-    processing: "bg-sky-100 text-sky-700",
-    shipped: "bg-indigo-100 text-indigo-700",
-    delivered: "bg-emerald-100 text-emerald-700",
-    cancelled: "bg-rose-100 text-rose-700",
+    pending: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+    processing: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+    shipped: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300",
+    delivered: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+    cancelled: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
 };
 
 function money(value) {
@@ -85,34 +85,33 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
             <Head title="Customer Dashboard" />
 
             <div
-                className="min-h-screen bg-slate-100 py-8 sm:py-10"
-                style={{ fontFamily: '"Plus Jakarta Sans", "Segoe UI", sans-serif' }}
+                className="min-h-screen bg-slate-100 py-8 dark:bg-slate-950 sm:py-10"
             >
                 <div className="mx-auto max-w-6xl space-y-8 px-4 sm:px-6 lg:px-8">
-                    <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                    <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-700 dark:bg-slate-900/80">
                         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-orange-100 blur-2xl" />
-                        <div className="absolute -bottom-16 left-1/3 h-52 w-52 rounded-full bg-sky-100 blur-2xl" />
+                        <div className="absolute -bottom-16 left-1/3 h-52 w-52 rounded-full bg-sky-100 blur-2xl dark:bg-sky-500/10" />
                         <div className="relative grid gap-6 lg:grid-cols-[1.3fr_1fr] lg:items-end">
                             <div>
                                 <p className="text-[11px] font-extrabold uppercase tracking-[0.28em] text-slate-400">
                                     Customer Workspace
                                 </p>
-                                <h1 className="mt-3 text-3xl font-black leading-tight text-slate-900 sm:text-4xl">
+                                <h1 className="mt-3 text-3xl font-black leading-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
                                     Welcome, {userName}
                                 </h1>
-                                <p className="mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
+                                <p className="mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-300 sm:text-base">
                                     Your shopping control center with quick access to products, orders, and support.
                                 </p>
                                 <div className="mt-5 flex flex-wrap gap-3">
                                     <Link
                                         href={route("home")}
-                                        className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-slate-800"
+                                        className="rounded-2xl bg-orange-600 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-orange-500"
                                     >
                                         Explore Store
                                     </Link>
                                     <Link
                                         href={route("orders.index")}
-                                        className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-slate-400"
+                                        className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-orange-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                                     >
                                         View Orders
                                     </Link>
@@ -120,17 +119,17 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                             </div>
 
                             <div className="grid grid-cols-3 gap-3">
-                                <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4">
+                                <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-500/30 dark:bg-orange-500/10">
                                     <p className="text-[11px] font-bold uppercase tracking-wider text-orange-600">Orders</p>
-                                    <p className="mt-2 text-2xl font-black text-slate-900">{orderCount}</p>
+                                    <p className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">{orderCount}</p>
                                 </div>
-                                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-500/30 dark:bg-emerald-500/10">
                                     <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Delivered</p>
-                                    <p className="mt-2 text-2xl font-black text-slate-900">{dashboardMetrics.delivered}</p>
+                                    <p className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">{dashboardMetrics.delivered}</p>
                                 </div>
-                                <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
+                                <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-500/30 dark:bg-sky-500/10">
                                     <p className="text-[11px] font-bold uppercase tracking-wider text-sky-600">Pending</p>
-                                    <p className="mt-2 text-2xl font-black text-slate-900">{dashboardMetrics.pending}</p>
+                                    <p className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">{dashboardMetrics.pending}</p>
                                 </div>
                             </div>
                         </div>
@@ -196,38 +195,38 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <Link
                             href={route("home")}
-                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/80"
                         >
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Shopping</p>
-                            <p className="mt-2 text-lg font-black text-slate-900">Discover Products</p>
+                            <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">Discover Products</p>
                             <span className="mt-2 inline-flex text-xs font-bold text-orange-600">Open store →</span>
                         </Link>
                         <Link
                             href={route("orders.index")}
-                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/80"
                         >
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Orders</p>
-                            <p className="mt-2 text-lg font-black text-slate-900">Track and manage</p>
+                            <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">Track and manage</p>
                             <span className="mt-2 inline-flex text-xs font-bold text-sky-600">Go to orders →</span>
                         </Link>
                         <Link
                             href={route("support.index")}
-                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/80"
                         >
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Support</p>
-                            <p className="mt-2 text-lg font-black text-slate-900">Live help chat</p>
+                            <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">Live help chat</p>
                             <span className="mt-2 inline-flex text-xs font-bold text-orange-600">Start chat →</span>
                         </Link>
-                        <div className="rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
+                        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-white shadow-sm">
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-300">Recent Value</p>
                             <p className="mt-2 text-lg font-black">{money(dashboardMetrics.revenue)}</p>
                             <span className="mt-2 inline-flex text-xs font-bold text-slate-300">Last {recentOrders.length} orders</span>
                         </div>
                     </section>
 
-                    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                        <div className="flex items-center justify-between border-b border-slate-100 p-6">
-                            <h3 className="text-lg font-black text-slate-900">Recent Orders</h3>
+                    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                        <div className="flex items-center justify-between border-b border-slate-100 p-6 dark:border-slate-700">
+                            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Recent Orders</h3>
                             <Link href={route("orders.index")} className="text-xs font-bold text-orange-600">
                                 View all
                             </Link>
@@ -241,10 +240,10 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                                         <Link
                                             key={order.id}
                                             href={route("orders.show", order.id)}
-                                            className="block rounded-2xl border border-slate-100 bg-slate-50 p-4"
+                                            className="block rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800"
                                         >
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm font-black text-slate-800">#{order.id}</span>
+                                                <span className="text-sm font-black text-slate-800 dark:text-slate-100">#{order.id}</span>
                                                 <span
                                                     className={`rounded-full px-2 py-1 text-[10px] font-extrabold uppercase ${
                                                         statusClasses[statusKey] || "bg-slate-100 text-slate-600"
@@ -253,7 +252,7 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                                                     {order.status}
                                                 </span>
                                             </div>
-                                            <p className="mt-2 text-sm font-bold text-slate-700">{money(order.total_amount)}</p>
+                                            <p className="mt-2 text-sm font-bold text-slate-700 dark:text-slate-300">{money(order.total_amount)}</p>
                                         </Link>
                                     );
                                 })
@@ -265,20 +264,20 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                         <div className="hidden overflow-x-auto sm:block">
                             <table className="w-full border-collapse text-left">
                                 <thead>
-                                    <tr className="border-b border-slate-100 text-[11px] uppercase tracking-widest text-slate-400">
+                                    <tr className="border-b border-slate-100 text-[11px] uppercase tracking-widest text-slate-400 dark:border-slate-700 dark:text-slate-500">
                                         <th className="px-6 py-4 font-bold">Order ID</th>
                                         <th className="px-6 py-4 font-bold">Status</th>
                                         <th className="px-6 py-4 font-bold">Total</th>
                                         <th className="px-6 py-4 font-bold">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-50">
+                                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                                     {recentOrders.length ? (
                                         recentOrders.map((order) => {
                                             const statusKey = String(order.status || "pending").toLowerCase();
                                             return (
-                                                <tr key={order.id} className="transition hover:bg-slate-50">
-                                                    <td className="px-6 py-4 font-black text-slate-800">#{order.id}</td>
+                                                <tr key={order.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                                                    <td className="px-6 py-4 font-black text-slate-800 dark:text-slate-100">#{order.id}</td>
                                                     <td className="px-6 py-4">
                                                         <span
                                                             className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold uppercase ${
@@ -288,7 +287,7 @@ export default function Dashboard({ orderCount = 0, recentOrders = [] }) {
                                                             {order.status}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 font-bold text-slate-800">{money(order.total_amount)}</td>
+                                                    <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-100">{money(order.total_amount)}</td>
                                                     <td className="px-6 py-4 text-sm">
                                                         <Link
                                                             href={route("orders.show", order.id)}
