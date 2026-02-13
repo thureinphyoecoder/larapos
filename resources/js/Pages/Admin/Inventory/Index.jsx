@@ -229,6 +229,7 @@ export default function InventoryIndex({
     const [selectedShop, setSelectedShop] = useState(
         filters?.shop_id ? String(filters.shop_id) : "",
     );
+    const [actionTab, setActionTab] = useState("adjust");
     const [lowStockOnly, setLowStockOnly] = useState(
         Boolean(filters?.low_stock),
     );
@@ -486,282 +487,265 @@ export default function InventoryIndex({
                 </div>
 
                 {/* Action Forms */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Stock Adjustment */}
-                    <div className="rounded-3xl border border-amber-200 bg-white p-6 shadow-sm dark:border-amber-500/30 dark:bg-slate-900/70">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300">
-                                <FaPenToSquare className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
-                                    လက်ကျန် ပြင်ဆင်ခြင်း
-                                </h3>
-                                <p className="text-xs text-slate-600 dark:text-slate-400">
-                                    SKU အလိုက် ထည့်/လျှော့/သတ်မှတ် ပြုလုပ်ရန်
-                                </p>
-                            </div>
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/70">
+                    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
+                                Inventory Actions
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Form တစ်ခုချင်းစီကို tab ခွဲပြီး လုပ်ဆောင်နိုင်ပါသည်။
+                            </p>
                         </div>
+                        <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
+                            <button
+                                type="button"
+                                onClick={() => setActionTab("adjust")}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                                    actionTab === "adjust"
+                                        ? "bg-orange-600 text-white"
+                                        : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
+                                }`}
+                            >
+                                Adjust
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActionTab("transfer")}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                                    actionTab === "transfer"
+                                        ? "bg-orange-600 text-white"
+                                        : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
+                                }`}
+                            >
+                                Transfer
+                            </button>
+                            {canManageShares && (
+                                <button
+                                    type="button"
+                                    onClick={() => setActionTab("share")}
+                                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                                        actionTab === "share"
+                                            ? "bg-orange-600 text-white"
+                                            : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
+                                    }`}
+                                >
+                                    Share Permission
+                                </button>
+                            )}
+                        </div>
+                    </div>
 
-                        <SelectedVariantInfo
-                            variant={selectedAdjustVariant}
-                            color="orange"
-                        />
+                    {actionTab === "adjust" && (
+                        <div className="rounded-2xl border border-amber-200 bg-white p-5 dark:border-amber-500/30 dark:bg-slate-900/70">
+                            <div className="mb-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300">
+                                    <FaPenToSquare className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <h4 className="text-base font-black text-slate-900 dark:text-slate-100">
+                                        လက်ကျန် ပြင်ဆင်ခြင်း
+                                    </h4>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                                        SKU အလိုက် ထည့်/လျှော့/သတ်မှတ် ပြုလုပ်ရန်
+                                    </p>
+                                </div>
+                            </div>
 
-                        <form onSubmit={submitAdjust} className="space-y-4">
-                            <VariantSelect
-                                label="SKU ရွေးချယ်ပါ"
-                                value={adjustForm.data.variant_id}
-                                onChange={(e) =>
-                                    adjustForm.setData(
-                                        "variant_id",
-                                        e.target.value,
-                                    )
-                                }
-                                variants={variantRows}
-                                placeholder="SKU ရွေးချယ်ပါ..."
-                                colorScheme="orange"
-                            />
+                            <SelectedVariantInfo variant={selectedAdjustVariant} color="orange" />
 
-                            <div className="grid grid-cols-3 gap-3">
-                                <FormSelect
-                                    label="လုပ်ဆောင်ချက်"
-                                    value={adjustForm.data.action}
-                                    onChange={(e) =>
-                                        adjustForm.setData(
-                                            "action",
-                                            e.target.value,
-                                        )
-                                    }
-                                    options={[
-                                        { value: "add", label: "ထည့်" },
-                                        { value: "remove", label: "လျှော့" },
-                                        { value: "set", label: "သတ်မှတ်" },
-                                    ]}
+                            <form onSubmit={submitAdjust} className="space-y-4">
+                                <VariantSelect
+                                    label="SKU ရွေးချယ်ပါ"
+                                    value={adjustForm.data.variant_id}
+                                    onChange={(e) => adjustForm.setData("variant_id", e.target.value)}
+                                    variants={variantRows}
+                                    placeholder="SKU ရွေးချယ်ပါ..."
                                     colorScheme="orange"
                                 />
+
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                                    <FormSelect
+                                        label="လုပ်ဆောင်ချက်"
+                                        value={adjustForm.data.action}
+                                        onChange={(e) => adjustForm.setData("action", e.target.value)}
+                                        options={[
+                                            { value: "add", label: "ထည့်" },
+                                            { value: "remove", label: "လျှော့" },
+                                            { value: "set", label: "သတ်မှတ်" },
+                                        ]}
+                                        colorScheme="orange"
+                                    />
+                                    <FormInput
+                                        label="အရေအတွက်"
+                                        type="number"
+                                        min="0"
+                                        value={adjustForm.data.quantity}
+                                        onChange={(e) => adjustForm.setData("quantity", Number(e.target.value))}
+                                        required
+                                    />
+                                    <div className="flex items-end">
+                                        <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 py-3 font-bold text-white transition hover:bg-orange-500">
+                                            <FaFloppyDisk className="h-3.5 w-3.5" />
+                                            သိမ်း
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <FormInput
-                                    label="အရေအတွက်"
-                                    type="number"
-                                    min="0"
-                                    value={adjustForm.data.quantity}
-                                    onChange={(e) =>
-                                        adjustForm.setData(
-                                            "quantity",
-                                            Number(e.target.value),
-                                        )
-                                    }
-                                    required
+                                    label="မှတ်ချက် (ရွေးချယ်ရန်)"
+                                    placeholder="မှတ်ချက်ရေးရန်..."
+                                    value={adjustForm.data.note}
+                                    onChange={(e) => adjustForm.setData("note", e.target.value)}
+                                />
+                            </form>
+                        </div>
+                    )}
+
+                    {actionTab === "transfer" && (
+                        <div className="rounded-2xl border border-sky-200 bg-white p-5 dark:border-sky-500/30 dark:bg-slate-900/70">
+                            <div className="mb-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300">
+                                    <FaArrowRightArrowLeft className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <h4 className="text-base font-black text-slate-900 dark:text-slate-100">
+                                        ဆိုင်ခွဲအကြား လွှဲပြောင်းခြင်း
+                                    </h4>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                                        တစ်ဆိုင်ခွဲမှ အခြားဆိုင်ခွဲသို့ ကုန်ပစ္စည်း ရွှေ့ရန်
+                                    </p>
+                                </div>
+                            </div>
+
+                            <SelectedVariantInfo variant={selectedTransferVariant} color="blue" />
+
+                            <form onSubmit={submitTransfer} className="space-y-4">
+                                <VariantSelect
+                                    label="မူလ SKU ရွေးချယ်ပါ"
+                                    value={transferForm.data.variant_id}
+                                    onChange={(e) => transferForm.setData("variant_id", e.target.value)}
+                                    variants={variantRows}
+                                    placeholder="မူလ SKU ရွေးချယ်ပါ..."
+                                    colorScheme="blue"
+                                />
+
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                    <ShopSelect
+                                        label="လွှဲပို့မည့် ဆိုင်ခွဲ"
+                                        value={transferForm.data.to_shop_id}
+                                        onChange={(e) => transferForm.setData("to_shop_id", e.target.value)}
+                                        shops={shops}
+                                        placeholder="ဆိုင်ရွေးပါ..."
+                                        colorScheme="blue"
+                                    />
+                                    <FormInput
+                                        label="အရေအတွက်"
+                                        type="number"
+                                        min="1"
+                                        value={transferForm.data.quantity}
+                                        onChange={(e) => transferForm.setData("quantity", Number(e.target.value))}
+                                        required
+                                    />
+                                </div>
+
+                                <FormInput
+                                    label="မှတ်ချက် (ရွေးချယ်ရန်)"
+                                    placeholder="လွှဲပြောင်းမှု အကြောင်းအရာ..."
+                                    value={transferForm.data.note}
+                                    onChange={(e) => transferForm.setData("note", e.target.value)}
+                                />
+
+                                <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 py-3.5 font-bold text-white transition hover:bg-orange-500">
+                                    <FaTruckFast className="h-4 w-4" />
+                                    လွှဲပြောင်းမည်
+                                </button>
+                            </form>
+                        </div>
+                    )}
+
+                    {actionTab === "share" && canManageShares && (
+                        <div className="rounded-2xl border border-orange-200 bg-white p-5 dark:border-orange-500/30 dark:bg-slate-900/70">
+                            <div className="mb-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
+                                    <FaLock className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h4 className="text-base font-black text-slate-900 dark:text-slate-100">
+                                        Share Permission စီမံခန့်ခွဲမှု
+                                    </h4>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                                        ဆိုင်ခွဲများအကြား Stock မျှဝေခွင့် ပေးရန် (Admin သာ)
+                                    </p>
+                                </div>
+                            </div>
+
+                            <form onSubmit={submitShare} className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+                                <ShopSelect
+                                    label="မူလ ဆိုင်ခွဲ"
+                                    value={shareForm.data.from_shop_id}
+                                    onChange={(e) => shareForm.setData("from_shop_id", e.target.value)}
+                                    shops={shops}
+                                    placeholder="မူလ ဆိုင်"
+                                    colorScheme="purple"
+                                />
+                                <ShopSelect
+                                    label="ပန်းတိုင် ဆိုင်ခွဲ"
+                                    value={shareForm.data.to_shop_id}
+                                    onChange={(e) => shareForm.setData("to_shop_id", e.target.value)}
+                                    shops={shops}
+                                    placeholder="ပန်းတိုင် ဆိုင်"
+                                    colorScheme="purple"
+                                />
+                                <FormSelect
+                                    label="အခြေအနေ"
+                                    value={shareForm.data.is_enabled ? "1" : "0"}
+                                    onChange={(e) => shareForm.setData("is_enabled", e.target.value === "1")}
+                                    options={[
+                                        { value: "1", label: "ဖွင့်ထား" },
+                                        { value: "0", label: "ပိတ်ထား" },
+                                    ]}
+                                    colorScheme="purple"
                                 />
                                 <div className="flex items-end">
-                                    <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 font-bold text-white transition hover:bg-amber-400">
+                                    <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 py-3 font-bold text-white transition hover:bg-orange-500">
                                         <FaFloppyDisk className="h-3.5 w-3.5" />
                                         သိမ်း
                                     </button>
                                 </div>
-                            </div>
+                            </form>
 
-                            <FormInput
-                                label="မှတ်ချက် (ရွေးချယ်ရန်)"
-                                placeholder="မှတ်ချက်ရေးရန်..."
-                                value={adjustForm.data.note}
-                                onChange={(e) =>
-                                    adjustForm.setData("note", e.target.value)
-                                }
-                            />
-                        </form>
-                    </div>
-
-                    {/* Transfer Form */}
-                    <div className="rounded-3xl border border-sky-200 bg-white p-6 shadow-sm dark:border-sky-500/30 dark:bg-slate-900/70">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300">
-                                <FaArrowRightArrowLeft className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
-                                    ဆိုင်ခွဲအကြား လွှဲပြောင်းခြင်း
-                                </h3>
-                                <p className="text-xs text-slate-600 dark:text-slate-400">
-                                    တစ်ဆိုင်ခွဲမှ အခြားဆိုင်ခွဲသို့ ကုန်ပစ္စည်း
-                                    ရွှေ့ရန်
-                                </p>
-                            </div>
-                        </div>
-
-                        <SelectedVariantInfo
-                            variant={selectedTransferVariant}
-                            color="blue"
-                        />
-
-                        <form onSubmit={submitTransfer} className="space-y-4">
-                            <VariantSelect
-                                label="မူလ SKU ရွေးချယ်ပါ"
-                                value={transferForm.data.variant_id}
-                                onChange={(e) =>
-                                    transferForm.setData(
-                                        "variant_id",
-                                        e.target.value,
-                                    )
-                                }
-                                variants={variantRows}
-                                placeholder="မူလ SKU ရွေးချယ်ပါ..."
-                                colorScheme="blue"
-                            />
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <ShopSelect
-                                    label="လွှဲပို့မည့် ဆိုင်ခွဲ"
-                                    value={transferForm.data.to_shop_id}
-                                    onChange={(e) =>
-                                        transferForm.setData(
-                                            "to_shop_id",
-                                            e.target.value,
-                                        )
-                                    }
-                                    shops={shops}
-                                    placeholder="ဆိုင်ရွေးပါ..."
-                                    colorScheme="blue"
-                                />
-                                <FormInput
-                                    label="အရေအတွက်"
-                                    type="number"
-                                    min="1"
-                                    value={transferForm.data.quantity}
-                                    onChange={(e) =>
-                                        transferForm.setData(
-                                            "quantity",
-                                            Number(e.target.value),
-                                        )
-                                    }
-                                    required
-                                />
-                            </div>
-
-                            <FormInput
-                                label="မှတ်ချက် (ရွေးချယ်ရန်)"
-                                placeholder="လွှဲပြောင်းမှု အကြောင်းအရာ..."
-                                value={transferForm.data.note}
-                                onChange={(e) =>
-                                    transferForm.setData("note", e.target.value)
-                                }
-                            />
-
-                            <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 py-3.5 font-bold text-white transition hover:bg-sky-500">
-                                <FaTruckFast className="h-4 w-4" />
-                                လွှဲပြောင်းမည်
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                {/* Share Permission */}
-                {canManageShares && (
-                    <div className="rounded-3xl border border-cyan-200 bg-white p-6 shadow-sm dark:border-cyan-500/30 dark:bg-slate-900/70">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300">
-                                <FaLock className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
-                                    Share Permission စီမံခန့်ခွဲမှု
-                                </h3>
-                                <p className="text-xs text-slate-600 dark:text-slate-400">
-                                    ဆိုင်ခွဲများအကြား Stock မျှဝေခွင့် ပေးရန်
-                                    (Admin သာ)
-                                </p>
-                            </div>
-                        </div>
-
-                        <form
-                            onSubmit={submitShare}
-                            className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"
-                        >
-                            <ShopSelect
-                                label="မူလ ဆိုင်ခွဲ"
-                                value={shareForm.data.from_shop_id}
-                                onChange={(e) =>
-                                    shareForm.setData(
-                                        "from_shop_id",
-                                        e.target.value,
-                                    )
-                                }
-                                shops={shops}
-                                placeholder="မူလ ဆိုင်"
-                                colorScheme="purple"
-                            />
-                            <ShopSelect
-                                label="ပန်းတိုင် ဆိုင်ခွဲ"
-                                value={shareForm.data.to_shop_id}
-                                onChange={(e) =>
-                                    shareForm.setData(
-                                        "to_shop_id",
-                                        e.target.value,
-                                    )
-                                }
-                                shops={shops}
-                                placeholder="ပန်းတိုင် ဆိုင်"
-                                colorScheme="purple"
-                            />
-                            <FormSelect
-                                label="အခြေအနေ"
-                                value={shareForm.data.is_enabled ? "1" : "0"}
-                                onChange={(e) =>
-                                    shareForm.setData(
-                                        "is_enabled",
-                                        e.target.value === "1",
-                                    )
-                                }
-                                options={[
-                                    { value: "1", label: "ဖွင့်ထား" },
-                                    { value: "0", label: "ပိတ်ထား" },
-                                ]}
-                                colorScheme="purple"
-                            />
-                            <div className="flex items-end">
-                                <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 py-3 font-bold text-white transition hover:bg-cyan-500">
-                                    <FaFloppyDisk className="h-3.5 w-3.5" />
-                                    သိမ်း
-                                </button>
-                            </div>
-                        </form>
-
-                        {shares.length > 0 && (
-                            <div>
-                                <h4 className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-300">
-                                    လက်ရှိ Permissions
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {shares.map((share) => (
-                                        <div
-                                            key={share.id}
-                                            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-900"
-                                        >
-                                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                                                {share.from_shop?.name}{" "}
-                                                <span className="mx-1 text-cyan-500">
-                                                    →
-                                                </span>{" "}
-                                                {share.to_shop?.name}
-                                            </p>
-                                            <span
-                                                className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold ${
-                                                    share.is_enabled
-                                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-                                                        : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
-                                                }`}
+                            {shares.length > 0 && (
+                                <div>
+                                    <h4 className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                                        လက်ရှိ Permissions
+                                    </h4>
+                                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                        {shares.map((share) => (
+                                            <div
+                                                key={share.id}
+                                                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-orange-300 dark:border-slate-700 dark:bg-slate-900"
                                             >
-                                                {share.is_enabled
-                                                    ? "ဖွင့်ထား"
-                                                    : "ပိတ်ထား"}
-                                            </span>
-                                        </div>
-                                    ))}
+                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                                    {share.from_shop?.name} <span className="mx-1 text-orange-500">→</span> {share.to_shop?.name}
+                                                </p>
+                                                <span
+                                                    className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-bold ${
+                                                        share.is_enabled
+                                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                                                            : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+                                                    }`}
+                                                >
+                                                    {share.is_enabled ? "ဖွင့်ထား" : "ပိတ်ထား"}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )}
+                            )}
+                        </div>
+                    )}
+                </section>
 
                 {/* Inventory Table */}
                 <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/70">
