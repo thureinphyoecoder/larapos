@@ -42,6 +42,12 @@ export default function Show({ order }) {
     const [isLocating, setIsLocating] = useState(false);
     const [isUploadingProof, setIsUploadingProof] = useState(false);
     const [locationError, setLocationError] = useState("");
+    const syncLiveOrderFromPage = (page) => {
+        const latestOrder = page?.props?.order;
+        if (latestOrder) {
+            setLiveOrder(latestOrder);
+        }
+    };
 
     const items = liveOrder?.items || [];
     const customer = liveOrder?.user;
@@ -170,6 +176,10 @@ export default function Show({ order }) {
             window.Echo.leaveChannel(channel);
         };
     }, [order?.id]);
+
+    useEffect(() => {
+        setLiveOrder(order);
+    }, [order]);
 
     return (
         <AdminLayout header={`Order #${order?.id || ""}`}>
@@ -380,7 +390,10 @@ export default function Show({ order }) {
                                             if (!result.isConfirmed) return;
                                             router.post(route("admin.orders.verifySlip", order.id), {}, {
                                                 preserveScroll: true,
-                                                onSuccess: () => Swal.fire("Done", "Slip verification completed.", "success"),
+                                                onSuccess: (page) => {
+                                                    syncLiveOrderFromPage(page);
+                                                    Swal.fire("Done", "Slip verification completed.", "success");
+                                                },
                                             });
                                         })
                                     }
@@ -425,9 +438,9 @@ export default function Show({ order }) {
                                                 {
                                                     forceFormData: true,
                                                     preserveScroll: true,
-                                                    onSuccess: () => {
+                                                    onSuccess: (page) => {
+                                                        syncLiveOrderFromPage(page);
                                                         setDeliveryProof(null);
-                                                        setLiveOrder((prev) => ({ ...prev, status: "shipped" }));
                                                         Swal.fire("Uploaded", "Delivery proof uploaded and order marked shipped.", "success");
                                                     },
                                                     onError: () => {
