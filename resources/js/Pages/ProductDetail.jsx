@@ -7,6 +7,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
     const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || null);
     const [quantity, setQuantity] = useState(1);
     const [processing, setProcessing] = useState(false);
+    const [localCartCount, setLocalCartCount] = useState(Number(auth?.cart_count || 0));
 
     const selectedEffectiveUnitPrice = Number(selectedVariant?.effective_price ?? selectedVariant?.price ?? 0);
     const selectedBaseUnitPrice = Number(selectedVariant?.base_price ?? selectedVariant?.price ?? 0);
@@ -73,9 +74,12 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                 onFinish: () => setProcessing(false),
                 onSuccess: () => {
                     if (type === "buy_now") {
+                        setLocalCartCount((count) => count + quantity);
                         router.visit(route("checkout.index"));
                         return;
                     }
+
+                    setLocalCartCount((count) => count + quantity);
 
                     Swal.fire({
                         icon: "success",
@@ -117,6 +121,33 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                         <span className="text-slate-300">/</span>
                         <span className="text-slate-800 font-semibold truncate">{product.name}</span>
                     </div>
+                    <Link
+                        href={auth?.user ? route("cart.index") : route("login")}
+                        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                        aria-label="Cart"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.9}
+                                d="M3 4h2l2.2 10.5a1 1 0 00.98.8h8.92a1 1 0 00.98-.8L21 7H8"
+                            />
+                            <circle cx="10" cy="19" r="1.5" />
+                            <circle cx="18" cy="19" r="1.5" />
+                        </svg>
+                        {localCartCount > 0 && (
+                            <span className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] font-black leading-none text-white">
+                                {localCartCount > 99 ? "99+" : localCartCount}
+                            </span>
+                        )}
+                    </Link>
                 </div>
             </nav>
 
