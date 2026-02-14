@@ -65,20 +65,20 @@ export default function Confirm({ formData, cartItems }) {
     };
 
     return (
-        <div className="py-12 bg-gray-50 min-h-screen">
+        <div className="min-h-screen bg-gray-50 py-12 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
             <Head title="Order Confirmation" />
-            <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-sm border">
-                <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+            <div className="mx-auto max-w-4xl rounded-2xl border bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <h2 className="mb-6 flex items-center text-2xl font-bold text-gray-800 dark:text-slate-100">
                     <LuCheckCheck className="mr-2 h-5 w-5 text-orange-600" /> အော်ဒါကို အတည်ပြုပေးပါ
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                     {/* ပို့ဆောင်မည့်လိပ်စာ အကျဉ်းချုပ် */}
-                    <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
-                        <h4 className="font-bold text-blue-800 mb-3 flex items-center">
+                    <div className="rounded-xl border border-blue-100 bg-blue-50 p-5 dark:border-sky-500/30 dark:bg-sky-500/10">
+                        <h4 className="mb-3 flex items-center font-bold text-blue-800 dark:text-sky-300">
                             <LuMapPin className="mr-2 h-4 w-4" /> ပို့ဆောင်မည့် လိပ်စာ
                         </h4>
-                        <div className="text-gray-700 space-y-1">
+                        <div className="space-y-1 text-gray-700 dark:text-slate-300">
                             <p>
                                 <span className="font-medium">ဖုန်း:</span>{" "}
                                 {formData.phone}
@@ -90,8 +90,8 @@ export default function Confirm({ formData, cartItems }) {
                         </div>
                     </div>
                     {/* ငွေလွှဲဖြတ်ပိုင်း */}
-                    <div className="border border-dashed border-gray-300 p-5 rounded-xl text-center bg-gray-50">
-                        <h4 className="font-bold mb-3 text-gray-700 flex items-center justify-center">
+                    <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-center dark:border-slate-700 dark:bg-slate-800">
+                        <h4 className="mb-3 flex items-center justify-center font-bold text-gray-700 dark:text-slate-200">
                             <LuImage className="mr-2 h-4 w-4" /> ငွေလွှဲဖြတ်ပိုင်း (Slip)
                         </h4>
                         <img
@@ -103,10 +103,10 @@ export default function Confirm({ formData, cartItems }) {
                 </div>
 
                 {/* ဝယ်ထားတဲ့ ပစ္စည်းစာရင်း Review */}
-                <div className="overflow-hidden rounded-xl border border-gray-200 mb-8">
+                <div className="mb-8 overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700">
                     <table className="w-full">
                         <thead>
-                            <tr className="bg-gray-100 text-gray-600 text-sm">
+                            <tr className="bg-gray-100 text-sm text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                                 <th className="p-4 text-left font-bold">
                                     ပစ္စည်းအမည်
                                 </th>
@@ -118,16 +118,16 @@ export default function Confirm({ formData, cartItems }) {
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
                             {cartItems.map((item) => (
-                                <tr key={item.id} className="hover:bg-gray-50">
-                                    <td className="p-4 text-gray-700 font-medium">
+                                <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/70">
+                                    <td className="p-4 font-medium text-gray-700 dark:text-slate-200">
                                         {item.variant.product.name}
                                     </td>
-                                    <td className="p-4 text-center text-gray-600">
+                                    <td className="p-4 text-center text-gray-600 dark:text-slate-300">
                                         {item.quantity}
                                     </td>
-                                    <td className="p-4 text-right font-semibold text-gray-800">
+                                    <td className="p-4 text-right font-semibold text-gray-800 dark:text-slate-100">
                                         {(
                                             Number(
                                                 item.line_total ||
@@ -146,7 +146,7 @@ export default function Confirm({ formData, cartItems }) {
                 </div>
 
                 {/* အောက်ခြေ စုစုပေါင်းနှင့် ခလုတ်များ */}
-                <div className="flex flex-col md:flex-row justify-between items-center bg-gray-900 p-6 rounded-2xl text-white gap-6">
+                <div className="flex flex-col items-center justify-between gap-6 rounded-2xl bg-gray-900 p-6 text-white dark:bg-slate-800 md:flex-row">
                     <div className="space-y-1">
                         <div className="text-2xl font-bold text-orange-400">
                             စုစုပေါင်း: {calculatedTotal.toLocaleString()} Ks
@@ -163,7 +163,7 @@ export default function Confirm({ formData, cartItems }) {
                         <button
                             onClick={handleEdit}
                             disabled={processing}
-                            className="flex-1 md:flex-none px-8 py-3 rounded-xl border border-gray-500 text-gray-300 font-bold hover:bg-gray-800 transition disabled:opacity-50"
+                            className="flex-1 rounded-xl border border-gray-500 px-8 py-3 font-bold text-gray-300 transition hover:bg-gray-800 disabled:opacity-50 md:flex-none dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
                         >
                             ပြန်ပြင်မည်
                         </button>
@@ -172,7 +172,7 @@ export default function Confirm({ formData, cartItems }) {
                         <button
                             onClick={submitOrder}
                             disabled={processing}
-                            className="flex-1 md:flex-none bg-orange-600 text-white px-10 py-3 rounded-xl hover:bg-orange-700 font-bold text-lg shadow-lg active:transform active:scale-95 transition disabled:bg-gray-600"
+                            className="flex-1 rounded-xl bg-orange-600 px-10 py-3 text-lg font-bold text-white shadow-lg transition hover:bg-orange-700 active:scale-95 disabled:bg-gray-600 md:flex-none dark:disabled:bg-slate-600"
                         >
                             {processing ? "တင်နေပါသည်..." : "အော်ဒါတင်မည်"}
                         </button>

@@ -169,31 +169,31 @@ export default function Checkout({ cartItems, user }) {
     };
 
     return (
-        <div className="bg-gray-100 min-h-screen pb-12">
+        <div className="min-h-screen bg-gray-100 pb-12 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
             <Head title="Checkout" />
             <div className="max-w-4xl mx-auto px-4 py-8">
-                <h1 className="text-2xl font-bold mb-6 text-gray-800">
+                <h1 className="mb-6 text-2xl font-bold text-gray-800 dark:text-slate-100">
                     ငွေချေမည် (Checkout)
                 </h1>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* ဘယ်ဘက်: လိပ်စာနှင့် အချက်အလက် */}
                     <div className="md:col-span-2 space-y-6">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <h2 className="font-bold text-lg mb-4 border-b pb-2 flex items-center">
+                        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                            <h2 className="mb-4 flex items-center border-b pb-2 text-lg font-bold dark:border-slate-700">
                                 <LuMapPin className="mr-2 h-4 w-4 text-orange-500" />
                                 ပစ္စည်းပို့ဆောင်မည့် လိပ်စာ
                             </h2>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
                                         ဖုန်းနံပါတ်
                                     </label>
                                     <input
                                         type="tel"
                                         pattern="[0-9]*"
                                         required
-                                        className={`w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-orange-500 outline-none transition ${errors.phone ? "border-red-500" : "border-gray-300"}`}
+                                        className={`w-full rounded-lg border bg-white p-2.5 text-slate-800 outline-none transition focus:ring-2 focus:ring-orange-500 dark:bg-slate-900 dark:text-slate-100 ${errors.phone ? "border-red-500" : "border-gray-300 dark:border-slate-700"}`}
                                         value={data.phone}
                                         onChange={(e) =>
                                             setData("phone", e.target.value)
@@ -207,11 +207,11 @@ export default function Checkout({ cartItems, user }) {
                                     )}
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
                                         အိမ်အမှတ်၊ လမ်း၊ မြို့နယ်၊ မြို့
                                     </label>
                                     <textarea
-                                        className={`w-full border rounded-lg p-2.5 h-24 focus:ring-2 focus:ring-orange-500 outline-none transition ${errors.address ? "border-red-500" : "border-gray-300"}`}
+                                        className={`h-24 w-full rounded-lg border bg-white p-2.5 text-slate-800 outline-none transition focus:ring-2 focus:ring-orange-500 dark:bg-slate-900 dark:text-slate-100 ${errors.address ? "border-red-500" : "border-gray-300 dark:border-slate-700"}`}
                                         value={data.address}
                                         onChange={(e) =>
                                             setData("address", e.target.value)
@@ -223,12 +223,12 @@ export default function Checkout({ cartItems, user }) {
                                             type="button"
                                             onClick={handleUseCurrentLocation}
                                             disabled={locating}
-                                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white ${locating ? "bg-slate-400" : "bg-sky-600 hover:bg-sky-700"}`}
+                                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white ${locating ? "bg-slate-400 dark:bg-slate-600" : "bg-sky-600 hover:bg-sky-700"}`}
                                         >
                                             {locating ? "Locating..." : "Use Current Location"}
                                         </button>
                                         {locationMessage ? (
-                                            <span className="text-xs font-medium text-emerald-700">{locationMessage}</span>
+                                            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">{locationMessage}</span>
                                         ) : null}
                                     </div>
                                     {locationError ? (
@@ -245,16 +245,16 @@ export default function Checkout({ cartItems, user }) {
 
                         {/* ငွေပေးချေမှုပုံစံ */}
                         {/* ငွေပေးချေမှုပုံစံ - ပြင်ဆင်ရန် */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <h2 className="font-bold text-lg mb-3 flex items-center">
+                        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                            <h2 className="mb-3 flex items-center text-lg font-bold dark:text-slate-100">
                                 <span className="mr-2">💳</span>{" "}
                                 ငွေပေးချေမှုပုံစံ
                             </h2>
-                            <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                                <p className="text-sm text-orange-800 font-bold mb-2">
+                            <div className="rounded-lg border border-orange-100 bg-orange-50 p-4 dark:border-orange-500/30 dark:bg-orange-500/10">
+                                <p className="mb-2 text-sm font-bold text-orange-800 dark:text-orange-300">
                                     ဘဏ်အကောင့်သို့ ငွေကြိုတင်လွှဲပေးပါရန်
                                 </p>
-                                <div className="space-y-2 text-sm text-gray-700 bg-white p-3 rounded border border-orange-100">
+                                <div className="space-y-2 rounded border border-orange-100 bg-white p-3 text-sm text-gray-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                                     <div className="flex justify-between">
                                         <span>KPay / Wave:</span>
                                         <span className="font-bold">
@@ -268,7 +268,7 @@ export default function Checkout({ cartItems, user }) {
                                         </span>
                                     </div>
                                 </div>
-                                <p className="text-[11px] text-orange-600 mt-3 italic">
+                                <p className="mt-3 text-[11px] italic text-orange-600 dark:text-orange-400">
                                     * ငွေလွှဲပြီးပါက ပြေစာတင်ပေးပါရန်
                                     မေတ္တာရပ်ခံအပ်ပါသည်။
                                 </p>
@@ -278,8 +278,8 @@ export default function Checkout({ cartItems, user }) {
 
                     {/* ညာဘက်: အော်ဒါအနှစ်ချုပ် */}
                     <div className="md:col-span-1">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 sticky top-24">
-                            <h2 className="font-bold border-b pb-2 mb-4 text-gray-800">
+                        <div className="sticky top-24 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                            <h2 className="mb-4 border-b pb-2 font-bold text-gray-800 dark:border-slate-700 dark:text-slate-100">
                                 အော်ဒါအကျဉ်းချုပ်
                             </h2>
                             <div className="max-h-60 overflow-y-auto mb-4 pr-2">
@@ -289,14 +289,14 @@ export default function Checkout({ cartItems, user }) {
                                         className="flex justify-between text-sm mb-3"
                                     >
                                         <div className="flex flex-col">
-                                            <span className="text-gray-700 font-medium truncate w-32">
+                                            <span className="w-32 truncate font-medium text-gray-700 dark:text-slate-200">
                                                 {item.product.name}
                                             </span>
-                                            <span className="text-gray-400 text-xs">
+                                            <span className="text-xs text-gray-400 dark:text-slate-500">
                                                 Qty: {item.quantity}
                                             </span>
                                         </div>
-                                            <span className="text-gray-600">
+                                            <span className="text-gray-600 dark:text-slate-300">
                                                 Ks{" "}
                                                 {(
                                                     Number(
@@ -320,13 +320,13 @@ export default function Checkout({ cartItems, user }) {
                                 </div>
                             )}
 
-                            <div className="border-t pt-4 flex justify-between font-bold text-lg text-orange-600">
+                            <div className="flex justify-between border-t pt-4 text-lg font-bold text-orange-600 dark:border-slate-700">
                                 <span>စုစုပေါင်း</span>
                                 <span>Ks {totalPrice.toLocaleString()}</span>
                             </div>
 
-                            <div className="mt-6 p-4 border-2 border-dashed border-gray-200 rounded-lg">
-                                <label className="block text-sm font-bold text-gray-700 mb-2">
+                            <div className="mt-6 rounded-lg border-2 border-dashed border-gray-200 p-4 dark:border-slate-700">
+                                <label className="mb-2 block text-sm font-bold text-gray-700 dark:text-slate-300">
                                     📸 ငွေလွှဲပြေစာ (Screenshot) တင်ပေးပါ
                                 </label>
                                 <input
@@ -338,7 +338,7 @@ export default function Checkout({ cartItems, user }) {
                                             e.target.files[0],
                                         )
                                     }
-                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                                    className="block w-full text-sm text-gray-500 dark:text-slate-400 file:mr-4 file:rounded-full file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-orange-700 hover:file:bg-orange-100 dark:file:bg-orange-500/15 dark:file:text-orange-300"
                                     required
                                 />
 
@@ -352,7 +352,7 @@ export default function Checkout({ cartItems, user }) {
                             <button
                                 onClick={handleOrder}
                                 disabled={processing}
-                                className={`w-full py-3.5 rounded-xl mt-6 font-bold text-white transition shadow-lg ${processing ? "bg-gray-400" : "bg-orange-600 hover:bg-orange-700 active:transform active:scale-95"}`}
+                                className={`mt-6 w-full rounded-xl py-3.5 font-bold text-white shadow-lg transition ${processing ? "bg-gray-400 dark:bg-slate-600" : "bg-orange-600 hover:bg-orange-700 active:scale-95"}`}
                             >
                                 {processing ? "ခဏစောင့်ပါ..." : "အော်ဒါတင်မည်"}
                             </button>
