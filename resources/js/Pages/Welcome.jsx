@@ -204,7 +204,7 @@ export default function Welcome({
         <div
             className="premium-shell min-h-screen bg-transparent"
         >
-            <header className="sticky top-0 z-40 border-b border-slate-200/90 bg-white/95 backdrop-blur">
+            <header className="sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
                 <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
                     <div className="flex flex-wrap items-center gap-3 lg:flex-nowrap lg:gap-5">
                         <Link href="/" className="shrink-0 text-2xl font-black tracking-tight text-orange-600 sm:text-4xl">
@@ -212,7 +212,7 @@ export default function Welcome({
                         </Link>
 
                         <div className="order-3 w-full lg:order-none lg:min-w-[280px] lg:flex-1">
-                            <div className="flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <div className="flex overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.08)]">
                                 <input
                                     type="text"
                                     className="w-full px-4 py-3 text-slate-800 focus:outline-none"
@@ -331,7 +331,7 @@ export default function Welcome({
                     <div className="absolute inset-0 bg-black/10" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.35),_transparent_40%)]" />
 
-                    <div className="relative z-10 grid min-h-[330px] gap-5 p-6 sm:min-h-[390px] sm:p-10 lg:grid-cols-[1.4fr_1fr] lg:items-end">
+                    <div className="relative z-10 grid min-h-[330px] gap-5 p-6 sm:min-h-[390px] sm:p-10 lg:grid-cols-1 lg:items-end">
                         <div>
                             <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-white/80">
                                 {t("featured_collection", "Featured Collection")}
@@ -351,24 +351,6 @@ export default function Welcome({
                                 >
                                     {t("explore_product", "Explore Product")}
                                 </Link>
-                            </div>
-                        </div>
-
-                        <div className="hidden rounded-2xl border border-white/30 bg-white/15 p-5 backdrop-blur md:block">
-                            <p className="text-xs font-black uppercase tracking-widest text-white/80">Live Snapshot</p>
-                            <div className="mt-4 grid grid-cols-2 gap-3 text-white">
-                                <div>
-                                    <p className="text-[11px] text-white/70">{t("products", "Products")}</p>
-                                    <p className="text-2xl font-black">{products.length}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[11px] text-white/70">{t("categories", "Categories")}</p>
-                                    <p className="text-2xl font-black">{categories.length}</p>
-                                </div>
-                                <div className="col-span-2">
-                                    <p className="text-[11px] text-white/70">{t("active_brand", "Active Brand")}</p>
-                                    <p className="text-sm font-bold">{activeItem?.brand?.name || "LaraPee Store"}</p>
-                                </div>
                             </div>
                         </div>
                     </div>
