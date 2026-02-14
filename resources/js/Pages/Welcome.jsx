@@ -4,14 +4,35 @@ import LocaleSwitcher from "@/Components/LocaleSwitcher";
 
 function priceMeta(product) {
     const variants = product?.variants || [];
-    const base = variants.length
-        ? Math.min(...variants.map((v) => Number(v?.base_price ?? v?.price ?? 0)))
+    const variantPrices = variants
+        .map((v) => {
+            const base = Number(v?.base_price ?? v?.price ?? 0);
+            const effective = Number(v?.effective_price ?? v?.price ?? 0);
+            return {
+                base,
+                effective,
+                hasDiscount: effective > 0 && base > 0 && effective < base,
+                promotionType: v?.promotion?.type || null,
+            };
+        })
+        .filter((row) => row.effective > 0);
+
+    const cheapest = variantPrices.length
+        ? variantPrices.reduce((min, row) => (row.effective < min.effective ? row : min), variantPrices[0])
+        : null;
+
+    const base = cheapest
+        ? cheapest.base
         : Number(product?.base_price ?? product?.price ?? 0);
-    const effective = variants.length
-        ? Math.min(...variants.map((v) => Number(v?.effective_price ?? v?.price ?? 0)))
+    const effective = cheapest
+        ? cheapest.effective
         : Number(product?.price ?? 0);
-    const hasDiscount = effective < base;
-    const flashSale = variants.some((v) => v?.promotion?.type === "flash_sale");
+    const hasDiscount = variantPrices.length
+        ? variantPrices.some((row) => row.hasDiscount)
+        : effective < base;
+    const flashSale = variantPrices.some(
+        (row) => row.promotionType === "flash_sale" && row.hasDiscount,
+    );
 
     return {
         base,
@@ -291,12 +312,14 @@ export default function Welcome({
                     }}
                     className="group relative overflow-hidden rounded-3xl shadow-xl"
                 >
-                    <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${activeSlideImage})` }}
+                    <img
+                        src={activeSlideImage}
+                        alt={activeItem?.name || "Hero"}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        loading="eager"
                     />
-                    <div className={`absolute inset-0 bg-gradient-to-br ${slideBackgrounds[activeSlide % slideBackgrounds.length]}`} />
-                    <div className="absolute inset-0 bg-black/20" />
+                    <div className={`absolute inset-0 bg-gradient-to-br ${slideBackgrounds[activeSlide % slideBackgrounds.length]} opacity-70`} />
+                    <div className="absolute inset-0 bg-black/10" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.35),_transparent_40%)]" />
 
                     <div className="relative z-10 grid min-h-[330px] gap-5 p-6 sm:min-h-[390px] sm:p-10 lg:grid-cols-[1.4fr_1fr] lg:items-end">
