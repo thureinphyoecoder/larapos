@@ -141,23 +141,23 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
     };
 
     return (
-        <div className="bg-slate-100 min-h-screen pb-12">
-            <nav className="bg-white border-b border-slate-200 sticky top-0 z-30 backdrop-blur">
-                <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between text-sm gap-2 text-slate-500">
+        <div className="min-h-screen bg-slate-100 pb-12 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+            <nav className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/88">
+                <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 text-sm text-slate-500 dark:text-slate-300">
                     <div className="flex items-center gap-2 min-w-0">
-                        <Link href="/" className="hover:text-orange-500 transition font-medium">
+                        <Link href="/" className="font-medium transition hover:text-orange-500 dark:hover:text-orange-400">
                             Back
                         </Link>
-                        <span className="text-slate-300">/</span>
-                        <Link href="/" className="hover:text-orange-500 transition font-medium">
+                        <span className="text-slate-300 dark:text-slate-700">/</span>
+                        <Link href="/" className="font-medium transition hover:text-orange-500 dark:hover:text-orange-400">
                             Home
                         </Link>
-                        <span className="text-slate-300">/</span>
-                        <span className="text-slate-800 font-semibold truncate">{product.name}</span>
+                        <span className="text-slate-300 dark:text-slate-700">/</span>
+                        <span className="truncate font-semibold text-slate-800 dark:text-slate-100">{product.name}</span>
                     </div>
                     <Link
                         href={auth?.user ? route("cart.index") : route("login")}
-                        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-orange-300 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                         aria-label="Cart"
                     >
                         <svg
@@ -185,7 +185,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                     <button
                         type="button"
                         onClick={() => setThemeMode((prev) => (prev === "dark" ? "light" : "dark"))}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                         aria-label={t("theme_toggle", "Toggle theme")}
                         title={t("theme_toggle", "Toggle theme")}
                     >
@@ -202,10 +202,10 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                 </div>
             </nav>
 
-            <div className="max-w-6xl mx-auto px-4 mt-8 space-y-8">
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="mx-auto mt-8 max-w-6xl space-y-8 px-4">
+                <div className="grid grid-cols-1 gap-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-700 dark:bg-slate-900 lg:grid-cols-2">
                     <div className="space-y-4">
-                        <div className="aspect-square rounded-3xl overflow-hidden border border-slate-200 bg-slate-100">
+                        <div className="aspect-square overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
                             <img src={selectedImage} alt={product.name} className="w-full h-full object-cover" />
                         </div>
                         <div className="grid grid-cols-3 gap-3">
@@ -217,7 +217,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                                     className={`h-20 rounded-xl overflow-hidden border transition ${
                                         selectedImage === img
                                             ? "border-orange-500 ring-2 ring-orange-200"
-                                            : "border-slate-200 hover:border-orange-300"
+                                        : "border-slate-200 hover:border-orange-300 dark:border-slate-700"
                                     }`}
                                     aria-label={`View angle ${idx + 1}`}
                                 >
@@ -229,10 +229,10 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
 
                     <div className="space-y-6">
                         <div>
-                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400 font-bold">
+                            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                                 {product.brand?.name || "Brand"}
                             </p>
-                            <h1 className="mt-2 text-3xl sm:text-4xl font-black text-slate-900 leading-tight">
+                            <h1 className="mt-2 text-3xl font-black leading-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
                                 {product.name}
                             </h1>
                             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -249,7 +249,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                                         {avgRating.toFixed(1)}
                                     </span>
                                 </div>
-                                <p className="text-sm text-slate-500">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {totalRatings} ratings
                                 </p>
                                 {totalRatings >= 5 && (
@@ -258,20 +258,20 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                                     </span>
                                 )}
                             </div>
-                            <p className="mt-3 text-sm text-slate-500">SKU: {selectedVariant?.sku || product.sku || "-"}</p>
+                            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">SKU: {selectedVariant?.sku || product.sku || "-"}</p>
                         </div>
 
                         {errors.message && (
-                            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+                            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">
                                 {errors.message}
                             </div>
                         )}
 
-                        <div className="bg-orange-50 border border-orange-200 p-5 rounded-2xl">
+                        <div className="rounded-2xl border border-orange-200 bg-orange-50 p-5 dark:border-orange-500/30 dark:bg-orange-500/10">
                             <div className="flex flex-wrap items-end gap-2">
                                 <span className="text-3xl font-black text-orange-600">Ks {selectedPrice.toLocaleString()}</span>
                                 {selectedDiscountPerUnit > 0 && (
-                                    <span className="text-sm text-slate-400 line-through">Ks {selectedBasePrice.toLocaleString()}</span>
+                                    <span className="text-sm text-slate-400 line-through dark:text-slate-500">Ks {selectedBasePrice.toLocaleString()}</span>
                                 )}
                                 {selectedVariant?.promotion?.label && (
                                     <span className="rounded-full bg-rose-100 px-2 py-1 text-[10px] font-bold uppercase text-rose-700">
@@ -279,7 +279,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                                     </span>
                                 )}
                             </div>
-                            <p className="text-xs text-slate-500 mt-2">Stock: {selectedVariant?.stock_level ?? 0}</p>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Stock: {selectedVariant?.stock_level ?? 0}</p>
                             {selectedDiscountPerUnit > 0 && (
                                 <p className="text-xs font-semibold text-emerald-700 mt-1">
                                     You save Ks {(selectedDiscountPerUnit * quantity).toLocaleString()}
@@ -288,7 +288,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                         </div>
 
                         <div>
-                            <p className="text-sm font-semibold text-slate-700 mb-3">Choose Variant</p>
+                            <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Choose Variant</p>
                             <div className="flex flex-wrap gap-2">
                                 {(product.variants || []).map((v) => (
                                     <button
@@ -298,7 +298,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                                         className={`px-4 py-2 rounded-xl border text-sm font-semibold transition ${
                                             selectedVariant?.id === v.id
                                                 ? "border-orange-500 text-orange-600 bg-orange-50"
-                                                : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                                                : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                                         }`}
                                     >
                                         {v.sku?.split("-").pop() || "Default"}
@@ -308,20 +308,20 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <span className="text-sm font-semibold text-slate-700">Qty</span>
-                            <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden">
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Qty</span>
+                            <div className="flex items-center overflow-hidden rounded-xl border border-slate-300 dark:border-slate-700">
                                 <button
                                     type="button"
                                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                                    className="px-3 py-2 bg-slate-100 border-r border-slate-300 hover:bg-slate-200"
+                                    className="border-r border-slate-300 bg-slate-100 px-3 py-2 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
                                 >
                                     -
                                 </button>
-                                <span className="px-6 py-2 font-semibold text-slate-700">{quantity}</span>
+                                <span className="px-6 py-2 font-semibold text-slate-700 dark:text-slate-200">{quantity}</span>
                                 <button
                                     type="button"
                                     onClick={() => setQuantity((q) => q + 1)}
-                                    className="px-3 py-2 bg-slate-100 border-l border-slate-300 hover:bg-slate-200"
+                                    className="border-l border-slate-300 bg-slate-100 px-3 py-2 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
                                 >
                                     +
                                 </button>
@@ -371,7 +371,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                         </div>
 
                         {!inStock && (
-                            <p className="text-sm text-red-500 font-medium">This variant is out of stock.</p>
+                            <p className="text-sm font-medium text-red-500">This variant is out of stock.</p>
                         )}
                     </div>
                 </div>
@@ -387,24 +387,24 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                 />
 
                 {recommendations.length > 0 && (
-                    <section className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-700 dark:bg-slate-900">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-black text-slate-900">Recommended for You</h2>
-                            <p className="text-sm font-semibold text-slate-500">Based on this product and buyer behavior</p>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">Recommended for You</h2>
+                            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Based on this product and buyer behavior</p>
                         </div>
                         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                             {recommendations.map((item) => (
                                 <Link
                                     key={item.id}
                                     href={route("product.show", { slug: item.slug })}
-                                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+                                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900"
                                 >
-                                    <div className="aspect-square overflow-hidden bg-slate-100">
+                                    <div className="aspect-square overflow-hidden bg-slate-100 dark:bg-slate-800">
                                         <img src={item.image_url || "/images/products/product-1.svg"} alt={item.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
                                     </div>
                                     <div className="p-3">
-                                        <p className="line-clamp-2 min-h-[40px] text-sm font-bold text-slate-800">{item.name}</p>
-                                        <p className="mt-1 text-[11px] text-slate-400">{item.shop?.name || "LaraPee Store"}</p>
+                                        <p className="line-clamp-2 min-h-[40px] text-sm font-bold text-slate-800 dark:text-slate-100">{item.name}</p>
+                                        <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">{item.shop?.name || "LaraPee Store"}</p>
                                         <p className="mt-2 text-sm font-black text-orange-600">Ks {Number(item.price || 0).toLocaleString()}</p>
                                     </div>
                                 </Link>
@@ -518,8 +518,8 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
     };
 
     return (
-        <div className="bg-white p-6 sm:p-8 shadow-sm rounded-3xl border border-slate-200">
-            <div className="flex border-b border-slate-100 gap-6 mb-6 overflow-x-auto">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-8">
+            <div className="mb-6 flex gap-6 overflow-x-auto border-b border-slate-100 dark:border-slate-800">
                 {["description", "comments", "ratings"].map((tab) => (
                     <button
                         key={tab}
@@ -527,7 +527,7 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
                         className={`pb-3 text-sm font-bold uppercase tracking-wider transition whitespace-nowrap ${
                             activeTab === tab
                                 ? "border-b-2 border-orange-500 text-orange-600"
-                                : "text-slate-400 hover:text-slate-600"
+                                : "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                         }`}
                     >
                         {tab}
@@ -539,19 +539,19 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
                 {activeTab === "description" && (
                     <div className="space-y-4">
                         {hasDescription && (
-                            <div className="prose max-w-none text-slate-600 leading-relaxed whitespace-pre-line">
+                            <div className="prose max-w-none whitespace-pre-line leading-relaxed text-slate-600 dark:text-slate-300">
                                 {normalizedDescription}
                             </div>
                         )}
                         {!hasDescription && (
-                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                 Product summary will appear here when seller adds description details.
                             </div>
                         )}
                         {detailSections.map((section) => (
-                            <div key={section.title} className="p-4 rounded-2xl border border-slate-200 bg-slate-50">
-                                <h3 className="text-sm font-bold text-slate-800">{section.title}</h3>
-                                <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                            <div key={section.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">{section.title}</h3>
+                                <ul className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-300">
                                     {section.items.map((item) => (
                                         <li key={item} className="flex items-start gap-2">
                                             <span className="mt-1 text-orange-500">•</span>
@@ -562,21 +562,21 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
                             </div>
                         ))}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                                <p className="text-slate-400 text-xs uppercase">Brand</p>
-                                <p className="font-semibold text-slate-700 mt-1">{product?.brand?.name || "-"}</p>
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
+                                <p className="text-xs uppercase text-slate-400 dark:text-slate-500">Brand</p>
+                                <p className="mt-1 font-semibold text-slate-700 dark:text-slate-100">{product?.brand?.name || "-"}</p>
                             </div>
-                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                                <p className="text-slate-400 text-xs uppercase">Category</p>
-                                <p className="font-semibold text-slate-700 mt-1">{product?.category?.name || "-"}</p>
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
+                                <p className="text-xs uppercase text-slate-400 dark:text-slate-500">Category</p>
+                                <p className="mt-1 font-semibold text-slate-700 dark:text-slate-100">{product?.category?.name || "-"}</p>
                             </div>
-                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                                <p className="text-slate-400 text-xs uppercase">Shop</p>
-                                <p className="font-semibold text-slate-700 mt-1">{product?.shop?.name || "-"}</p>
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
+                                <p className="text-xs uppercase text-slate-400 dark:text-slate-500">Shop</p>
+                                <p className="mt-1 font-semibold text-slate-700 dark:text-slate-100">{product?.shop?.name || "-"}</p>
                             </div>
-                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                                <p className="text-slate-400 text-xs uppercase">Variants</p>
-                                <p className="font-semibold text-slate-700 mt-1">{product?.variants?.length || 0}</p>
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
+                                <p className="text-xs uppercase text-slate-400 dark:text-slate-500">Variants</p>
+                                <p className="mt-1 font-semibold text-slate-700 dark:text-slate-100">{product?.variants?.length || 0}</p>
                             </div>
                         </div>
                     </div>
@@ -584,11 +584,11 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
 
                 {activeTab === "comments" && (
                     <div className="space-y-4">
-                        <p className="text-sm text-slate-500 italic">Comments ({commentList.length})</p>
+                        <p className="text-sm italic text-slate-500 dark:text-slate-400">Comments ({commentList.length})</p>
 
                         <form onSubmit={submitComment} className="space-y-3">
                             <textarea
-                                className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                 placeholder={isMM ? "မေးချင်တာရှိရင် ရေးခဲ့ပါ..." : "Write your comment..."}
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
@@ -609,16 +609,16 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
                         <div className="space-y-3 pt-2">
                             {commentList.length ? (
                                 commentList.map((c) => (
-                                    <div key={c.id} className="p-3 rounded-xl border border-slate-200 bg-white">
+                                    <div key={c.id} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
                                         <div className="flex items-center justify-between gap-2">
-                                            <p className="font-semibold text-sm text-slate-700">{c.reviewer_name}</p>
-                                            <p className="text-xs text-slate-400">{c.created_at_human || "recent"}</p>
+                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-100">{c.reviewer_name}</p>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500">{c.created_at_human || "recent"}</p>
                                         </div>
-                                        <p className="mt-2 text-sm text-slate-600">{c.comment}</p>
+                                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{c.comment}</p>
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-sm text-slate-400">No comments yet.</p>
+                                <p className="text-sm text-slate-400 dark:text-slate-500">No comments yet.</p>
                             )}
                         </div>
                     </div>
@@ -627,7 +627,7 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
                 {activeTab === "ratings" && (
                     <div className="space-y-4">
                         <div className="flex flex-col items-center py-4">
-                            <span className="text-4xl font-bold text-slate-800">{averageRating.toFixed(1)}</span>
+                            <span className="text-4xl font-bold text-slate-800 dark:text-slate-100">{averageRating.toFixed(1)}</span>
                             <div className="flex text-yellow-400 my-2 text-xl">
                                 {"★★★★★".split("").map((star, idx) => (
                                     <span
@@ -638,11 +638,11 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
                                     </span>
                                 ))}
                             </div>
-                            <p className="text-slate-400 text-sm">{ratingCount} ratings</p>
+                            <p className="text-sm text-slate-400 dark:text-slate-500">{ratingCount} ratings</p>
                         </div>
 
-                        <form onSubmit={submitRating} className="p-4 rounded-xl border border-slate-200 bg-slate-50">
-                            <p className="text-sm font-semibold text-slate-700 mb-3">Give your rating</p>
+                        <form onSubmit={submitRating} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                            <p className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Give your rating</p>
                             <div className="flex items-center gap-1 mb-3">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <button

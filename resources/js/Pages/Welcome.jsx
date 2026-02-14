@@ -229,9 +229,9 @@ export default function Welcome({
 
     return (
         <div
-            className="premium-shell min-h-screen bg-transparent"
+            className="premium-shell min-h-screen bg-transparent text-slate-900 dark:text-slate-100"
         >
-            <header className="sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+            <header className="sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(15,23,42,0.08)] dark:border-slate-700/80 dark:bg-slate-950/80 dark:shadow-[0_10px_34px_rgba(2,6,23,0.45)]">
                 <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
                     <div className="flex flex-wrap items-center gap-3 lg:flex-nowrap lg:gap-5">
                         <Link href="/" className="shrink-0 text-2xl font-black tracking-tight text-orange-600 sm:text-4xl">
@@ -239,10 +239,10 @@ export default function Welcome({
                         </Link>
 
                         <div className="order-3 w-full lg:order-none lg:w-[34rem] lg:max-w-[55%]">
-                            <div className="flex overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_8px_18px_rgba(15,23,42,0.08)]">
+                            <div className="flex overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_8px_18px_rgba(15,23,42,0.08)] dark:border-slate-700 dark:bg-slate-900">
                                 <input
                                     type="text"
-                                    className="w-full px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none"
+                                    className="w-full bg-transparent px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
                                     placeholder={t("search_placeholder", "Search products, brands or shops...")}
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -270,12 +270,12 @@ export default function Welcome({
                             </div>
                         </div>
 
-                        <div className="ml-auto flex w-auto items-center gap-2 text-xs font-semibold text-slate-600 sm:text-sm">
+                        <div className="ml-auto flex w-auto items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 sm:text-sm">
                             {sharedAuth?.user ? (
                                 <>
                                     <Link
                                         href={route("cart.index")}
-                                        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                                        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-orange-300 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                                         aria-label={t("cart", "Cart")}
                                     >
                                         <svg
@@ -302,21 +302,21 @@ export default function Welcome({
                                     </Link>
                                     <Link
                                         href={route("dashboard")}
-                                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                                         aria-label={t("dashboard", "Dashboard")}
                                     >
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 font-bold text-orange-700">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 font-bold text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
                                             {sharedAuth.user.name.charAt(0).toUpperCase()}
                                         </div>
                                     </Link>
                                 </>
                             ) : (
                                 <>
-                                    <Link href="/login" className="transition hover:text-orange-600">
+                                    <Link href="/login" className="transition hover:text-orange-600 dark:hover:text-orange-400">
                                         {t("login", "Login")}
                                     </Link>
-                                    <span className="h-4 w-px bg-slate-300" />
-                                    <Link href="/register" className="transition hover:text-orange-600">
+                                    <span className="h-4 w-px bg-slate-300 dark:bg-slate-700" />
+                                    <Link href="/register" className="transition hover:text-orange-600 dark:hover:text-orange-400">
                                         {t("register", "Register")}
                                     </Link>
                                 </>
@@ -324,7 +324,7 @@ export default function Welcome({
                             <button
                                 type="button"
                                 onClick={() => setThemeMode((prev) => (prev === "dark" ? "light" : "dark"))}
-                                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                                 aria-label={t("theme_toggle", "Toggle theme")}
                                 title={t("theme_toggle", "Toggle theme")}
                             >
@@ -371,8 +371,8 @@ export default function Welcome({
                         className="absolute inset-0 h-full w-full object-cover"
                         loading="eager"
                     />
-                    <div className={`absolute inset-0 bg-gradient-to-br ${slideBackgrounds[activeSlide % slideBackgrounds.length]} opacity-70`} />
-                    <div className="absolute inset-0 bg-black/10" />
+                    <div className={`absolute inset-0 bg-gradient-to-br ${slideBackgrounds[activeSlide % slideBackgrounds.length]} opacity-72`} />
+                    <div className="absolute inset-0 bg-black/24" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.35),_transparent_40%)]" />
 
                     <div className="relative z-10 grid min-h-[330px] gap-5 p-6 sm:min-h-[390px] sm:p-10 lg:grid-cols-1 lg:items-end">
@@ -380,13 +380,13 @@ export default function Welcome({
                             <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-white/80">
                                 {t("featured_collection", "Featured Collection")}
                             </p>
-                            <p className="pointer-events-none absolute right-6 top-8 text-4xl font-black uppercase tracking-[0.08em] text-white/25 sm:right-10 sm:top-10 sm:text-7xl">
+                            <p className="pointer-events-none absolute right-6 top-8 text-4xl font-black uppercase tracking-[0.08em] text-white/40 sm:right-10 sm:top-10 sm:text-7xl">
                                 {activeItem?.brand?.name || "LaraPee"}
                             </p>
-                            <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight text-white sm:text-5xl">
+                            <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight text-white drop-shadow-[0_8px_24px_rgba(2,6,23,0.38)] sm:text-5xl">
                                 {activeItem?.name || "Shop smart with fresh deals today"}
                             </h1>
-                            <p className="mt-4 max-w-2xl text-sm text-white/90 sm:text-base">
+                            <p className="mt-4 max-w-2xl text-sm text-white sm:text-base">
                                 {activeItem?.brand?.name
                                     ? `${activeItem.brand.name} collections are trending now with fast checkout and secure delivery updates.`
                                     : "Find popular products from verified shops and purchase with confidence."}
@@ -420,15 +420,15 @@ export default function Welcome({
                     )}
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-700 dark:bg-slate-900/85">
                     <div className="flex flex-wrap gap-2">
                         <button
                             type="button"
                             onClick={() => filterByCategory(null)}
                             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                                 activeCategory === ""
-                                    ? "bg-slate-900 text-white"
-                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                             }`}
                         >
                             {t("all", "All")}
@@ -441,7 +441,7 @@ export default function Welcome({
                                 className={`rounded-full px-4 py-2 text-sm font-semibold capitalize transition ${
                                     activeCategory === String(cat.id)
                                         ? "bg-orange-600 text-white"
-                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                                 }`}
                             >
                                 {cat.name}
@@ -451,14 +451,14 @@ export default function Welcome({
                 </section>
 
                 {flashSaleProducts.length > 0 && (
-                    <section className="space-y-4 rounded-3xl border border-rose-200 bg-gradient-to-r from-rose-50 via-orange-50 to-amber-50 p-4 shadow-sm sm:p-6">
+                    <section className="space-y-4 rounded-3xl border border-rose-200 bg-gradient-to-r from-rose-50 via-orange-50 to-amber-50 p-4 shadow-sm sm:p-6 dark:border-rose-500/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-black text-slate-900 sm:text-2xl">Flash Sale</h2>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 sm:text-2xl">Flash Sale</h2>
                             <p className="rounded-full bg-rose-600 px-3 py-1 text-xs font-black uppercase tracking-wider text-white">
                                 Limited Time
                             </p>
                         </div>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-slate-600 dark:text-slate-300">
                             Active discounts are live now. Open product details to buy at sale price.
                         </p>
 
@@ -470,7 +470,7 @@ export default function Welcome({
                                     <Link
                                         href={route("product.show", { slug: product.slug })}
                                         key={`flash-${product.id}`}
-                                        className="group overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-rose-300 hover:shadow-lg"
+                                        className="group overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-rose-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900"
                                     >
                                         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-rose-100 to-orange-100">
                                             <img
@@ -484,10 +484,10 @@ export default function Welcome({
                                             </div>
                                         </div>
                                         <div className="p-3">
-                                            <h3 className="min-h-[40px] text-sm font-bold leading-tight text-slate-800">{product.name}</h3>
+                                            <h3 className="min-h-[40px] text-sm font-bold leading-tight text-slate-800 dark:text-slate-100">{product.name}</h3>
                                             <div className="mt-2 flex items-end gap-2">
                                                 <p className="text-sm font-black text-rose-600">Ks {price.effective.toLocaleString()}</p>
-                                                <p className="text-xs text-slate-400 line-through">{price.base.toLocaleString()}</p>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 line-through">{price.base.toLocaleString()}</p>
                                             </div>
                                         </div>
                                     </Link>
@@ -499,8 +499,8 @@ export default function Welcome({
 
                 <section className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-black text-slate-900 sm:text-2xl">{t("discover_products", "Discover Products")}</h2>
-                        <p className="text-sm font-semibold text-slate-500">{filteredProducts.length} {t("items_found", "items found")}</p>
+                        <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 sm:text-2xl">{t("discover_products", "Discover Products")}</h2>
+                        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">{filteredProducts.length} {t("items_found", "items found")}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -512,9 +512,9 @@ export default function Welcome({
                                     <Link
                                         href={route("product.show", { slug: product.slug })}
                                         key={product.id}
-                                        className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+                                        className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900"
                                     >
-                                    <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
+                                    <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
                                         <img
                                             src={getProductImage(product)}
                                             alt={product.name}
@@ -534,22 +534,22 @@ export default function Welcome({
                                     </div>
 
                                     <div className="p-3 sm:p-4">
-                                        <h3 className="min-h-[40px] text-sm font-bold leading-tight text-slate-800 transition group-hover:text-orange-600">
+                                        <h3 className="min-h-[40px] text-sm font-bold leading-tight text-slate-800 transition group-hover:text-orange-600 dark:text-slate-100">
                                             {product.name}
                                         </h3>
-                                        <p className="mt-1 text-xs text-slate-400">{product.shop?.name || "Unknown shop"}</p>
+                                        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{product.shop?.name || "Unknown shop"}</p>
 
                                         <div className="mt-3 flex items-baseline gap-1">
                                             <span className="text-[11px] font-bold text-orange-600">Ks</span>
                                             <span className="text-lg font-black text-orange-600">{price.effective.toLocaleString()}</span>
                                             {price.hasDiscount && (
-                                                <span className="text-xs text-slate-400 line-through">
+                                                <span className="text-xs text-slate-400 dark:text-slate-500 line-through">
                                                     {price.base.toLocaleString()}
                                                 </span>
                                             )}
                                         </div>
 
-                                        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500">
+                                        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-slate-800 dark:text-slate-400">
                                             <span className="truncate">{product.brand?.name || "Brand"}</span>
                                             <span>{product?.variants?.[0]?.stock_level ?? 0} left</span>
                                         </div>
@@ -558,7 +558,7 @@ export default function Welcome({
                                 );
                             })
                         ) : (
-                            <div className="col-span-full rounded-2xl border border-slate-200 bg-white py-20 text-center text-slate-500">
+                            <div className="col-span-full rounded-2xl border border-slate-200 bg-white py-20 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
                                 No products matched your search.
                             </div>
                         )}
@@ -568,8 +568,8 @@ export default function Welcome({
                 {aiRecommendations.length > 0 && (
                     <section className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-black text-slate-900 sm:text-2xl">Recommended for You</h2>
-                            <p className="text-sm font-semibold text-slate-500">Based on your browsing and order behavior</p>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 sm:text-2xl">Recommended for You</h2>
+                            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Based on your browsing and order behavior</p>
                         </div>
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                             {aiRecommendations.map((product) => {
@@ -579,9 +579,9 @@ export default function Welcome({
                                     <Link
                                         href={route("product.show", { slug: product.slug })}
                                         key={`ai-${product.id}`}
-                                        className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"
+                                        className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900"
                                     >
-                                        <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
+                                        <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
                                             <img
                                                 src={getProductImage(product)}
                                                 alt={product.name}
@@ -590,8 +590,8 @@ export default function Welcome({
                                             />
                                         </div>
                                         <div className="p-3">
-                                            <h3 className="min-h-[40px] text-sm font-bold leading-tight text-slate-800">{product.name}</h3>
-                                            <p className="mt-1 text-[11px] text-slate-400">{product.shop?.name || "LaraPee Store"}</p>
+                                            <h3 className="min-h-[40px] text-sm font-bold leading-tight text-slate-800 dark:text-slate-100">{product.name}</h3>
+                                            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">{product.shop?.name || "LaraPee Store"}</p>
                                             <p className="mt-2 text-sm font-black text-orange-600">Ks {price.effective.toLocaleString()}</p>
                                         </div>
                                     </Link>
@@ -604,13 +604,13 @@ export default function Welcome({
 
             {showFlashModal && flashSaleProducts.length > 0 && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/55 px-4">
-                    <div className="w-full max-w-md rounded-3xl border border-rose-200 bg-white p-6 shadow-2xl">
+                    <div className="w-full max-w-md rounded-3xl border border-rose-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
                         <div className="rounded-2xl bg-gradient-to-r from-rose-600 to-orange-500 px-4 py-3 text-white">
                             <p className="text-[11px] font-extrabold uppercase tracking-[0.2em]">Flash Sale</p>
                             <h3 className="mt-1 text-xl font-black">Deals are live now</h3>
                         </div>
 
-                        <p className="mt-4 text-sm text-slate-600">
+                        <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
                             {flashSaleProducts.length} product(s) are currently on flash sale.
                         </p>
 
@@ -618,7 +618,7 @@ export default function Welcome({
                             <button
                                 type="button"
                                 onClick={() => setShowFlashModal(false)}
-                                className="flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                                className="flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 Later
                             </button>
