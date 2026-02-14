@@ -54,6 +54,46 @@ The architecture is designed to support both web applications and future mobile 
 
 ---
 
+## Production Safety & Sync Reliability (Implemented)
+
+### Service / Action Separation
+- Business flows are executed via dedicated actions/services (example: order creation, audit logging, stock movement logging, payment verification jobs).
+- Controllers focus on request validation + orchestration, not heavy domain logic.
+- This structure is ready for adding more services without coupling controller code.
+
+### Offline/Sync Readiness (Desktop POS + Multi-Branch)
+- Auto sync and manual retry are both supported in admin dashboard UX.
+- Sync status is explicit: `syncing`, `success`, `failed`.
+- On failure, UI shows reason + recovery guidance (check network/queue worker and retry).
+- Sync re-entry is guarded to prevent overlapping sync requests.
+
+### Duplicate Event Handling (Dedupe)
+- Push notification listeners are queued and deduped with short-lived cache locks.
+- This prevents duplicate push sends for repeated/retried events.
+- API order creation also supports idempotency keys to avoid duplicate order writes.
+
+### Security Hardening
+- API login now enforces rate limiting + lockout handling.
+- API order visibility is branch-scoped by role (shop-level access control).
+- Address suggestion endpoint is scoped to current user data and throttled.
+- Default weak password fallback for staff creation was removed (explicit password required).
+- Security headers are applied on both web and API middleware stacks.
+- CORS is now explicit allowlist based (`CORS_ALLOWED_ORIGINS`), no `null` origin.
+
+### Performance Hardening
+- Push delivery moved off request thread to queue listeners.
+- Storefront product query is bounded and filterable (`search`, `category`, `limit`).
+- Performance index migration is database-portable and protected against duplicate index creation.
+
+### Pre-Production Checklist
+1. Set strict `CORS_ALLOWED_ORIGINS` in `.env` for your real domains only.
+2. Run at least one queue worker in production (`queue:work rabbitmq ...`).
+3. Disable debug in production (`APP_DEBUG=false`).
+4. Keep DB/RabbitMQ management ports private (do not expose publicly).
+5. Use HTTPS and verify HSTS behavior behind your reverse proxy.
+
+---
+
 ## Development Environment
 
 This project uses Docker to ensure consistent development and deployment environments.
