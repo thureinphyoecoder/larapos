@@ -13,6 +13,7 @@ class AddressController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $limit = max(1, min(20, (int) $request->query('limit', 10)));
+        $user = $request->user();
 
         if (mb_strlen($q) < 2) {
             return response()->json(['data' => []]);
@@ -29,43 +30,49 @@ class AddressController extends Controller
                 'source' => 'static',
             ]);
 
-        $profileRows = DB::table('user_profiles')
-            ->select(['address_line_1', 'city', 'state'])
-            ->where(function ($query) use ($like) {
-                $query->where('address_line_1', 'like', $like)
-                    ->orWhere('city', 'like', $like)
-                    ->orWhere('state', 'like', $like);
-            })
-            ->whereNotNull('address_line_1')
-            ->limit(60)
-            ->get()
-            ->map(function ($row) {
-                $parts = array_values(array_filter([
-                    trim((string) ($row->address_line_1 ?? '')),
-                    trim((string) ($row->city ?? '')),
-                    trim((string) ($row->state ?? '')),
-                ]));
+        $profileRows = collect();
+        $orderRows = collect();
+        if ($user) {
+            $profileRows = DB::table('user_profiles')
+                ->select(['address_line_1', 'city', 'state'])
+                ->where('user_id', $user->id)
+                ->where(function ($query) use ($like) {
+                    $query->where('address_line_1', 'like', $like)
+                        ->orWhere('city', 'like', $like)
+                        ->orWhere('state', 'like', $like);
+                })
+                ->whereNotNull('address_line_1')
+                ->limit(30)
+                ->get()
+                ->map(function ($row) {
+                    $parts = array_values(array_filter([
+                        trim((string) ($row->address_line_1 ?? '')),
+                        trim((string) ($row->city ?? '')),
+                        trim((string) ($row->state ?? '')),
+                    ]));
 
-                return [
-                    'label' => implode(', ', $parts),
-                    'township' => trim((string) ($row->city ?? '')),
-                    'state' => trim((string) ($row->state ?? '')),
-                    'source' => 'profile',
-                ];
-            });
+                    return [
+                        'label' => implode(', ', $parts),
+                        'township' => trim((string) ($row->city ?? '')),
+                        'state' => trim((string) ($row->state ?? '')),
+                        'source' => 'profile',
+                    ];
+                });
 
-        $orderRows = DB::table('orders')
-            ->select(['address'])
-            ->whereNotNull('address')
-            ->where('address', 'like', $like)
-            ->limit(60)
-            ->get()
-            ->map(fn ($row) => [
-                'label' => trim((string) ($row->address ?? '')),
-                'township' => null,
-                'state' => null,
-                'source' => 'order',
-            ]);
+            $orderRows = DB::table('orders')
+                ->select(['address'])
+                ->where('user_id', $user->id)
+                ->whereNotNull('address')
+                ->where('address', 'like', $like)
+                ->limit(30)
+                ->get()
+                ->map(fn ($row) => [
+                    'label' => trim((string) ($row->address ?? '')),
+                    'township' => null,
+                    'state' => null,
+                    'source' => 'order',
+                ]);
+        }
 
         $results = $static
             ->concat($profileRows)
