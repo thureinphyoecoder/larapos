@@ -1,13 +1,46 @@
 import { Link, usePage, router } from "@inertiajs/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 
 export default function ProductDetail({ product, reviews = [], ratingSummary = {}, recommendations = [] }) {
-    const { auth, errors = {} } = usePage().props;
+    const page = usePage();
+    const { auth, errors = {}, i18n = {}, locale = "mm" } = page.props;
+    const t = (key, fallback) => i18n?.[key] || fallback;
+    const isMM = String(locale).toLowerCase() === "mm";
+    const [themeMode, setThemeMode] = useState("system");
+    const [resolvedTheme, setResolvedTheme] = useState("light");
     const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || null);
     const [quantity, setQuantity] = useState(1);
     const [processing, setProcessing] = useState(false);
     const [localCartCount, setLocalCartCount] = useState(Number(auth?.cart_count || 0));
+
+    useEffect(() => {
+        setLocalCartCount(Number(auth?.cart_count || 0));
+    }, [auth?.cart_count]);
+
+    useEffect(() => {
+        const saved = window.localStorage.getItem("larapee_theme_mode");
+        if (saved === "light" || saved === "dark" || saved === "system") {
+            setThemeMode(saved);
+        }
+    }, []);
+
+    useEffect(() => {
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+        const applyTheme = () => {
+            const nextTheme = themeMode === "system" ? (media.matches ? "dark" : "light") : themeMode;
+            setResolvedTheme(nextTheme);
+            document.documentElement.dataset.theme = nextTheme;
+            document.documentElement.classList.toggle("dark", nextTheme === "dark");
+        };
+        applyTheme();
+        media.addEventListener("change", applyTheme);
+        return () => media.removeEventListener("change", applyTheme);
+    }, [themeMode]);
+
+    useEffect(() => {
+        window.localStorage.setItem("larapee_theme_mode", themeMode);
+    }, [themeMode]);
 
     const selectedEffectiveUnitPrice = Number(selectedVariant?.effective_price ?? selectedVariant?.price ?? 0);
     const selectedBaseUnitPrice = Number(selectedVariant?.base_price ?? selectedVariant?.price ?? 0);
@@ -38,8 +71,8 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
 
         if (!selectedVariant) {
             Swal.fire({
-                title: "Variant မရွေးရသေးပါ",
-                text: "ဝယ်ယူမည့် variant ကိုအရင်ရွေးပေးပါ။",
+                title: t("detail_select_variant_title", "Variant not selected"),
+                text: t("detail_select_variant_text", "Please choose a variant before continuing."),
                 icon: "warning",
                 confirmButtonColor: "#f97316",
             });
@@ -48,12 +81,12 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
 
         if (!auth.user) {
             Swal.fire({
-                title: "Login ဝင်ပေးပါဦး",
-                text: "ပစ္စည်းဝယ်ယူရန်အတွက် အရင်ဆုံး Login ဝင်ပေးဖို့ လိုပါတယ်ဗျာ။",
+                title: t("detail_login_required_title", "Please login first"),
+                text: t("detail_login_required_text", "Login is required to continue this action."),
                 icon: "info",
                 showCancelButton: true,
-                confirmButtonText: "Login သို့သွားမည်",
-                cancelButtonText: "နေဦးမယ်",
+                confirmButtonText: t("detail_login_cta", "Go to Login"),
+                cancelButtonText: t("detail_login_cancel", "Cancel"),
                 confirmButtonColor: "#f97316",
             }).then((result) => {
                 if (result.isConfirmed) router.get("/login");
@@ -74,16 +107,17 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                 onFinish: () => setProcessing(false),
                 onSuccess: () => {
                     if (type === "buy_now") {
-                        setLocalCartCount((count) => count + quantity);
                         router.visit(route("checkout.index"));
                         return;
                     }
-
-                    setLocalCartCount((count) => count + quantity);
+                    router.reload({
+                        only: ["auth"],
+                        preserveScroll: true,
+                    });
 
                     Swal.fire({
                         icon: "success",
-                        title: "ခြင်းတောင်းထဲ ထည့်ပြီးပါပြီ",
+                        title: t("detail_add_cart_success", "Added to cart"),
                         toast: true,
                         position: "top-end",
                         showConfirmButton: false,
@@ -95,7 +129,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                     const firstError = Object.values(formErrors || {}).find((value) => typeof value === "string");
                     if (firstError) {
                         Swal.fire({
-                            title: "လုပ်ဆောင်မှု မအောင်မြင်ပါ",
+                            title: t("detail_action_failed_title", "Action failed"),
                             text: firstError,
                             icon: "error",
                             confirmButtonColor: "#f97316",
@@ -148,6 +182,23 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                             </span>
                         )}
                     </Link>
+                    <button
+                        type="button"
+                        onClick={() => setThemeMode((prev) => (prev === "dark" ? "light" : "dark"))}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                        aria-label={t("theme_toggle", "Toggle theme")}
+                        title={t("theme_toggle", "Toggle theme")}
+                    >
+                        {resolvedTheme === "dark" ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 18a6 6 0 100-12 6 6 0 000 12zm0 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm0-22a1 1 0 011 1v1a1 1 0 11-2 0V1a1 1 0 011-1zm11 11a1 1 0 010 2h-1a1 1 0 110-2h1zM3 12a1 1 0 010 2H2a1 1 0 110-2h1zm16.95 7.536a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0zM5.17 5.17a1 1 0 010 1.415l-.707.707A1 1 0 113.05 5.878l.707-.707a1 1 0 011.414 0zm14.78 0l.707.708a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 011.414-1.415zM5.17 18.83l.707.707a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 111.414-1.414z" />
+                            </svg>
+                        ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M21.75 15.002A9.75 9.75 0 1112.998 2.25a.75.75 0 01.674 1.08A8.25 8.25 0 0020.67 10.33a.75.75 0 011.08.672z" />
+                            </svg>
+                        )}
+                    </button>
                 </div>
             </nav>
 
@@ -302,7 +353,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                                         d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
                                     />
                                 </svg>
-                                {processing ? "ထည့်သွင်းနေပါသည်..." : "Add to Cart"}
+                                {processing ? t("detail_added_loading", "Adding...") : t("detail_add_to_cart", "Add to Cart")}
                             </button>
 
                             <button
@@ -331,6 +382,8 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                     reviews={reviews}
                     ratingSummary={ratingSummary}
                     auth={auth}
+                    isMM={isMM}
+                    t={t}
                 />
 
                 {recommendations.length > 0 && (
@@ -364,7 +417,7 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
     );
 }
 
-function ProductTabs({ product, description, reviews = [], ratingSummary = {}, auth }) {
+function ProductTabs({ product, description, reviews = [], ratingSummary = {}, auth, isMM, t }) {
     const [activeTab, setActiveTab] = useState("description");
     const [commentText, setCommentText] = useState("");
     const [ratingInput, setRatingInput] = useState(0);
@@ -414,12 +467,12 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
         if (auth?.user) return true;
 
         Swal.fire({
-            title: "Login ဝင်ပေးပါဦး",
-            text: "Comment / Rating ပေးရန် Login လိုအပ်ပါတယ်။",
+            title: t("detail_login_required_title", "Please login first"),
+            text: t("detail_comment_login_text", "Please login to add comments or ratings."),
             icon: "info",
             showCancelButton: true,
-            confirmButtonText: "Login",
-            cancelButtonText: "Cancel",
+            confirmButtonText: t("detail_login_cta", "Go to Login"),
+            cancelButtonText: t("detail_login_cancel", "Cancel"),
             confirmButtonColor: "#f97316",
         }).then((result) => {
             if (result.isConfirmed) router.get("/login");
@@ -536,7 +589,7 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
                         <form onSubmit={submitComment} className="space-y-3">
                             <textarea
                                 className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                placeholder="မေးချင်တာရှိရင် ရေးခဲ့ပါ..."
+                                placeholder={isMM ? "မေးချင်တာရှိရင် ရေးခဲ့ပါ..." : "Write your comment..."}
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
                             ></textarea>
@@ -549,7 +602,7 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
                                         : "bg-orange-600 text-white hover:bg-orange-700"
                                 }`}
                             >
-                                {submittingComment ? "Posting..." : "Post Comment"}
+                                {submittingComment ? t("detail_posting", "Posting...") : t("detail_post_comment", "Post Comment")}
                             </button>
                         </form>
 
@@ -612,7 +665,7 @@ function ProductTabs({ product, description, reviews = [], ratingSummary = {}, a
                                         : "bg-orange-600 text-white hover:bg-orange-700"
                                 }`}
                             >
-                                {submittingRating ? "Submitting..." : "Submit Rating"}
+                                {submittingRating ? t("detail_submitting", "Submitting...") : t("detail_submit_rating", "Submit Rating")}
                             </button>
                         </form>
                     </div>

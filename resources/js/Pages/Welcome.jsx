@@ -48,8 +48,11 @@ export default function Welcome({
     auth,
 }) {
     const page = usePage();
+    const sharedAuth = page.props?.auth || auth || {};
     const i18n = page.props?.i18n || {};
     const t = (key, fallback) => i18n?.[key] || fallback;
+    const [themeMode, setThemeMode] = useState("system");
+    const [resolvedTheme, setResolvedTheme] = useState("light");
 
     const [search, setSearch] = useState(filters?.search || "");
     const [activeCategory, setActiveCategory] = useState(
@@ -59,7 +62,7 @@ export default function Welcome({
     const [pauseSlider, setPauseSlider] = useState(false);
     const [showFlashModal, setShowFlashModal] = useState(false);
     const touchStartX = useRef(null);
-    const cartCount = Number(auth?.cart_count || 0);
+    const cartCount = Number(sharedAuth?.cart_count || 0);
 
     const sliderItems = useMemo(() => {
         const heroProducts = products.filter((product) => Boolean(product?.is_hero));
@@ -107,6 +110,30 @@ export default function Welcome({
             setActiveSlide(0);
         }
     }, [activeSlide, sliderItems.length]);
+
+    useEffect(() => {
+        const saved = window.localStorage.getItem("larapee_theme_mode");
+        if (saved === "light" || saved === "dark" || saved === "system") {
+            setThemeMode(saved);
+        }
+    }, []);
+
+    useEffect(() => {
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+        const applyTheme = () => {
+            const nextTheme = themeMode === "system" ? (media.matches ? "dark" : "light") : themeMode;
+            setResolvedTheme(nextTheme);
+            document.documentElement.dataset.theme = nextTheme;
+            document.documentElement.classList.toggle("dark", nextTheme === "dark");
+        };
+        applyTheme();
+        media.addEventListener("change", applyTheme);
+        return () => media.removeEventListener("change", applyTheme);
+    }, [themeMode]);
+
+    useEffect(() => {
+        window.localStorage.setItem("larapee_theme_mode", themeMode);
+    }, [themeMode]);
 
     const activeItem = sliderItems[activeSlide] || sliderItems[0];
     const activeSlideImage = slideImages[activeSlide % slideImages.length];
@@ -211,18 +238,18 @@ export default function Welcome({
                             LaraPee
                         </Link>
 
-                        <div className="order-3 w-full lg:order-none lg:min-w-[280px] lg:flex-1">
-                            <div className="flex overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.08)]">
+                        <div className="order-3 w-full lg:order-none lg:w-[34rem] lg:max-w-[55%]">
+                            <div className="flex overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_8px_18px_rgba(15,23,42,0.08)]">
                                 <input
                                     type="text"
-                                    className="w-full px-4 py-3 text-slate-800 focus:outline-none"
+                                    className="w-full px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none"
                                     placeholder={t("search_placeholder", "Search products, brands or shops...")}
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
                                 <button
                                     type="button"
-                                    className="bg-orange-600 px-5 text-white transition hover:bg-orange-700"
+                                    className="bg-orange-600 px-4 text-white transition hover:bg-orange-700"
                                     aria-label="Search"
                                 >
                                     <svg
@@ -244,7 +271,7 @@ export default function Welcome({
                         </div>
 
                         <div className="ml-auto flex w-auto items-center gap-2 text-xs font-semibold text-slate-600 sm:text-sm">
-                            {auth?.user ? (
+                            {sharedAuth?.user ? (
                                 <>
                                     <Link
                                         href={route("cart.index")}
@@ -279,7 +306,7 @@ export default function Welcome({
                                         aria-label={t("dashboard", "Dashboard")}
                                     >
                                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 font-bold text-orange-700">
-                                            {auth.user.name.charAt(0).toUpperCase()}
+                                            {sharedAuth.user.name.charAt(0).toUpperCase()}
                                         </div>
                                     </Link>
                                 </>
@@ -294,6 +321,23 @@ export default function Welcome({
                                     </Link>
                                 </>
                             )}
+                            <button
+                                type="button"
+                                onClick={() => setThemeMode((prev) => (prev === "dark" ? "light" : "dark"))}
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600"
+                                aria-label={t("theme_toggle", "Toggle theme")}
+                                title={t("theme_toggle", "Toggle theme")}
+                            >
+                                {resolvedTheme === "dark" ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 18a6 6 0 100-12 6 6 0 000 12zm0 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm0-22a1 1 0 011 1v1a1 1 0 11-2 0V1a1 1 0 011-1zm11 11a1 1 0 010 2h-1a1 1 0 110-2h1zM3 12a1 1 0 010 2H2a1 1 0 110-2h1zm16.95 7.536a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0zM5.17 5.17a1 1 0 010 1.415l-.707.707A1 1 0 113.05 5.878l.707-.707a1 1 0 011.414 0zm14.78 0l.707.708a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 011.414-1.415zM5.17 18.83l.707.707a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 111.414-1.414z" />
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M21.75 15.002A9.75 9.75 0 1112.998 2.25a.75.75 0 01.674 1.08A8.25 8.25 0 0020.67 10.33a.75.75 0 011.08.672z" />
+                                    </svg>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -335,6 +379,9 @@ export default function Welcome({
                         <div>
                             <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-white/80">
                                 {t("featured_collection", "Featured Collection")}
+                            </p>
+                            <p className="pointer-events-none absolute right-6 top-8 text-4xl font-black uppercase tracking-[0.08em] text-white/25 sm:right-10 sm:top-10 sm:text-7xl">
+                                {activeItem?.brand?.name || "LaraPee"}
                             </p>
                             <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight text-white sm:text-5xl">
                                 {activeItem?.name || "Shop smart with fresh deals today"}
