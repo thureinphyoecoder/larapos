@@ -1,6 +1,6 @@
-# LaraPee – Full Stack POS & Web Application Platform
+# LaraPee – Full Stack Commerce Platform (Web + Desktop POS + Mobile)
 
-LaraPee is a full-stack web application platform built with Laravel, React (Inertia.js), Docker, and PostgreSQL/MySQL.  
+LaraPee is a full-stack commerce platform built with Laravel, React (Inertia.js), Electron, React Native (Expo), Docker, and MySQL.  
 It is designed using production-level architecture principles to demonstrate scalable backend design, modern frontend integration, and containerized development environments.
 
 This project reflects real-world backend and full-stack engineering practices.
@@ -9,11 +9,11 @@ This project reflects real-world backend and full-stack engineering practices.
 
 ## Overview
 
-LaraPee provides a structured backend system and web interface foundation for building POS systems, dashboards, or business management applications.
+LaraPee provides a structured backend system with multi-client applications for operations and order flows.
 
-It uses Laravel as the core backend framework, React with Inertia.js for the frontend, and Docker for environment consistency and deployment readiness.
+It uses Laravel as the core backend/API, React + Inertia for web admin/customer pages, Electron for desktop POS, and React Native apps for customer and delivery teams.
 
-The architecture is designed to support both web applications and future mobile integration via REST API.
+All clients consume versioned REST APIs (`/api/v1`) and share common business rules from the same backend.
 
 ---
 
@@ -26,13 +26,13 @@ The architecture is designed to support both web applications and future mobile 
 - Service layer architecture
 
 ### Frontend
-- React
-- Inertia.js
-- Modern JavaScript (ES6+)
+- React + Inertia.js (Web)
+- Electron + React + TypeScript (Desktop POS)
+- React Native + Expo + TypeScript (Customer Mobile, Delivery Mobile)
 
 ### Database
-- PostgreSQL
-- MySQL compatible
+- MySQL (primary)
+- SQLite (offline outbox in desktop POS, test/dev use-cases)
 
 ### DevOps
 - Docker
@@ -46,11 +46,23 @@ The architecture is designed to support both web applications and future mobile 
 ## Features
 
 - Full stack Laravel + React architecture
+- Multi-client architecture: Web + Desktop POS + 2 React Native apps
 - Inertia.js integration for modern frontend routing
-- REST API ready for mobile applications
+- REST API for web/mobile/desktop clients
 - Docker containerized development environment
 - Clean service-based backend architecture
 - Scalable and maintainable project structure
+
+---
+
+## Monorepo Apps
+
+- `apps/pos-electron`  
+  Enterprise desktop POS client (offline-first outbox + auto/manual sync).
+- `apps/customer-mobile`  
+  Customer-facing React Native app (catalog, cart, order tracking).
+- `apps/delivery-mobile`  
+  Delivery-staff React Native app (delivery workflow, location updates, shipment proof).
 
 ---
 
@@ -107,6 +119,35 @@ Services include:
 
 ---
 
+## Quick Start (All Clients)
+
+### Backend (root)
+1. `cp .env.example .env`
+2. `docker compose up -d app web db rabbitmq`
+3. `php artisan migrate --seed`
+
+### Desktop POS
+1. `cd apps/pos-electron`
+2. `npm install`
+3. `npm run dev`
+
+### Customer Mobile
+1. `cd apps/customer-mobile`
+2. `npm install`
+3. `npm run start:lan`
+
+### Delivery Mobile
+1. `cd apps/delivery-mobile`
+2. `npm install`
+3. `npm run start:lan`
+
+For app-specific setup details, see:
+- `apps/pos-electron/README.md`
+- `apps/customer-mobile/README.md`
+- `apps/delivery-mobile/README.md`
+
+---
+
 ## Purpose
 
 This project was built to demonstrate my ability to:
@@ -122,9 +163,9 @@ It represents production-oriented engineering practices rather than tutorial-bas
 
 ## Future Enhancements
 
-- React Native mobile application integration
-- Authentication system using Laravel Sanctum
-- Full POS feature implementation
+- Advanced receipt printing and barcode/scanner workflow in desktop POS
+- Expanded branch governance/reporting and approval workflows
+- Mobile push and background sync optimization across all clients
 - API expansion for external integrations
 
 ---
