@@ -143,8 +143,8 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
     return (
         <div className="min-h-screen bg-slate-100 pb-12 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
             <nav className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/88">
-                <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 text-sm text-slate-500 dark:text-slate-300">
-                    <div className="flex items-center gap-2 min-w-0">
+                <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 text-sm text-slate-500 dark:text-slate-300">
+                    <div className="flex min-w-0 items-center gap-2">
                         <Link href="/" className="font-medium transition hover:text-orange-500 dark:hover:text-orange-400">
                             Back
                         </Link>
@@ -155,50 +155,52 @@ export default function ProductDetail({ product, reviews = [], ratingSummary = {
                         <span className="text-slate-300 dark:text-slate-700">/</span>
                         <span className="truncate font-semibold text-slate-800 dark:text-slate-100">{product.name}</span>
                     </div>
-                    <Link
-                        href={auth?.user ? route("cart.index") : route("login")}
-                        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-orange-300 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                        aria-label="Cart"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href={auth?.user ? route("cart.index") : route("login")}
+                            className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-orange-300 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                            aria-label="Cart"
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1.9}
-                                d="M3 4h2l2.2 10.5a1 1 0 00.98.8h8.92a1 1 0 00.98-.8L21 7H8"
-                            />
-                            <circle cx="10" cy="19" r="1.5" />
-                            <circle cx="18" cy="19" r="1.5" />
-                        </svg>
-                        {localCartCount > 0 && (
-                            <span className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] font-black leading-none text-white">
-                                {localCartCount > 99 ? "99+" : localCartCount}
-                            </span>
-                        )}
-                    </Link>
-                    <button
-                        type="button"
-                        onClick={() => setThemeMode((prev) => (prev === "dark" ? "light" : "dark"))}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                        aria-label={t("theme_toggle", "Toggle theme")}
-                        title={t("theme_toggle", "Toggle theme")}
-                    >
-                        {resolvedTheme === "dark" ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 18a6 6 0 100-12 6 6 0 000 12zm0 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm0-22a1 1 0 011 1v1a1 1 0 11-2 0V1a1 1 0 011-1zm11 11a1 1 0 010 2h-1a1 1 0 110-2h1zM3 12a1 1 0 010 2H2a1 1 0 110-2h1zm16.95 7.536a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0zM5.17 5.17a1 1 0 010 1.415l-.707.707A1 1 0 113.05 5.878l.707-.707a1 1 0 011.414 0zm14.78 0l.707.708a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 011.414-1.415zM5.17 18.83l.707.707a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 111.414-1.414z" />
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={1.9}
+                                    d="M3 4h2l2.2 10.5a1 1 0 00.98.8h8.92a1 1 0 00.98-.8L21 7H8"
+                                />
+                                <circle cx="10" cy="19" r="1.5" />
+                                <circle cx="18" cy="19" r="1.5" />
                             </svg>
-                        ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M21.75 15.002A9.75 9.75 0 1112.998 2.25a.75.75 0 01.674 1.08A8.25 8.25 0 0020.67 10.33a.75.75 0 011.08.672z" />
-                            </svg>
-                        )}
-                    </button>
+                            {localCartCount > 0 && (
+                                <span className="absolute -right-1 -top-1 rounded-full bg-orange-600 px-1.5 py-0.5 text-[10px] font-black leading-none text-white">
+                                    {localCartCount > 99 ? "99+" : localCartCount}
+                                </span>
+                            )}
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => setThemeMode((prev) => (prev === "dark" ? "light" : "dark"))}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:border-orange-300 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                            aria-label={t("theme_toggle", "Toggle theme")}
+                            title={t("theme_toggle", "Toggle theme")}
+                        >
+                            {resolvedTheme === "dark" ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 18a6 6 0 100-12 6 6 0 000 12zm0 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm0-22a1 1 0 011 1v1a1 1 0 11-2 0V1a1 1 0 011-1zm11 11a1 1 0 010 2h-1a1 1 0 110-2h1zM3 12a1 1 0 010 2H2a1 1 0 110-2h1zm16.95 7.536a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0zM5.17 5.17a1 1 0 010 1.415l-.707.707A1 1 0 113.05 5.878l.707-.707a1 1 0 011.414 0zm14.78 0l.707.708a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 011.414-1.415zM5.17 18.83l.707.707a1 1 0 11-1.414 1.414l-.707-.707a1 1 0 111.414-1.414z" />
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M21.75 15.002A9.75 9.75 0 1112.998 2.25a.75.75 0 01.674 1.08A8.25 8.25 0 0020.67 10.33a.75.75 0 011.08.672z" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </nav>
 

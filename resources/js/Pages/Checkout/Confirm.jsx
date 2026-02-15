@@ -1,9 +1,12 @@
-import React from "react";
-import { router, Head, useForm } from "@inertiajs/react";
+import { router, Head, useForm, usePage } from "@inertiajs/react";
 import { LuCheckCheck, LuImage, LuMapPin } from "react-icons/lu";
 import Swal from "sweetalert2";
 
 export default function Confirm({ formData, cartItems }) {
+    const page = usePage();
+    const { i18n = {} } = page.props;
+    const t = (key, fallback) => i18n?.[key] || fallback;
+
     const calculatedTotal = cartItems.reduce(
         (sum, item) =>
             sum +
@@ -19,44 +22,36 @@ export default function Confirm({ formData, cartItems }) {
         0,
     );
 
-    const { data, post, processing } = useForm({
+    const { post, processing } = useForm({
         phone: formData.phone,
         address: formData.address,
-        payment_slip: formData.payment_slip, // ဒါက storage path ဖြစ်နေပါလိမ့်မယ်
+        payment_slip: formData.payment_slip,
         total_amount: calculatedTotal,
     });
 
     const handleEdit = () => {
-        // 🎯 Checkout Page ကို ဒေတာတွေ ပြန်ပို့ပေးလိုက်မယ်
         router.visit(route("checkout.index"), {
             method: "get",
             data: {
                 phone: formData.phone,
                 address: formData.address,
-                // 💡 သတိပြုရန် - လုံခြုံရေးအရ ပုံဖိုင် (File Input) ကိုတော့ browser က automatic ပြန်ဖြည့်ပေးလို့ မရပါဘူး
             },
         });
     };
 
     const submitOrder = (e) => {
         e.preventDefault();
-        // useForm က data state ကိုပဲ submit လုပ်မယ် (nested data key မပို့ပါ)
         post(route("orders.store"), {
-            onSuccess: () => {
-                console.log("Success! Receipt should show now.");
-            },
             onError: (errors) => {
-                // ဒီနေရာမှာ validation/system error နှစ်မျိုးလုံး ဝင်နိုင်ပါတယ်
-                console.log("Order submit errors:", errors);
                 const firstError =
                     errors.system_error ||
                     errors.payment_slip ||
                     errors.phone ||
                     errors.address ||
-                    "Order submit failed.";
+                    t("checkout_submit_failed", "Unable to submit order.");
                 Swal.fire({
                     icon: "error",
-                    title: "Order မတင်နိုင်သေးပါ",
+                    title: t("checkout_submit_failed", "Unable to submit order."),
                     text: firstError,
                     confirmButtonColor: "#ea580c",
                 });
@@ -65,69 +60,67 @@ export default function Confirm({ formData, cartItems }) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-            <Head title="Order Confirmation" />
-            <div className="mx-auto max-w-4xl rounded-2xl border bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                <h2 className="mb-6 flex items-center text-2xl font-bold text-gray-800 dark:text-slate-100">
-                    <LuCheckCheck className="mr-2 h-5 w-5 text-orange-600" /> အော်ဒါကို အတည်ပြုပေးပါ
+        <div className="min-h-screen bg-slate-100 py-12 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+            <Head title={t("checkout_confirm_page_title", "Order Confirmation")} />
+            <div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <h2 className="mb-6 flex items-center text-2xl font-bold text-slate-800 dark:text-slate-100">
+                    <LuCheckCheck className="mr-2 h-5 w-5 text-orange-600" /> {t("checkout_confirm_heading", "Please confirm your order")}
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                    {/* ပို့ဆောင်မည့်လိပ်စာ အကျဉ်းချုပ် */}
+                <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2">
                     <div className="rounded-xl border border-blue-100 bg-blue-50 p-5 dark:border-sky-500/30 dark:bg-sky-500/10">
                         <h4 className="mb-3 flex items-center font-bold text-blue-800 dark:text-sky-300">
-                            <LuMapPin className="mr-2 h-4 w-4" /> ပို့ဆောင်မည့် လိပ်စာ
+                            <LuMapPin className="mr-2 h-4 w-4" /> {t("checkout_confirm_address", "Delivery address")}
                         </h4>
-                        <div className="space-y-1 text-gray-700 dark:text-slate-300">
+                        <div className="space-y-1 text-slate-700 dark:text-slate-300">
                             <p>
-                                <span className="font-medium">ဖုန်း:</span>{" "}
+                                <span className="font-medium">{t("checkout_phone", "Phone number")}:</span>{" "}
                                 {formData.phone}
                             </p>
                             <p>
-                                <span className="font-medium">လိပ်စာ:</span>{" "}
+                                <span className="font-medium">{t("checkout_address", "Address")}:</span>{" "}
                                 {formData.address}
                             </p>
                         </div>
                     </div>
-                    {/* ငွေလွှဲဖြတ်ပိုင်း */}
-                    <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-center dark:border-slate-700 dark:bg-slate-800">
-                        <h4 className="mb-3 flex items-center justify-center font-bold text-gray-700 dark:text-slate-200">
-                            <LuImage className="mr-2 h-4 w-4" /> ငွေလွှဲဖြတ်ပိုင်း (Slip)
+
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center dark:border-slate-700 dark:bg-slate-800">
+                        <h4 className="mb-3 flex items-center justify-center font-bold text-slate-700 dark:text-slate-200">
+                            <LuImage className="mr-2 h-4 w-4" /> {t("checkout_confirm_slip", "Transfer slip")}
                         </h4>
                         <img
                             src={`/storage/${formData.payment_slip}`}
-                            className="h-40 mx-auto rounded-lg shadow-md border-2 border-white"
-                            alt="Slip"
+                            className="mx-auto h-40 rounded-lg border-2 border-white shadow-md dark:border-slate-700"
+                            alt={t("checkout_confirm_slip", "Transfer slip")}
                         />
                     </div>
                 </div>
 
-                {/* ဝယ်ထားတဲ့ ပစ္စည်းစာရင်း Review */}
-                <div className="mb-8 overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700">
+                <div className="mb-8 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
                     <table className="w-full">
                         <thead>
-                            <tr className="bg-gray-100 text-sm text-gray-600 dark:bg-slate-800 dark:text-slate-300">
+                            <tr className="bg-slate-100 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                 <th className="p-4 text-left font-bold">
-                                    ပစ္စည်းအမည်
+                                    {t("checkout_confirm_product_name", "Product")}
                                 </th>
                                 <th className="p-4 text-center font-bold">
-                                    အရေအတွက်
+                                    {t("checkout_confirm_quantity", "Quantity")}
                                 </th>
                                 <th className="p-4 text-right font-bold">
-                                    ဈေးနှုန်း
+                                    {t("checkout_confirm_price", "Price")}
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                        <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                             {cartItems.map((item) => (
-                                <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/70">
-                                    <td className="p-4 font-medium text-gray-700 dark:text-slate-200">
+                                <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/70">
+                                    <td className="p-4 font-medium text-slate-700 dark:text-slate-200">
                                         {item.variant.product.name}
                                     </td>
-                                    <td className="p-4 text-center text-gray-600 dark:text-slate-300">
+                                    <td className="p-4 text-center text-slate-600 dark:text-slate-300">
                                         {item.quantity}
                                     </td>
-                                    <td className="p-4 text-right font-semibold text-gray-800 dark:text-slate-100">
+                                    <td className="p-4 text-right font-semibold text-slate-800 dark:text-slate-100">
                                         {(
                                             Number(
                                                 item.line_total ||
@@ -136,8 +129,7 @@ export default function Confirm({ formData, cartItems }) {
                                                         0) *
                                                         item.quantity,
                                             )
-                                        ).toLocaleString()}{" "}
-                                        Ks
+                                        ).toLocaleString()} Ks
                                     </td>
                                 </tr>
                             ))}
@@ -145,36 +137,33 @@ export default function Confirm({ formData, cartItems }) {
                     </table>
                 </div>
 
-                {/* အောက်ခြေ စုစုပေါင်းနှင့် ခလုတ်များ */}
-                <div className="flex flex-col items-center justify-between gap-6 rounded-2xl bg-gray-900 p-6 text-white dark:bg-slate-800 md:flex-row">
+                <div className="flex flex-col items-center justify-between gap-6 rounded-2xl bg-slate-900 p-6 text-white dark:bg-slate-800 md:flex-row">
                     <div className="space-y-1">
                         <div className="text-2xl font-bold text-orange-400">
-                            စုစုပေါင်း: {calculatedTotal.toLocaleString()} Ks
+                            {t("checkout_confirm_total", "Total")}: {calculatedTotal.toLocaleString()} Ks
                         </div>
                         {totalDiscount > 0 && (
                             <div className="text-sm font-semibold text-emerald-300">
-                                Promotion Discount: -{totalDiscount.toLocaleString()} Ks
+                                {t("cart_discount", "Promotion Discount")}: -{totalDiscount.toLocaleString()} Ks
                             </div>
                         )}
                     </div>
 
-                    <div className="flex gap-4 w-full md:w-auto">
-                        {/* 🎯 ပြန်ပြင်မည့်ခလုတ် */}
+                    <div className="flex w-full gap-4 md:w-auto">
                         <button
                             onClick={handleEdit}
                             disabled={processing}
-                            className="flex-1 rounded-xl border border-gray-500 px-8 py-3 font-bold text-gray-300 transition hover:bg-gray-800 disabled:opacity-50 md:flex-none dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+                            className="flex-1 rounded-xl border border-slate-500 px-8 py-3 font-bold text-slate-300 transition hover:bg-slate-800 disabled:opacity-50 md:flex-none dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
                         >
-                            ပြန်ပြင်မည်
+                            {t("checkout_back_edit", "Edit")}
                         </button>
 
-                        {/* 🎯 အော်ဒါတင်မည့်ခလုတ် */}
                         <button
                             onClick={submitOrder}
                             disabled={processing}
-                            className="flex-1 rounded-xl bg-orange-600 px-10 py-3 text-lg font-bold text-white shadow-lg transition hover:bg-orange-700 active:scale-95 disabled:bg-gray-600 md:flex-none dark:disabled:bg-slate-600"
+                            className="flex-1 rounded-xl bg-orange-600 px-10 py-3 text-lg font-bold text-white shadow-lg transition hover:bg-orange-700 active:scale-95 disabled:bg-slate-600 md:flex-none"
                         >
-                            {processing ? "တင်နေပါသည်..." : "အော်ဒါတင်မည်"}
+                            {processing ? t("checkout_submit_processing", "Submitting...") : t("checkout_submit_order", "Place order")}
                         </button>
                     </div>
                 </div>

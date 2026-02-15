@@ -1,10 +1,12 @@
-import { Link, router } from "@inertiajs/react"; // usePage မလိုရင် ဖယ်ထားလို့ရပါတယ်
+import { Link, router, usePage } from "@inertiajs/react";
 import Swal from "sweetalert2";
 
 export default function Index({ cartItems = [] }) {
     const isCartEmpty = cartItems.length === 0;
+    const page = usePage();
+    const { i18n = {} } = page.props;
+    const t = (key, fallback) => i18n?.[key] || fallback;
 
-    // စုစုပေါင်း ကျသင့်ငွေ တွက်ချက်ခြင်း
     const totalPrice = cartItems.reduce((sum, item) => {
         return sum + Number(item.line_total || (item.effective_unit_price || item.variant?.price || 0) * item.quantity);
     }, 0);
@@ -15,83 +17,74 @@ export default function Index({ cartItems = [] }) {
 
     const removeFromCart = (id) => {
         Swal.fire({
-            title: "သေချာပါသလား?",
-            text: "ခြင်းတောင်းထဲမှ ဤပစ္စည်းကို ဖယ်ရှားလိုပါသလား?",
+            title: t("cart_remove_confirm_title", "Are you sure?"),
+            text: t("cart_remove_confirm_text", "Do you want to remove this item from cart?"),
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#f97316",
-            cancelButtonText: "မလုပ်တော့ပါ",
-            confirmButtonText: "ဖယ်ရှားမည်",
+            cancelButtonText: t("cart_remove_cancel", "Cancel"),
+            confirmButtonText: t("cart_remove_confirm", "Remove"),
         }).then((result) => {
             if (result.isConfirmed) {
-                // Controller မှာ destroy function ရှိဖို့ လိုပါတယ်
                 router.delete(`/cart/${id}`, {
-                    onSuccess: () =>
-                        Swal.fire("ဖယ်ရှားပြီးပါပြီ", "", "success"),
+                    onSuccess: () => Swal.fire(t("cart_removed_success", "Removed from cart"), "", "success"),
                 });
             }
         });
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen pb-12">
-            <header className="bg-white border-b p-4 mb-6">
-                <div className="max-w-5xl mx-auto flex justify-between items-center">
-                    <Link
-                        href="/"
-                        className="text-2xl font-bold text-orange-500"
-                    >
-                        LaraPee | ခြင်းတောင်း
+        <div className="min-h-screen bg-slate-100 pb-12 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+            <header className="mb-6 border-b border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                <div className="mx-auto flex max-w-5xl items-center justify-between">
+                    <Link href="/" className="text-2xl font-black text-orange-500 dark:text-orange-400">
+                        {t("cart_title", "LaraPee | Cart")}
                     </Link>
                 </div>
             </header>
 
-            <main className="max-w-5xl mx-auto px-4">
-                <h2 className="text-xl font-bold mb-4">
-                    သင်ရွေးချယ်ထားသော ပစ္စည်းများ
+            <main className="mx-auto max-w-5xl px-4">
+                <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-100">
+                    {t("cart_heading", "Your selected items")}
                 </h2>
 
-                <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex flex-col gap-6 md:flex-row">
                     <div className="flex-1 space-y-4">
                         {cartItems.length > 0 ? (
                             cartItems.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="bg-white p-4 rounded shadow-sm flex gap-4 items-center border"
+                                    className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
                                 >
-                                    {/* Brand Logo or Placeholder */}
-                                    <div className="w-20 h-20 bg-gray-100 rounded flex items-center justify-center font-bold text-gray-400 text-[10px] text-center p-1">
-                                        {item.product.brand?.name || "No Brand"}
+                                    <div className="flex h-20 w-20 items-center justify-center rounded bg-slate-100 p-1 text-center text-[10px] font-bold text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                                        {item.product.brand?.name || t("cart_no_brand", "No Brand")}
                                     </div>
 
                                     <div className="flex-1">
-                                        <h4 className="font-medium text-gray-800">
+                                        <h4 className="font-medium text-slate-800 dark:text-slate-100">
                                             {item.product.name}
                                         </h4>
-                                        <p className="text-xs text-gray-500">
-                                            Variant: {item.variant.sku}
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            {t("cart_variant", "Variant")}: {item.variant.sku}
                                         </p>
-                                        <p className="text-orange-600 font-bold mt-1">
-                                            Ks{" "}
-                                            {Number(item.effective_unit_price || item.variant?.price || 0).toLocaleString()}
+                                        <p className="mt-1 font-bold text-orange-600 dark:text-orange-400">
+                                            Ks {Number(item.effective_unit_price || item.variant?.price || 0).toLocaleString()}
                                         </p>
                                         {Number(item.discount_line_total || 0) > 0 && (
-                                            <p className="text-xs text-emerald-600 font-semibold mt-1">
-                                                Promotion applied: -Ks {Number(item.discount_line_total).toLocaleString()}
+                                            <p className="mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                                {t("cart_discount", "Promotion Discount")}: -Ks {Number(item.discount_line_total).toLocaleString()}
                                             </p>
                                         )}
                                     </div>
 
                                     <div className="flex items-center gap-4">
-                                        <div className="text-sm font-bold bg-gray-50 px-3 py-1 rounded border">
-                                            x {item.quantity}
+                                        <div className="rounded border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                            {t("cart_qty", "Qty")}: {item.quantity}
                                         </div>
                                         <button
-                                            onClick={() =>
-                                                removeFromCart(item.id)
-                                            }
-                                            className="text-gray-400 hover:text-red-500 transition"
-                                            title="ဖယ်ရှားမည်"
+                                            onClick={() => removeFromCart(item.id)}
+                                            className="text-slate-400 transition hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400"
+                                            title={t("cart_remove", "Remove")}
                                         >
                                             🗑️
                                         </button>
@@ -99,61 +92,58 @@ export default function Index({ cartItems = [] }) {
                                 </div>
                             ))
                         ) : (
-                            <div className="bg-white p-12 text-center rounded shadow-sm border border-dashed">
-                                <p className="text-gray-500 mb-4">
-                                    ခြင်းတောင်းထဲတွင် ပစ္စည်းမရှိသေးပါ
+                            <div className="rounded border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                                <p className="mb-4 text-slate-500 dark:text-slate-400">
+                                    {t("cart_empty", "Your cart is empty")}
                                 </p>
                                 <Link
                                     href="/"
-                                    className="bg-orange-500 text-white px-8 py-3 rounded-lg font-bold hover:bg-orange-600 transition inline-block"
+                                    className="inline-block rounded-lg bg-orange-500 px-8 py-3 font-bold text-white transition hover:bg-orange-600"
                                 >
-                                    ဈေးဝယ်ထွက်မယ်
+                                    {t("cart_shop_now", "Shop now")}
                                 </Link>
                             </div>
                         )}
                     </div>
 
-                    {/* Summary Card */}
                     <div className="md:w-80">
-                        <div className="bg-white p-6 rounded shadow-sm sticky top-24 border">
-                            <h3 className="font-bold border-b pb-2 mb-4">
-                                စုစုပေါင်းစာရင်း
+                        <div className="sticky top-24 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                            <h3 className="mb-4 border-b border-slate-200 pb-2 font-bold text-slate-800 dark:border-slate-700 dark:text-slate-100">
+                                {t("cart_summary", "Summary")}
                             </h3>
-                            <div className="flex justify-between mb-6">
-                                <span className="text-gray-600">
-                                    စုစုပေါင်း ကျသင့်ငွေ
+                            <div className="mb-6 flex justify-between">
+                                <span className="text-slate-600 dark:text-slate-300">
+                                    {t("cart_total", "Total")}
                                 </span>
-                                <span className="font-bold text-xl text-orange-600">
+                                <span className="text-xl font-bold text-orange-600 dark:text-orange-400">
                                     Ks {totalPrice.toLocaleString()}
                                 </span>
                             </div>
 
                             {totalDiscount > 0 && (
-                                <div className="flex justify-between mb-6 text-sm">
-                                    <span className="text-emerald-700 font-semibold">
-                                        Promotion Discount
+                                <div className="mb-6 flex justify-between text-sm">
+                                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                                        {t("cart_discount", "Promotion Discount")}
                                     </span>
-                                    <span className="font-bold text-emerald-700">
+                                    <span className="font-bold text-emerald-700 dark:text-emerald-400">
                                         -Ks {totalDiscount.toLocaleString()}
                                     </span>
                                 </div>
                             )}
 
                             <Link
-                                href={
-                                    isCartEmpty ? "#" : route("checkout.index")
-                                }
+                                href={isCartEmpty ? "#" : route("checkout.index")}
                                 as="button"
                                 disabled={isCartEmpty}
-                                className={`w-full py-3 rounded-xl font-bold text-white transition shadow-md ${
+                                className={`w-full rounded-xl py-3 font-bold text-white transition shadow-md ${
                                     isCartEmpty
-                                        ? "bg-gray-300 cursor-not-allowed shadow-none"
+                                        ? "cursor-not-allowed bg-slate-300 shadow-none dark:bg-slate-700"
                                         : "bg-orange-600 hover:bg-orange-700 active:scale-95"
                                 }`}
                             >
                                 {isCartEmpty
-                                    ? "ပစ္စည်းအရင်ရွေးပါ"
-                                    : "ငွေချေမည် (Checkout)"}
+                                    ? t("cart_select_items_first", "Select items first")
+                                    : t("cart_checkout", "Checkout")}
                             </Link>
                         </div>
                     </div>

@@ -21,7 +21,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
         color-scheme: dark;
         --color-bg: #050b16;
         --color-text: #dbe6f8;
@@ -48,6 +48,16 @@
 
 :root[data-theme="light"] {
     color-scheme: light;
+    --color-bg: #f4f6fb;
+    --color-text: #0c1426;
+    --color-surface: #ffffff;
+    --color-surface-muted: #eef2f7;
+    --color-border: #d7dfec;
+    --color-ring: #0ea5e9;
+    --color-accent: #f97316;
+    --color-accent-2: #0ea5e9;
+    --shadow-elev-1: 0 10px 30px rgba(15, 23, 42, 0.08);
+    --shadow-elev-2: 0 28px 70px rgba(15, 23, 42, 0.13);
 }
 
 body {
