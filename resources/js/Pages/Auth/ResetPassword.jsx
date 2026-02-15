@@ -3,9 +3,13 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthTopbar from '@/Components/AuthTopbar';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 
 export default function ResetPassword({ token, email }) {
+    const { props } = usePage();
+    const i18n = props?.i18n || {};
+    const t = (key, fallback) => i18n?.[key] || fallback;
+
     const { data, setData, post, processing, errors, reset } = useForm({
         token: token,
         email: email,
@@ -23,7 +27,7 @@ export default function ResetPassword({ token, email }) {
 
     return (
         <div className="min-h-screen bg-orange-500 px-4 pb-10 pt-10 dark:bg-slate-950 md:px-10">
-            <Head title="Reset Password" />
+            <Head title={t('auth_reset_page_title', 'Reset Password')} />
             <AuthTopbar />
 
             <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-4xl items-center">
@@ -31,20 +35,16 @@ export default function ResetPassword({ token, email }) {
                     <div className="grid gap-0 md:grid-cols-2">
                         <div className="flex flex-col items-center justify-center bg-orange-600 p-12 text-center text-white">
                             <h1 className="mb-4 text-4xl font-bold italic tracking-tighter">LaraPee</h1>
-                            <p className="text-orange-100 text-lg">
-                                Password အသစ်သတ်မှတ်ပြီး account ပြန်ဝင်ပါ
-                            </p>
+                            <p className="text-lg text-orange-100">{t('auth_reset_tagline', 'Set a new password and sign back in')}</p>
                             <div className="mt-10 text-7xl">♻️</div>
                         </div>
 
                         <div className="p-8 md:p-12">
-                            <h2 className="mb-5 text-2xl font-bold text-gray-800 dark:text-slate-100">
-                                Reset Password
-                            </h2>
+                            <h2 className="mb-5 text-2xl font-bold text-gray-800 dark:text-slate-100">{t('auth_reset_heading', 'Reset Password')}</h2>
 
                             <form onSubmit={submit}>
                                 <div>
-                                    <InputLabel htmlFor="email" value="Email" />
+                                    <InputLabel htmlFor="email" value={t('email', 'Email')} />
 
                                     <TextInput
                                         id="email"
@@ -60,7 +60,7 @@ export default function ResetPassword({ token, email }) {
                                 </div>
 
                                 <div className="mt-4">
-                                    <InputLabel htmlFor="password" value="Password" />
+                                    <InputLabel htmlFor="password" value={t('password', 'Password')} />
 
                                     <TextInput
                                         id="password"
@@ -79,7 +79,7 @@ export default function ResetPassword({ token, email }) {
                                 <div className="mt-4">
                                     <InputLabel
                                         htmlFor="password_confirmation"
-                                        value="Confirm Password"
+                                        value={t('confirm_password', 'Confirm Password')}
                                     />
 
                                     <TextInput
@@ -102,7 +102,7 @@ export default function ResetPassword({ token, email }) {
 
                                 <div className="mt-4 flex items-center justify-end">
                                     <PrimaryButton className="ms-4" disabled={processing}>
-                                        Reset Password
+                                        {t('auth_reset_heading', 'Reset Password')}
                                     </PrimaryButton>
                                 </div>
                             </form>

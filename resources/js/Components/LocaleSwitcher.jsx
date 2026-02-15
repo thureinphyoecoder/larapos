@@ -5,6 +5,8 @@ export default function LocaleSwitcher({ compact = false }) {
     const locale = props.locale || "en";
     const i18n = props.i18n || {};
     const label = i18n.language || "Language";
+    const enLabel = i18n.locale_en || "EN";
+    const mmLabel = i18n.locale_mm || "MM";
 
     const onChangeLocale = (nextLocale) => {
         if (!nextLocale || nextLocale === locale) return;
@@ -25,9 +27,9 @@ export default function LocaleSwitcher({ compact = false }) {
                             ? "bg-orange-500 text-white"
                             : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                     }`}
-                    aria-label="Switch to English"
+                    aria-label={i18n.switch_to_english || "Switch to English"}
                 >
-                    EN
+                    {enLabel}
                 </button>
                 <button
                     type="button"
@@ -37,9 +39,9 @@ export default function LocaleSwitcher({ compact = false }) {
                             ? "bg-orange-500 text-white"
                             : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                     }`}
-                    aria-label="Switch to Myanmar"
+                    aria-label={i18n.switch_to_myanmar || "Switch to Myanmar"}
                 >
-                    MM
+                    {mmLabel}
                 </button>
             </div>
         );
@@ -55,8 +57,8 @@ export default function LocaleSwitcher({ compact = false }) {
                     className="h-8 rounded-md border border-slate-300 bg-white pl-2 pr-8 text-xs font-semibold text-slate-700 shadow-sm outline-none transition focus:border-slate-400 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                     aria-label={label}
                 >
-                    <option value="en">English</option>
-                    <option value="mm">မြန်မာ</option>
+                    <option value="en">{i18n.english || "English"}</option>
+                    <option value="mm">{i18n.myanmar || "မြန်မာ"}</option>
                 </select>
             </div>
         </div>
